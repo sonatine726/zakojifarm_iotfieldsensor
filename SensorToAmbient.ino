@@ -15,9 +15,9 @@ constexpr int LOG_TEMP_BUF_SIZE = 32;
 
 
 //LTE global
-#define APN               "soracom.io"
-#define USERNAME          "sora"
-#define PASSWORD          "sora"
+#define APN       "soracom.io"
+#define USERNAME  "sora"
+#define PASSWORD  "sora"
 
 //Ambient global
 unsigned int AMBIENT_CHANNEL_ID = 5701;
@@ -60,11 +60,15 @@ void setup()
 void loop()
 {
     unsigned long stime = millis();
+    char cbuf[32] = {0};
+    snprintf(cbuf, sizeof(cbuf), "loop() : %lu", stime);
+    SerialUSB.println(cbuf);
 
     /* Get temperature and humidity */
     float temp;
     float humi;
 
+    SerialUSB.println("TemperatureAndHumidityRead()");
     if(TemperatureAndHumidityRead(&temp, &humi))
     {
         //Send to serial
@@ -82,10 +86,24 @@ void loop()
 
 
     /* Get GPS */
+    SerialUSB.println("GpsRead()");
     double lat, lng, meter;
     bool validGps = GpsRead(lat, lng, meter);
+    if(validGps)
+    {
+        SerialUSB.println("GPS Value:");
+        snprintf(cbuf, sizeof(cbuf), "lat: %12.8f", lat);
+        SerialUSB.println(cbuf);
+
+        snprintf(cbuf, sizeof(cbuf), "lng: %12.8f", lng);
+        SerialUSB.println(cbuf);
+
+        snprintf(cbuf, sizeof(cbuf), "meter: %4.2f", meter);
+        SerialUSB.println(cbuf);
+    }
 
     /* Send to Ambient */
+    SerialUSB.println("SendToAmbient()");
     bool isSendSuccess;
     if(validGps)
     {
@@ -149,7 +167,7 @@ bool TemperatureAndHumidityRead(float* temperature, float* humidity)
     DHT11Start(TemperatureAndHumidityPin);
     for (int i = 0; i < 5; i++)
     {
-    data[i] = DHT11ReadByte(TemperatureAndHumidityPin);
+        data[i] = DHT11ReadByte(TemperatureAndHumidityPin);
     }
     DHT11Finish(TemperatureAndHumidityPin);
 
@@ -238,7 +256,8 @@ void GpsBegin(HardwareSerial* serial)
 
 bool GpsRead(double& lat, double& lng, double& meter)
 {
-    while(GpsSerial->available()){
+    while(GpsSerial->available())
+    {
         if(gps.encode(GpsSerial->read()))
         {
           break;
@@ -286,10 +305,10 @@ bool SendToAmbient(float temp, float humi, double lat, double lng, double meter)
     if(lat != INVALID_GPS_VALUE)
     {
         snprintf(cbuf, sizeof(cbuf), "%12.8f", lat);
-        if(!ambient.set(3, cbuf))
+        if(!ambient.set(9, cbuf))
         {
             char logBuf[LOG_TEMP_BUF_SIZE] = {0};
-            snprintf(logBuf, sizeof(logBuf), "ERROR: ambient.set(3, %s)", cbuf);
+            snprintf(logBuf, sizeof(logBuf), "ERROR: ambient.set(9, %s)", cbuf);
             SerialUSB.println(logBuf);
             return false;
         }
@@ -298,10 +317,10 @@ bool SendToAmbient(float temp, float humi, double lat, double lng, double meter)
     if(lng != INVALID_GPS_VALUE)
     {
         snprintf(cbuf, sizeof(cbuf), "%12.8f", lng);
-        if(!ambient.set(4, cbuf))
+        if(!ambient.set(10, cbuf))
         {
             char logBuf[LOG_TEMP_BUF_SIZE] = {0};
-            snprintf(logBuf, sizeof(logBuf), "ERROR: ambient.set(4, %s)", cbuf);
+            snprintf(logBuf, sizeof(logBuf), "ERROR: ambient.set(10, %s)", cbuf);
             SerialUSB.println(logBuf);
             return false;
         }
@@ -309,11 +328,11 @@ bool SendToAmbient(float temp, float humi, double lat, double lng, double meter)
 
     if(meter != INVALID_GPS_VALUE)
     {
-        snprintf(cbuf, sizeof(cbuf), "%4.2f", lat);
-        if(!ambient.set(5, cbuf))
+        snprintf(cbuf, sizeof(cbuf), "%4.2f", meter);
+        if(!ambient.set(3, cbuf))
         {
             char logBuf[LOG_TEMP_BUF_SIZE] = {0};
-            snprintf(logBuf, sizeof(logBuf), "ERROR: ambient.set(5, %s)", cbuf);
+            snprintf(logBuf, sizeof(logBuf), "ERROR: ambient.set(3, %s)", cbuf);
             SerialUSB.println(logBuf);
             return false;
         }
