@@ -2,6 +2,16 @@
 #include <WioLTEforArduino.h>
 #include <WioLTEClient.h>
 #include <TinyGPS++.h>
+#include <RTClock.h>
+#include <time.h>
+
+typedef int IRQn_Type;
+#define __NVIC_PRIO_BITS          4
+#define __Vendor_SysTickConfig    1
+#include <libmaple/libmaple_types.h>
+#include <libmaple/usbF4/VCP/core_cm4.h>
+#include <libmaple/usbF4/VCP/core_cmInstr.h>
+#include <libmaple/pwr.h>
 #include "Ambient.h"
 
 //Common global
@@ -12,6 +22,9 @@ WioLTE Wio;
 WioLTEClient WioClient(&Wio);
 
 constexpr int LOG_TEMP_BUF_SIZE = 32;
+
+RTClock rtc;
+const time_t JAPAN_TIME_DIFF = 9 * 60 * 60; // UTC + 9h
 
 
 //LTE global
@@ -30,6 +43,9 @@ Ambient ambient;
 HardwareSerial* GpsSerial;
 TinyGPSPlus gps;
 const double INVALID_GPS_VALUE = -1;
+
+//NTP
+const char NTP_SERVER[] = "ntp.nict.jp";
 
 void setup()
 {
@@ -113,7 +129,7 @@ void loop()
     {
         isSendSuccess = SendToAmbient(temp, humi);
     }
-    
+
     if(!isSendSuccess)
     {
         SerialUSB.println("ERROR: SendToAmbient");
@@ -148,6 +164,13 @@ bool SetupLTE()
     }
 
     return true;
+}
+
+void ShutdownLTE()
+{
+    Wio.Deactivate();  // Deactivate a PDP context. Added at v1.1.9
+    Wio.TurnOff(); // Shutdown the LTE module. Added at v1.1.6
+    Wio.PowerSupplyLTE(false); // Turn the power supply to LTE module off
 }
 
 
@@ -345,4 +368,72 @@ bool SendToAmbient(float temp, float humi, double lat, double lng, double meter)
     }
 
     return true;
+}
+
+void EnterStandbyMode(time_t wakeup_time)
+{
+    rtc.turnOffAlarmA();
+    rtc_enter_config_mode();
+    RTC_BASE->ISR &= ~(1 << RTC_ISR_ALRAF_BIT);
+    rtc_exit_config_mode();
+
+    *bb_perip(&EXTI_BASE->PR, EXTI_RTC_ALARM_BIT) = 1;
+
+    PWR_BASE->CR |= (1UL << PWR_CR_CWUF);
+
+    {
+        struct tm tm_waketime = {0};
+        gmtime_r(&wakeup_time, &tm_waketime);
+        SerialUSB.println("INFO: Next wakeup time : ");
+        SerialUSB.println(asctime(&tm_waketime));
+    }
+    rtc.setAlarmATime(wakeup_time);
+    delay(100);
+
+    PWR_BASE->CR |= (1UL << PWR_CR_PDDS);
+    PWR_BASE->CR |= (1UL << PWR_CR_CWUF);
+    while(PWR_BASE->CSR & (1UL << PWR_CSR_WUF)){} // WUPがクリアされるまで待機
+
+    SCB->SCR |= (SCB_SCR_SLEEPDEEP_Msk);
+    __WFI();
+}
+
+bool GetNtpTime(WioLTE& wio, tm& current_time)
+{
+  if(!wio.SyncTime(NTP_SERVER))
+  {
+    SerialUSB.println("ERROR: SyncTime() error");
+    return false;
+  }
+
+  return wio.GetTime(&current_time);
+}
+
+void SleepUntilNextLoop(unsigned long sleeptime_sec)
+{
+    struct tm current_time = {0};
+    time_t epoch = 0;
+    if (GetNtpTime(Wio, current_time) == true)
+    {  
+        epoch = mktime(&current_time);
+        epoch += JAPAN_TIME_DIFF;
+        gmtime_r(&epoch, &current_time);
+
+        SerialUSB.println("INFO: Get Time From NTP Server. UTC = ");
+        SerialUSB.println(asctime(&current_time));
+
+        rtc.setTime(&current_time);
+        delay(1);  // RTCへの反映待ち
+    }
+
+    rtc.getTime(&current_time);
+    SerialUSB.println("INFO: Current RTC time = ");
+    SerialUSB.println(asctime(&current_time));
+
+    epoch = mktime(&current_time);
+    epoch += sleeptime_sec;
+    
+    ShutdownLTE();
+    
+    EnterStandbyMode(epoch);
 }
