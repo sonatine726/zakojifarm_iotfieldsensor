@@ -2,16 +2,31 @@
 #include <WioLTEforArduino.h>
 #include <WioLTEClient.h>
 #include <TinyGPS++.h>
+#include <RTClock.h>
+#include <time.h>
+
+typedef int IRQn_Type;
+#define __NVIC_PRIO_BITS          4
+#define __Vendor_SysTickConfig    1
+#include <libmaple/libmaple_types.h>
+#include <libmaple/usbF4/VCP/core_cm4.h>
+#include <libmaple/usbF4/VCP/core_cmInstr.h>
+#include <libmaple/pwr.h>
 #include "Ambient.h"
 
 //Common global
 #define SENSOR_PIN    (WIOLTE_D38)
-#define LOOP_PERIOD 10000 // milliceconds
+#define LOOP_PERIOD_MSEC 60000 // milliseconds
 
 WioLTE Wio;
 WioLTEClient WioClient(&Wio);
 
 constexpr int LOG_TEMP_BUF_SIZE = 32;
+
+RTClock rtc(RTCSEL_LSI);
+const time_t JAPAN_TIME_DIFF = 9 * 60 * 60; // UTC + 9h
+
+// constexpr uint32* P_RTC_BKP0R = reinterpret_cast<uint32*>(RTC_BASE) + 0x50;
 
 
 //LTE global
@@ -31,12 +46,13 @@ HardwareSerial* GpsSerial;
 TinyGPSPlus gps;
 const double INVALID_GPS_VALUE = -1;
 
+//NTP
+const char NTP_SERVER[] = "ntp.nict.jp";
+
 void setup()
 {
     SerialUSB.println("setup()");
-
-    delay(200);
-
+    SerialUSB.flush();
     //Setup LTE
     SerialUSB.println("Setup LTE");
     if(!SetupLTE()){
@@ -59,10 +75,12 @@ void setup()
 
 void loop()
 {
-    unsigned long stime = millis();
     char cbuf[32] = {0};
-    snprintf(cbuf, sizeof(cbuf), "loop() : %lu", stime);
+    struct tm current_time = {0};
+    rtc.getTime(&current_time);
+    snprintf(cbuf, sizeof(cbuf), "loop() : %s", asctime(&current_time));
     SerialUSB.println(cbuf);
+    SerialUSB.flush();
 
     /* Get temperature and humidity */
     float temp;
@@ -113,17 +131,22 @@ void loop()
     {
         isSendSuccess = SendToAmbient(temp, humi);
     }
-    
+
     if(!isSendSuccess)
     {
         SerialUSB.println("ERROR: SendToAmbient");
     }
 
     /* Wait next loop */
-    unsigned long elapse = millis() - stime;
-    if (elapse < LOOP_PERIOD)
+    unsigned long elapse = millis();
+    snprintf(cbuf, sizeof(cbuf), "Run elapse: %ld msec", elapse);
+    SerialUSB.println(cbuf);
+    if(LOOP_PERIOD_MSEC > elapse)
     {
-      delay(LOOP_PERIOD - elapse);
+        time_t waittime_sec = (LOOP_PERIOD_MSEC - elapse) / 1000;
+        snprintf(cbuf, sizeof(cbuf), "Wait next loop: %ld sec", waittime_sec);
+        SerialUSB.println(cbuf);
+        SleepUntilNextLoop(waittime_sec);
     }
 }
 
@@ -133,21 +156,28 @@ bool SetupLTE()
 {
     Wio.Init();
     Wio.PowerSupplyLTE(true);
-    delay(5000);
+    delay(500);
 
     if (!Wio.TurnOnOrReset())
     {
-    SerialUSB.println("ERROR: Wio.TurnOnOrReset");
-    return false;
+        SerialUSB.println("ERROR: Wio.TurnOnOrReset");
+        return false;
     }
 
     if (!Wio.Activate(APN, USERNAME, PASSWORD))
     {
-    SerialUSB.println("ERROR: Wio.Activate");
-    return false;
+        SerialUSB.println("ERROR: Wio.Activate");
+        return false;
     }
 
     return true;
+}
+
+void ShutdownLTE()
+{
+    Wio.Deactivate();  // Deactivate a PDP context. Added at v1.1.9
+    Wio.TurnOff(); // Shutdown the LTE module. Added at v1.1.6
+    Wio.PowerSupplyLTE(false); // Turn the power supply to LTE module off
 }
 
 
@@ -345,4 +375,109 @@ bool SendToAmbient(float temp, float humi, double lat, double lng, double meter)
     }
 
     return true;
+}
+
+void EnterStandbyMode(time_t wakeup_time)
+{
+    //Set AlarmA
+    rtc.turnOffAlarmA();
+    rtc_enter_config_mode();
+    RTC_BASE->ISR &= ~(1 << RTC_ISR_ALRAF_BIT);
+    rtc_exit_config_mode();
+
+    *bb_perip(&EXTI_BASE->PR, EXTI_RTC_ALARM_BIT) = 1;
+    {
+        struct tm tm_waketime = {0};
+        gmtime_r(&wakeup_time, &tm_waketime);
+        SerialUSB.println("INFO: Next wakeup time : ");
+        SerialUSB.println(asctime(&tm_waketime));
+        delay(10);
+    }
+
+    PWR_BASE->CR |= (1 << PWR_CR_PDDS);
+    PWR_BASE->CR |= (1 << PWR_CR_CWUF);
+    while(PWR_BASE->CSR & (1 << PWR_CSR_WUF))
+    {
+        SerialUSB.println("DEBUG: Wait PWR_CSR_WUF clear");
+    } // WUPがクリアされるまで待機
+
+    rtc.setAlarmATime(wakeup_time, false, false);
+    // :For Debug
+    // {
+    //     struct tm current_time = {0};
+    //     rtc.getTime(&current_time);
+    //     SerialUSB.println("DEBUG: Current RTC time = ");
+    //     SerialUSB.println(asctime(&current_time));
+    // }
+
+    SerialUSB.println("DEBUG: Enter Standby Mode");
+    SCB->SCR |= (SCB_SCR_SLEEPDEEP_Msk);
+    delay(10);
+
+    __WFI();
+}
+
+bool GetNtpTime(WioLTE& wio, tm& current_time)
+{
+  if(!wio.SyncTime(NTP_SERVER))
+  {
+    SerialUSB.println("ERROR: SyncTime() error");
+    return false;
+  }
+
+  return wio.GetTime(&current_time);
+}
+
+void SleepUntilNextLoop(time_t sleeptime_sec)
+{
+    // :For Debug
+    // {
+    //     SerialUSB.println("DEBUG: RCC_CR HSI bit = ");
+    //     SerialUSB.println(bb_peri_get_bit(&RCC_BASE->CR, RCC_CR_HSIRDY_BIT));
+    //     SerialUSB.println(bb_peri_get_bit(&RCC_BASE->CR, RCC_CR_HSION_BIT));
+ 
+    //     SerialUSB.println("DEBUG: RCC_CSR LSI bit = ");
+    //     SerialUSB.println(bb_peri_get_bit(&RCC_BASE->CSR, RCC_CSR_LSIRDY_BIT));
+    //     SerialUSB.println(bb_peri_get_bit(&RCC_BASE->CSR, RCC_CSR_LSION_BIT));
+ 
+    //     SerialUSB.println("DEBUG: RCC_BDCR LSE bit = ");
+    //     SerialUSB.println(bb_peri_get_bit(&RCC_BASE->BDCR, RCC_BDCR_LSERDY_BIT));
+    //     SerialUSB.println(bb_peri_get_bit(&RCC_BASE->BDCR, RCC_BDCR_LSEON_BIT));
+
+    //     SerialUSB.println("DEBUG: RCC_BDCR bit = ");
+    //     char logBuf[LOG_TEMP_BUF_SIZE] = {0};
+    //     snprintf(logBuf, sizeof(logBuf), "%#08X", RCC_BASE->BDCR);
+    //     SerialUSB.println(logBuf);
+
+    //     SerialUSB.println("DEBUG: RCC_APB1ENR bit = ");
+    //     snprintf(logBuf, sizeof(logBuf), "%#08X", RCC_BASE->APB1ENR);
+    //     SerialUSB.println(logBuf);
+    // }
+    // delay(1);
+
+    struct tm current_time = {0};
+    time_t epoch = 0;
+    if (GetNtpTime(Wio, current_time) == true)
+    {
+        epoch = mktime(&current_time);
+        epoch += JAPAN_TIME_DIFF;
+
+        gmtime_r(&epoch, &current_time);
+        SerialUSB.println("INFO: Get Time From NTP Server. UTC = ");
+        SerialUSB.println(asctime(&current_time));
+
+        rtc.setTime(&current_time);
+        delay(10);  // RTCへの反映待ち
+    }
+
+    rtc.getTime(&current_time);
+    SerialUSB.println("INFO: Current RTC time = ");
+    SerialUSB.println(asctime(&current_time));
+
+    epoch = mktime(&current_time);
+    epoch += sleeptime_sec;
+
+    ShutdownLTE();
+
+    EnterStandbyMode(epoch);
 }
