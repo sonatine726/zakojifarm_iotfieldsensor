@@ -4,6 +4,8 @@
 #include <TinyGPS++.h>
 #include <RTClock.h>
 #include <time.h>
+#include <OneWire.h>
+#include <DallasTemperature.h>
 
 typedef int IRQn_Type;
 #define __NVIC_PRIO_BITS          4
@@ -49,23 +51,33 @@ const double INVALID_GPS_VALUE = -1;
 //NTP
 const char NTP_SERVER[] = "ntp.nict.jp";
 
+//DS18B20
+OneWire oneWire(WIOLTE_A4);
+DallasTemperature dS18b20(&oneWire);
+constexpr uint8_t DS18B20_TEMPERATURE_RESOLUTION_BIT = 10;
+
+
 void setup()
 {
-    SerialUSB.println("setup()");
+    SerialUSB.println("INFO: setup()");
     SerialUSB.flush();
     //Setup LTE
-    SerialUSB.println("Setup LTE");
+    SerialUSB.println("INFO: Setup LTE");
     if(!SetupLTE()){
         return;
     }
 
     //Setup Ambient
-    SerialUSB.println("Setup Ambient");
+    SerialUSB.println("INFO: Setup Ambient");
     ambient.begin(AMBIENT_CHANNEL_ID, AMBIENT_WRITE_KEY, &WioClient);
 
     //Setup DHT11
-    SerialUSB.println("Setup DHT11");
+    SerialUSB.println("INFO: Setup DHT11");
     TemperatureAndHumidityBegin(SENSOR_PIN);
+
+    //Setup DS18B20
+    SerialUSB.println("INFO: SetupDS18B20");
+    SetupDS18B20();
 
     //Setup GPS
     GpsBegin(&Serial);
@@ -86,7 +98,7 @@ void loop()
     float temp;
     float humi;
 
-    SerialUSB.println("TemperatureAndHumidityRead()");
+    SerialUSB.println("INFO: TemperatureAndHumidityRead()");
     if(TemperatureAndHumidityRead(&temp, &humi))
     {
         //Send to serial
@@ -102,9 +114,15 @@ void loop()
         SerialUSB.println("ERROR: TemperatureAndHumidityRead");
     }
 
+    /* Get water temperature from DS18B20 */
+    SerialUSB.println("INFO: Get DS18B20 Temperature");
+    float tempDs18b20 = GetTemperatureDS18B20();
+    snprintf(cbuf, sizeof(cbuf), "INFO: DS18B20 temp: %f", tempDs18b20);
+    SerialUSB.println(cbuf);
+
 
     /* Get GPS */
-    SerialUSB.println("GpsRead()");
+    SerialUSB.println("INFO: GpsRead()");
     double lat, lng, meter;
     bool validGps = GpsRead(lat, lng, meter);
     if(validGps)
@@ -121,7 +139,7 @@ void loop()
     }
 
     /* Send to Ambient */
-    SerialUSB.println("SendToAmbient()");
+    SerialUSB.println("INFO: SendToAmbient()");
     bool isSendSuccess;
     if(validGps)
     {
@@ -274,6 +292,19 @@ bool DHT11Check(const byte data[5])
     }
 
     return (data[4] == sum) && (data[1] < 10) && (data[3] < 10);
+}
+
+
+/* Get water temperature from DS18B20 functions */
+void SetupDS18B20()
+{
+    dS18b20.begin();
+    dS18b20.setResolution(DS18B20_TEMPERATURE_RESOLUTION_BIT);
+}
+
+float GetTemperatureDS18B20()
+{
+    return dS18b20.getTempCByIndex(0);
 }
 
 
