@@ -25,7 +25,8 @@ WioLTEClient WioClient(&Wio);
 
 constexpr int LOG_TEMP_BUF_SIZE = 32;
 
-RTClock rtc(RTCSEL_LSI);
+//RTClock rtc(RTCSEL_LSI);
+RTClock rtc;
 const time_t JAPAN_TIME_DIFF = 9 * 60 * 60; // UTC + 9h
 
 // constexpr uint32* P_RTC_BKP0R = reinterpret_cast<uint32*>(RTC_BASE) + 0x50;
@@ -54,7 +55,7 @@ const char NTP_SERVER[] = "ntp.nict.jp";
 //DS18B20
 OneWire oneWire(WIOLTE_A4);
 DallasTemperature dS18b20(&oneWire);
-constexpr uint8_t DS18B20_TEMPERATURE_RESOLUTION_BIT = 10;
+constexpr uint8_t DS18B20_TEMPERATURE_RESOLUTION_BIT = 12;
 
 
 void setup()
@@ -120,6 +121,13 @@ void loop()
     snprintf(cbuf, sizeof(cbuf), "INFO: DS18B20 temp: %f", tempDs18b20);
     SerialUSB.println(cbuf);
 
+	{
+		SerialUSB.println("DEBUG: GPIOA_PUPDR = ");
+		char logBuf[LOG_TEMP_BUF_SIZE] = {0};
+		snprintf(logBuf, sizeof(logBuf), "%#08X", GPIOA_BASE->PUPDR);
+		SerialUSB.println(logBuf);
+	}
+
 
     /* Get GPS */
     SerialUSB.println("INFO: GpsRead()");
@@ -166,6 +174,7 @@ void loop()
         SerialUSB.println(cbuf);
         SleepUntilNextLoop(waittime_sec);
     }
+
 }
 
 
@@ -298,12 +307,39 @@ bool DHT11Check(const byte data[5])
 /* Get water temperature from DS18B20 functions */
 void SetupDS18B20()
 {
+	//{
+	//	SerialUSB.println("DEBUG: GPIOA_PUPDR before set= ");
+	//	char logBuf[LOG_TEMP_BUF_SIZE] = { 0 };
+	//	snprintf(logBuf, sizeof(logBuf), "%#08X", GPIOA_BASE->PUPDR);
+	//	SerialUSB.println(logBuf);
+	//}
+
+	////GPIOA_4ピン(WIOLTE_A4)をプルアップ
+	//GPIOA_BASE->PUPDR &= ~(3UL << 8);
+	//GPIOA_BASE->PUPDR |= (1UL << 8);
+
     dS18b20.begin();
     dS18b20.setResolution(DS18B20_TEMPERATURE_RESOLUTION_BIT);
+
+	{
+		SerialUSB.println("DEBUG: isParasitePowerMode ");
+		SerialUSB.println(dS18b20.isParasitePowerMode());
+
+		SerialUSB.println("DEBUG: getCheckForConversion");
+		SerialUSB.println(dS18b20.getCheckForConversion());
+
+	}
 }
 
 float GetTemperatureDS18B20()
 {
+	dS18b20.requestTemperatures();
+
+	{
+		SerialUSB.println("DEBUG: isConversionComplete ");
+		SerialUSB.println(dS18b20.isConversionComplete());
+	}
+
     return dS18b20.getTempCByIndex(0);
 }
 
