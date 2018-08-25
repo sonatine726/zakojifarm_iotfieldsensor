@@ -1,3 +1,4 @@
 *.vcxproj*
+*.sln
 .vs/
 __vm/

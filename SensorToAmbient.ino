@@ -4,6 +4,8 @@
 #include <TinyGPS++.h>
 #include <RTClock.h>
 #include <time.h>
+#include <OneWire.h>
+#include <DallasTemperature.h>
 
 typedef int IRQn_Type;
 #define __NVIC_PRIO_BITS          4
@@ -49,23 +51,33 @@ const double INVALID_GPS_VALUE = -1;
 //NTP
 const char NTP_SERVER[] = "ntp.nict.jp";
 
+//DS18B20
+OneWire oneWire(WIOLTE_A4);
+DallasTemperature dS18b20(&oneWire);
+constexpr uint8_t DS18B20_TEMPERATURE_RESOLUTION_BIT = 12;
+
+
 void setup()
 {
-    SerialUSB.println("setup()");
+    SerialUSB.println("INFO: setup()");
     SerialUSB.flush();
     //Setup LTE
-    SerialUSB.println("Setup LTE");
+    SerialUSB.println("INFO: Setup LTE");
     if(!SetupLTE()){
         return;
     }
 
     //Setup Ambient
-    SerialUSB.println("Setup Ambient");
+    SerialUSB.println("INFO: Setup Ambient");
     ambient.begin(AMBIENT_CHANNEL_ID, AMBIENT_WRITE_KEY, &WioClient);
 
     //Setup DHT11
-    SerialUSB.println("Setup DHT11");
+    SerialUSB.println("INFO: Setup DHT11");
     TemperatureAndHumidityBegin(SENSOR_PIN);
+
+    //Setup DS18B20
+    SerialUSB.println("INFO: SetupDS18B20");
+    SetupDS18B20();
 
     //Setup GPS
     GpsBegin(&Serial);
@@ -86,7 +98,7 @@ void loop()
     float temp;
     float humi;
 
-    SerialUSB.println("TemperatureAndHumidityRead()");
+    SerialUSB.println("INFO: TemperatureAndHumidityRead()");
     if(TemperatureAndHumidityRead(&temp, &humi))
     {
         //Send to serial
@@ -102,9 +114,22 @@ void loop()
         SerialUSB.println("ERROR: TemperatureAndHumidityRead");
     }
 
+    /* Get water temperature from DS18B20 */
+    SerialUSB.println("INFO: Get DS18B20 Temperature");
+    float tempDs18b20 = GetTemperatureDS18B20();
+    snprintf(cbuf, sizeof(cbuf), "INFO: DS18B20 temp: %f", tempDs18b20);
+    SerialUSB.println(cbuf);
+
+	{
+		SerialUSB.println("DEBUG: GPIOA_PUPDR = ");
+		char logBuf[LOG_TEMP_BUF_SIZE] = {0};
+		snprintf(logBuf, sizeof(logBuf), "%#08X", GPIOA_BASE->PUPDR);
+		SerialUSB.println(logBuf);
+	}
+
 
     /* Get GPS */
-    SerialUSB.println("GpsRead()");
+    SerialUSB.println("INFO: GpsRead()");
     double lat, lng, meter;
     bool validGps = GpsRead(lat, lng, meter);
     if(validGps)
@@ -121,15 +146,15 @@ void loop()
     }
 
     /* Send to Ambient */
-    SerialUSB.println("SendToAmbient()");
+    SerialUSB.println("INFO: SendToAmbient()");
     bool isSendSuccess;
     if(validGps)
     {
-        isSendSuccess = SendToAmbient(temp, humi, lat, lng, meter);
+        isSendSuccess = SendToAmbient(temp, humi, tempDs18b20, lat, lng, meter);
     }
     else
     {
-        isSendSuccess = SendToAmbient(temp, humi);
+        isSendSuccess = SendToAmbient(temp, humi, tempDs18b20);
     }
 
     if(!isSendSuccess)
@@ -148,6 +173,7 @@ void loop()
         SerialUSB.println(cbuf);
         SleepUntilNextLoop(waittime_sec);
     }
+
 }
 
 
@@ -277,6 +303,20 @@ bool DHT11Check(const byte data[5])
 }
 
 
+/* Get water temperature from DS18B20 functions */
+void SetupDS18B20()
+{
+    dS18b20.begin();
+    dS18b20.setResolution(DS18B20_TEMPERATURE_RESOLUTION_BIT);
+}
+
+float GetTemperatureDS18B20()
+{
+	dS18b20.requestTemperatures();
+    return dS18b20.getTempCByIndex(0);
+}
+
+
 //GPS functions
 void GpsBegin(HardwareSerial* serial)
 {
@@ -308,12 +348,12 @@ bool GpsRead(double& lat, double& lng, double& meter)
 }
 
 // LTE functions
-bool SendToAmbient(float temp, float humi)
+bool SendToAmbient(float temp, float humi, float water_temp)
 {
-    return SendToAmbient(temp, humi, INVALID_GPS_VALUE, INVALID_GPS_VALUE, INVALID_GPS_VALUE);
+    return SendToAmbient(temp, humi, water_temp, INVALID_GPS_VALUE, INVALID_GPS_VALUE, INVALID_GPS_VALUE);
 }
 
-bool SendToAmbient(float temp, float humi, double lat, double lng, double meter)
+bool SendToAmbient(float temp, float humi, float water_temp, double lat, double lng, double meter)
 {
     if(!ambient.set(1, temp))
     {
@@ -330,6 +370,14 @@ bool SendToAmbient(float temp, float humi, double lat, double lng, double meter)
         SerialUSB.println(logBuf);
         return false;
     }
+
+	if (!ambient.set(3, water_temp))
+	{
+		char logBuf[LOG_TEMP_BUF_SIZE] = { 0 };
+		snprintf(logBuf, sizeof(logBuf), "ERROR: ambient.set(3, %f)", water_temp);
+		SerialUSB.println(logBuf);
+		return false;
+	}
 
     char cbuf[16];
     if(lat != INVALID_GPS_VALUE)
@@ -402,13 +450,6 @@ void EnterStandbyMode(time_t wakeup_time)
     } // WUPがクリアされるまで待機
 
     rtc.setAlarmATime(wakeup_time, false, false);
-    // :For Debug
-    // {
-    //     struct tm current_time = {0};
-    //     rtc.getTime(&current_time);
-    //     SerialUSB.println("DEBUG: Current RTC time = ");
-    //     SerialUSB.println(asctime(&current_time));
-    // }
 
     SerialUSB.println("DEBUG: Enter Standby Mode");
     SCB->SCR |= (SCB_SCR_SLEEPDEEP_Msk);
@@ -430,31 +471,6 @@ bool GetNtpTime(WioLTE& wio, tm& current_time)
 
 void SleepUntilNextLoop(time_t sleeptime_sec)
 {
-    // :For Debug
-    // {
-    //     SerialUSB.println("DEBUG: RCC_CR HSI bit = ");
-    //     SerialUSB.println(bb_peri_get_bit(&RCC_BASE->CR, RCC_CR_HSIRDY_BIT));
-    //     SerialUSB.println(bb_peri_get_bit(&RCC_BASE->CR, RCC_CR_HSION_BIT));
- 
-    //     SerialUSB.println("DEBUG: RCC_CSR LSI bit = ");
-    //     SerialUSB.println(bb_peri_get_bit(&RCC_BASE->CSR, RCC_CSR_LSIRDY_BIT));
-    //     SerialUSB.println(bb_peri_get_bit(&RCC_BASE->CSR, RCC_CSR_LSION_BIT));
- 
-    //     SerialUSB.println("DEBUG: RCC_BDCR LSE bit = ");
-    //     SerialUSB.println(bb_peri_get_bit(&RCC_BASE->BDCR, RCC_BDCR_LSERDY_BIT));
-    //     SerialUSB.println(bb_peri_get_bit(&RCC_BASE->BDCR, RCC_BDCR_LSEON_BIT));
-
-    //     SerialUSB.println("DEBUG: RCC_BDCR bit = ");
-    //     char logBuf[LOG_TEMP_BUF_SIZE] = {0};
-    //     snprintf(logBuf, sizeof(logBuf), "%#08X", RCC_BASE->BDCR);
-    //     SerialUSB.println(logBuf);
-
-    //     SerialUSB.println("DEBUG: RCC_APB1ENR bit = ");
-    //     snprintf(logBuf, sizeof(logBuf), "%#08X", RCC_BASE->APB1ENR);
-    //     SerialUSB.println(logBuf);
-    // }
-    // delay(1);
-
     struct tm current_time = {0};
     time_t epoch = 0;
     if (GetNtpTime(Wio, current_time) == true)
