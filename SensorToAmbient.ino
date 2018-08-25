@@ -25,8 +25,7 @@ WioLTEClient WioClient(&Wio);
 
 constexpr int LOG_TEMP_BUF_SIZE = 32;
 
-//RTClock rtc(RTCSEL_LSI);
-RTClock rtc;
+RTClock rtc(RTCSEL_LSI);
 const time_t JAPAN_TIME_DIFF = 9 * 60 * 60; // UTC + 9h
 
 // constexpr uint32* P_RTC_BKP0R = reinterpret_cast<uint32*>(RTC_BASE) + 0x50;
@@ -151,11 +150,11 @@ void loop()
     bool isSendSuccess;
     if(validGps)
     {
-        isSendSuccess = SendToAmbient(temp, humi, lat, lng, meter);
+        isSendSuccess = SendToAmbient(temp, humi, tempDs18b20, lat, lng, meter);
     }
     else
     {
-        isSendSuccess = SendToAmbient(temp, humi);
+        isSendSuccess = SendToAmbient(temp, humi, tempDs18b20);
     }
 
     if(!isSendSuccess)
@@ -307,39 +306,13 @@ bool DHT11Check(const byte data[5])
 /* Get water temperature from DS18B20 functions */
 void SetupDS18B20()
 {
-	//{
-	//	SerialUSB.println("DEBUG: GPIOA_PUPDR before set= ");
-	//	char logBuf[LOG_TEMP_BUF_SIZE] = { 0 };
-	//	snprintf(logBuf, sizeof(logBuf), "%#08X", GPIOA_BASE->PUPDR);
-	//	SerialUSB.println(logBuf);
-	//}
-
-	////GPIOA_4ピン(WIOLTE_A4)をプルアップ
-	//GPIOA_BASE->PUPDR &= ~(3UL << 8);
-	//GPIOA_BASE->PUPDR |= (1UL << 8);
-
     dS18b20.begin();
     dS18b20.setResolution(DS18B20_TEMPERATURE_RESOLUTION_BIT);
-
-	{
-		SerialUSB.println("DEBUG: isParasitePowerMode ");
-		SerialUSB.println(dS18b20.isParasitePowerMode());
-
-		SerialUSB.println("DEBUG: getCheckForConversion");
-		SerialUSB.println(dS18b20.getCheckForConversion());
-
-	}
 }
 
 float GetTemperatureDS18B20()
 {
 	dS18b20.requestTemperatures();
-
-	{
-		SerialUSB.println("DEBUG: isConversionComplete ");
-		SerialUSB.println(dS18b20.isConversionComplete());
-	}
-
     return dS18b20.getTempCByIndex(0);
 }
 
@@ -375,12 +348,12 @@ bool GpsRead(double& lat, double& lng, double& meter)
 }
 
 // LTE functions
-bool SendToAmbient(float temp, float humi)
+bool SendToAmbient(float temp, float humi, float water_temp)
 {
-    return SendToAmbient(temp, humi, INVALID_GPS_VALUE, INVALID_GPS_VALUE, INVALID_GPS_VALUE);
+    return SendToAmbient(temp, humi, water_temp, INVALID_GPS_VALUE, INVALID_GPS_VALUE, INVALID_GPS_VALUE);
 }
 
-bool SendToAmbient(float temp, float humi, double lat, double lng, double meter)
+bool SendToAmbient(float temp, float humi, float water_temp, double lat, double lng, double meter)
 {
     if(!ambient.set(1, temp))
     {
@@ -397,6 +370,14 @@ bool SendToAmbient(float temp, float humi, double lat, double lng, double meter)
         SerialUSB.println(logBuf);
         return false;
     }
+
+	if (!ambient.set(3, water_temp))
+	{
+		char logBuf[LOG_TEMP_BUF_SIZE] = { 0 };
+		snprintf(logBuf, sizeof(logBuf), "ERROR: ambient.set(3, %f)", water_temp);
+		SerialUSB.println(logBuf);
+		return false;
+	}
 
     char cbuf[16];
     if(lat != INVALID_GPS_VALUE)
@@ -469,13 +450,6 @@ void EnterStandbyMode(time_t wakeup_time)
     } // WUPがクリアされるまで待機
 
     rtc.setAlarmATime(wakeup_time, false, false);
-    // :For Debug
-    // {
-    //     struct tm current_time = {0};
-    //     rtc.getTime(&current_time);
-    //     SerialUSB.println("DEBUG: Current RTC time = ");
-    //     SerialUSB.println(asctime(&current_time));
-    // }
 
     SerialUSB.println("DEBUG: Enter Standby Mode");
     SCB->SCR |= (SCB_SCR_SLEEPDEEP_Msk);
@@ -497,31 +471,6 @@ bool GetNtpTime(WioLTE& wio, tm& current_time)
 
 void SleepUntilNextLoop(time_t sleeptime_sec)
 {
-    // :For Debug
-    // {
-    //     SerialUSB.println("DEBUG: RCC_CR HSI bit = ");
-    //     SerialUSB.println(bb_peri_get_bit(&RCC_BASE->CR, RCC_CR_HSIRDY_BIT));
-    //     SerialUSB.println(bb_peri_get_bit(&RCC_BASE->CR, RCC_CR_HSION_BIT));
- 
-    //     SerialUSB.println("DEBUG: RCC_CSR LSI bit = ");
-    //     SerialUSB.println(bb_peri_get_bit(&RCC_BASE->CSR, RCC_CSR_LSIRDY_BIT));
-    //     SerialUSB.println(bb_peri_get_bit(&RCC_BASE->CSR, RCC_CSR_LSION_BIT));
- 
-    //     SerialUSB.println("DEBUG: RCC_BDCR LSE bit = ");
-    //     SerialUSB.println(bb_peri_get_bit(&RCC_BASE->BDCR, RCC_BDCR_LSERDY_BIT));
-    //     SerialUSB.println(bb_peri_get_bit(&RCC_BASE->BDCR, RCC_BDCR_LSEON_BIT));
-
-    //     SerialUSB.println("DEBUG: RCC_BDCR bit = ");
-    //     char logBuf[LOG_TEMP_BUF_SIZE] = {0};
-    //     snprintf(logBuf, sizeof(logBuf), "%#08X", RCC_BASE->BDCR);
-    //     SerialUSB.println(logBuf);
-
-    //     SerialUSB.println("DEBUG: RCC_APB1ENR bit = ");
-    //     snprintf(logBuf, sizeof(logBuf), "%#08X", RCC_BASE->APB1ENR);
-    //     SerialUSB.println(logBuf);
-    // }
-    // delay(1);
-
     struct tm current_time = {0};
     time_t epoch = 0;
     if (GetNtpTime(Wio, current_time) == true)
