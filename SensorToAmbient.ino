@@ -16,6 +16,16 @@ typedef int IRQn_Type;
 #include <libmaple/pwr.h>
 #include "Ambient.h"
 
+// Compile Switch
+#define C_SW_LTE 1
+#define C_SW_AMBIENT 1
+#define C_SW_DHT11 1
+#define C_SW_DS18B20 1
+#define C_SW_GPS 1
+#define C_SW_BATTERY_V 1
+
+
+
 //Common global
 #define SENSOR_PIN    (WIOLTE_D38)
 #define LOOP_PERIOD_MSEC 60000 // milliseconds
@@ -26,68 +36,100 @@ WioLTEClient WioClient(&Wio);
 constexpr int LOG_TEMP_BUF_SIZE = 32;
 
 RTClock rtc(RTCSEL_LSI);
-const time_t JAPAN_TIME_DIFF = 9 * 60 * 60; // UTC + 9h
+constexpr time_t JAPAN_TIME_DIFF = 9 * 60 * 60; // UTC + 9h
 
 // constexpr uint32* P_RTC_BKP0R = reinterpret_cast<uint32*>(RTC_BASE) + 0x50;
 
+constexpr float INVALID_TEMP_AND_HUMID = -127;
 
+
+#if C_SW_LTE
 //LTE global
 #define APN       "soracom.io"
 #define USERNAME  "sora"
 #define PASSWORD  "sora"
+#endif //C_SW_LTE
 
+#if C_SW_AMBIENT
 //Ambient global
 unsigned int AMBIENT_CHANNEL_ID = 5701;
 const char AMBIENT_WRITE_KEY[] = "13a769c5371e81ce";
 Ambient ambient;
+#endif //C_SW_AMBIENT
 
+constexpr double INVALID_GPS_VALUE = -1;
+#if C_SW_GPS
 //GPS global
-#define GPS_OVERFLOW_STRING "OVERFLOW"
-
 HardwareSerial* GpsSerial;
 TinyGPSPlus gps;
-const double INVALID_GPS_VALUE = -1;
+#endif //C_SW_GPS
 
 //NTP
 const char NTP_SERVER[] = "ntp.nict.jp";
 
+#if C_SW_DS18B20
 //DS18B20
 OneWire oneWire(WIOLTE_A4);
 DallasTemperature dS18b20(&oneWire);
 constexpr uint8_t DS18B20_TEMPERATURE_RESOLUTION_BIT = 12;
+#endif //C_SW_DS18B20
 
+#if C_SW_BATTERY_V
+constexpr unsigned int EXTERNAL_BATTERY_ADC_PIN = 5;
+constexpr unsigned int INTERNAL_BATTERY_ADC_CHANNEL = 18;
+constexpr unsigned int INTERNAL_TEMPERATURE_ADC_CHANNEL = 16;
+#endif //C_SW_BATTERY_V
 
 void setup()
 {
+	Wio.Init();
+
     SerialUSB.println("INFO: setup()");
-    SerialUSB.flush();
+
+#if C_SW_LTE
     //Setup LTE
     SerialUSB.println("INFO: Setup LTE");
     if(!SetupLTE()){
         return;
     }
 
+#if C_SW_AMBIENT
     //Setup Ambient
     SerialUSB.println("INFO: Setup Ambient");
     ambient.begin(AMBIENT_CHANNEL_ID, AMBIENT_WRITE_KEY, &WioClient);
+#endif //C_SW_AMBIENT
 
+#else
+	delay(500);
+#endif //C_SW_LTE
+
+#if C_SW_DHT11
     //Setup DHT11
     SerialUSB.println("INFO: Setup DHT11");
     TemperatureAndHumidityBegin(SENSOR_PIN);
+#endif //C_SW_DHT11
 
+#if C_SW_DS18B20
     //Setup DS18B20
     SerialUSB.println("INFO: SetupDS18B20");
     SetupDS18B20();
+#endif //C_SW_DS18B20
 
+#if C_SW_BATTERY_V
+	SetupADC();
+#endif //C_SW_BATTERY_V
+
+#if C_SW_GPS
     //Setup GPS
     GpsBegin(&Serial);
     Wio.PowerSupplyGrove(true);
     delay(500);
+#endif
 }
 
 void loop()
 {
-    char cbuf[32] = {0};
+    char cbuf[64] = {0};
     struct tm current_time = {0};
     rtc.getTime(&current_time);
     snprintf(cbuf, sizeof(cbuf), "loop() : %s", asctime(&current_time));
@@ -95,9 +137,10 @@ void loop()
     SerialUSB.flush();
 
     /* Get temperature and humidity */
-    float temp;
-    float humi;
+    float temp = INVALID_TEMP_AND_HUMID;
+    float humi = INVALID_TEMP_AND_HUMID;
 
+#if C_SW_DHT11
     SerialUSB.println("INFO: TemperatureAndHumidityRead()");
     if(TemperatureAndHumidityRead(&temp, &humi))
     {
@@ -113,25 +156,31 @@ void loop()
     {
         SerialUSB.println("ERROR: TemperatureAndHumidityRead");
     }
+#endif //C_SW_DHT11
 
+	float tempDs18b20 = INVALID_TEMP_AND_HUMID;
+#if C_SW_DS18B20
     /* Get water temperature from DS18B20 */
     SerialUSB.println("INFO: Get DS18B20 Temperature");
-    float tempDs18b20 = GetTemperatureDS18B20();
+    tempDs18b20 = GetTemperatureDS18B20();
     snprintf(cbuf, sizeof(cbuf), "INFO: DS18B20 temp: %f", tempDs18b20);
     SerialUSB.println(cbuf);
 
-	{
-		SerialUSB.println("DEBUG: GPIOA_PUPDR = ");
-		char logBuf[LOG_TEMP_BUF_SIZE] = {0};
-		snprintf(logBuf, sizeof(logBuf), "%#08X", GPIOA_BASE->PUPDR);
-		SerialUSB.println(logBuf);
-	}
+	// [DEBUG]
+	//{
+	//	SerialUSB.println("DEBUG: GPIOA_PUPDR = ");
+	//	char logBuf[LOG_TEMP_BUF_SIZE] = {0};
+	//	snprintf(logBuf, sizeof(logBuf), "%#08X", GPIOA_BASE->PUPDR);
+	//	SerialUSB.println(logBuf);
+	//}
+#endif //C_SW_DS18B20
 
-
+	bool validGps = false;
+	double lat, lng, meter;
+#if C_SW_GPS
     /* Get GPS */
     SerialUSB.println("INFO: GpsRead()");
-    double lat, lng, meter;
-    bool validGps = GpsRead(lat, lng, meter);
+    validGps = GpsRead(lat, lng, meter);
     if(validGps)
     {
         SerialUSB.println("GPS Value:");
@@ -144,25 +193,77 @@ void loop()
         snprintf(cbuf, sizeof(cbuf), "meter: %4.2f", meter);
         SerialUSB.println(cbuf);
     }
+#endif //C_SW_GPS
 
+	float ext_battery_v = 0;
+	float in_battery_v = 0;
+	float in_temperature = 0;
+#if C_SW_BATTERY_V
+	ext_battery_v = GetExternalBatteryV();
+	snprintf(cbuf, sizeof(cbuf), "INFO: External Battery V %f mV", ext_battery_v);
+	SerialUSB.println(cbuf);
+
+	in_battery_v = GetInternalBatteryV();
+	snprintf(cbuf, sizeof(cbuf), "INFO: Internal Battery V %f mV", in_battery_v);
+	SerialUSB.println(cbuf);
+
+	in_temperature = GetInternalTemperature();
+	snprintf(cbuf, sizeof(cbuf), "INFO: Internal Temp %f", in_temperature);
+	SerialUSB.println(cbuf);
+
+	// [DEBUG]
+	//{
+	//	snprintf(cbuf, sizeof(cbuf), "DEBUG: ADC_COMMON->CCR %08X", ADC_COMMON->CCR);
+	//	SerialUSB.println(cbuf);
+	//}
+
+	//{
+	//	snprintf(cbuf, sizeof(cbuf), "DEBUG: ADC1_BASE->CR1 %08X", ADC1_BASE->CR1);
+	//	SerialUSB.println(cbuf);
+	//}
+
+	//{
+	//	snprintf(cbuf, sizeof(cbuf), "GPIOA_BASE->MODER %08X", GPIOA_BASE->MODER);
+	//	SerialUSB.println(cbuf);
+	//}
+
+	//{
+	//	snprintf(cbuf, sizeof(cbuf), "GPIOA_BASE->AFRL %08X", GPIOA_BASE->AFR[0]);
+	//	SerialUSB.println(cbuf);
+	//}
+
+	//{
+	//	snprintf(cbuf, sizeof(cbuf), "GPIOA_BASE->AFRH %08X", GPIOA_BASE->AFR[1]);
+	//	SerialUSB.println(cbuf);
+	//}
+	//[DEBUG END]
+#endif //C_SW_BATTERY_V
+
+#if C_SW_LTE && C_SW_AMBIENT
     /* Send to Ambient */
     SerialUSB.println("INFO: SendToAmbient()");
     bool isSendSuccess;
     if(validGps)
     {
-        isSendSuccess = SendToAmbient(temp, humi, tempDs18b20, lat, lng, meter);
+        isSendSuccess = SendToAmbient(temp, humi, tempDs18b20, ext_battery_v, in_battery_v, in_temperature, lat, lng, meter);
     }
     else
     {
-        isSendSuccess = SendToAmbient(temp, humi, tempDs18b20);
+        isSendSuccess = SendToAmbient(temp, humi, tempDs18b20, ext_battery_v, in_battery_v, in_temperature);
     }
 
     if(!isSendSuccess)
     {
         SerialUSB.println("ERROR: SendToAmbient");
     }
+#endif //C_SW_LTE && C_SW_AMBIENT
 
     /* Wait next loop */
+#if C_SW_LTE
+	UpdateRtcByNtp();
+	ShutdownLTE();
+#endif //C_SW_LTE
+
     unsigned long elapse = millis();
     snprintf(cbuf, sizeof(cbuf), "Run elapse: %ld msec", elapse);
     SerialUSB.println(cbuf);
@@ -173,22 +274,20 @@ void loop()
         SerialUSB.println(cbuf);
         SleepUntilNextLoop(waittime_sec);
     }
-
 }
 
-
+#if C_SW_LTE
 //LTE functions
 bool SetupLTE()
 {
-    Wio.Init();
     Wio.PowerSupplyLTE(true);
     delay(500);
 
-    if (!Wio.TurnOnOrReset())
-    {
-        SerialUSB.println("ERROR: Wio.TurnOnOrReset");
-        return false;
-    }
+	if (!Wio.TurnOnOrReset())
+	{
+		SerialUSB.println("ERROR: Wio.TurnOnOrReset");
+		return false;
+	}
 
     if (!Wio.Activate(APN, USERNAME, PASSWORD))
     {
@@ -199,14 +298,17 @@ bool SetupLTE()
     return true;
 }
 
+
 void ShutdownLTE()
 {
     Wio.Deactivate();  // Deactivate a PDP context. Added at v1.1.9
     Wio.TurnOff(); // Shutdown the LTE module. Added at v1.1.6
     Wio.PowerSupplyLTE(false); // Turn the power supply to LTE module off
 }
+#endif //C_SW_LTE
 
 
+#if C_SW_DHT11
 //Temperature and humidity functions
 int TemperatureAndHumidityPin;
 
@@ -301,8 +403,10 @@ bool DHT11Check(const byte data[5])
 
     return (data[4] == sum) && (data[1] < 10) && (data[3] < 10);
 }
+#endif //C_SW_DHT11
 
 
+#if C_SW_DS18B20
 /* Get water temperature from DS18B20 functions */
 void SetupDS18B20()
 {
@@ -315,8 +419,10 @@ float GetTemperatureDS18B20()
 	dS18b20.requestTemperatures();
     return dS18b20.getTempCByIndex(0);
 }
+#endif //C_SW_DS18B20
 
 
+#if C_SW_GPS
 //GPS functions
 void GpsBegin(HardwareSerial* serial)
 {
@@ -346,14 +452,16 @@ bool GpsRead(double& lat, double& lng, double& meter)
 
     return true;
 }
+#endif //C_SW_GPS
 
-// LTE functions
-bool SendToAmbient(float temp, float humi, float water_temp)
+#if C_SW_AMBIENT
+// Ambient functions
+bool SendToAmbient(float temp, float humi, float water_temp, float ext_battery_v, float in_battery_v, float in_temperature)
 {
-    return SendToAmbient(temp, humi, water_temp, INVALID_GPS_VALUE, INVALID_GPS_VALUE, INVALID_GPS_VALUE);
+    return SendToAmbient(temp, humi, water_temp, ext_battery_v, in_battery_v, in_temperature, INVALID_GPS_VALUE, INVALID_GPS_VALUE, INVALID_GPS_VALUE);
 }
 
-bool SendToAmbient(float temp, float humi, float water_temp, double lat, double lng, double meter)
+bool SendToAmbient(float temp, float humi, float water_temp, float ext_battery_v, float in_battery_v, float in_temperature, double lat, double lng, double meter)
 {
     if(!ambient.set(1, temp))
     {
@@ -375,6 +483,31 @@ bool SendToAmbient(float temp, float humi, float water_temp, double lat, double 
 	{
 		char logBuf[LOG_TEMP_BUF_SIZE] = { 0 };
 		snprintf(logBuf, sizeof(logBuf), "ERROR: ambient.set(3, %f)", water_temp);
+		SerialUSB.println(logBuf);
+		return false;
+	}
+
+	//float ext_battery_v, float in_battery_v, float in_temperature
+	if (!ambient.set(4, ext_battery_v))
+	{
+		char logBuf[LOG_TEMP_BUF_SIZE] = { 0 };
+		snprintf(logBuf, sizeof(logBuf), "ERROR: ambient.set(4, %f)", ext_battery_v);
+		SerialUSB.println(logBuf);
+		return false;
+	}
+
+	if (!ambient.set(5, in_battery_v))
+	{
+		char logBuf[LOG_TEMP_BUF_SIZE] = { 0 };
+		snprintf(logBuf, sizeof(logBuf), "ERROR: ambient.set(5, %f)", in_battery_v);
+		SerialUSB.println(logBuf);
+		return false;
+	}
+
+	if (!ambient.set(6, in_temperature))
+	{
+		char logBuf[LOG_TEMP_BUF_SIZE] = { 0 };
+		snprintf(logBuf, sizeof(logBuf), "ERROR: ambient.set(6, %f)", in_temperature);
 		SerialUSB.println(logBuf);
 		return false;
 	}
@@ -424,7 +557,68 @@ bool SendToAmbient(float temp, float humi, float water_temp, double lat, double 
 
     return true;
 }
+#endif //C_SW_AMBIENT
 
+#if C_SW_BATTERY_V
+void SetupADC()
+{
+	ADC_COMMON->CCR |= (3UL << 22);
+	GPIOA_BASE->MODER &= ~(3UL << 10);
+	GPIOA_BASE->MODER |= (3UL << 10);
+}
+
+float GetExternalBatteryV()
+{
+	const uint16 v = analogRead(EXTERNAL_BATTERY_ADC_PIN);
+	//SerialUSB.println(v);
+	return v * 3300 / 2048;  //v is Vbat/2.  ADC resolution is 12bit(4096)and max indicates 3300mv. So Vbat = v / 4096 * 3300 * 2 
+}
+
+float GetInternalBatteryV()
+{
+	const uint16 v = adc_read(ADC1, INTERNAL_BATTERY_ADC_CHANNEL);
+	//SerialUSB.println(v);
+	return v * 3300 / 2048; //v is Vbat/2.  ADC resolution is 12bit(4096)and max indicates 3300mv. So Vbat = v / 4096 * 3300 * 2
+}
+
+float GetInternalTemperature()
+{
+	const uint16 t = adc_read(ADC1, INTERNAL_TEMPERATURE_ADC_CHANNEL);
+	//SerialUSB.println(t);
+	return (t * 3300 / 4096 - 760) / 2.5 + 25; //Refer to STM32F405RG datasheet.
+}
+#endif //C_SW_BATTERY_V
+
+//RTC functions
+void UpdateRtcByNtp()
+{
+	struct tm current_time = { 0 };
+	if (GetNtpTime(Wio, current_time) == true)
+	{
+		time_t epoch = mktime(&current_time);
+		epoch += JAPAN_TIME_DIFF;
+
+		gmtime_r(&epoch, &current_time);
+		SerialUSB.println("INFO: Get Time From NTP Server. UTC = ");
+		SerialUSB.println(asctime(&current_time));
+
+		rtc.setTime(&current_time);
+		delay(10);  // RTCへの反映待ち
+	}
+}
+
+bool GetNtpTime(WioLTE& wio, tm& current_time)
+{
+	if (!wio.SyncTime(NTP_SERVER))
+	{
+		SerialUSB.println("ERROR: SyncTime() error");
+		return false;
+	}
+
+	return wio.GetTime(&current_time);
+}
+
+//StanbyMode functions
 void EnterStandbyMode(time_t wakeup_time)
 {
     //Set AlarmA
@@ -458,42 +652,15 @@ void EnterStandbyMode(time_t wakeup_time)
     __WFI();
 }
 
-bool GetNtpTime(WioLTE& wio, tm& current_time)
-{
-  if(!wio.SyncTime(NTP_SERVER))
-  {
-    SerialUSB.println("ERROR: SyncTime() error");
-    return false;
-  }
-
-  return wio.GetTime(&current_time);
-}
-
 void SleepUntilNextLoop(time_t sleeptime_sec)
 {
-    struct tm current_time = {0};
-    time_t epoch = 0;
-    if (GetNtpTime(Wio, current_time) == true)
-    {
-        epoch = mktime(&current_time);
-        epoch += JAPAN_TIME_DIFF;
-
-        gmtime_r(&epoch, &current_time);
-        SerialUSB.println("INFO: Get Time From NTP Server. UTC = ");
-        SerialUSB.println(asctime(&current_time));
-
-        rtc.setTime(&current_time);
-        delay(10);  // RTCへの反映待ち
-    }
-
+	struct tm current_time = { 0 };
     rtc.getTime(&current_time);
     SerialUSB.println("INFO: Current RTC time = ");
     SerialUSB.println(asctime(&current_time));
 
-    epoch = mktime(&current_time);
+	time_t epoch = mktime(&current_time);
     epoch += sleeptime_sec;
-
-    ShutdownLTE();
 
     EnterStandbyMode(epoch);
 }
