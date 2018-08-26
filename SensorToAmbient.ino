@@ -19,6 +19,7 @@ typedef int IRQn_Type;
 // Compile Switch
 #define C_SW_LTE 1
 #define C_SW_AMBIENT 0
+#define C_SW_DHT11 0
 
 //Common global
 #define SENSOR_PIN    (WIOLTE_D38)
@@ -85,9 +86,11 @@ void setup()
 #endif //C_SW_AMBIENT
 #endif //C_SW_LTE
 
+#if C_SW_DHT11
     //Setup DHT11
     SerialUSB.println("INFO: Setup DHT11");
     TemperatureAndHumidityBegin(SENSOR_PIN);
+#endif //C_SW_DHT11
 
     //Setup DS18B20
     SerialUSB.println("INFO: SetupDS18B20");
@@ -109,9 +112,10 @@ void loop()
     SerialUSB.flush();
 
     /* Get temperature and humidity */
-    float temp;
-    float humi;
+    float temp = 0;
+    float humi = 0;
 
+#if C_SW_DHT11
     SerialUSB.println("INFO: TemperatureAndHumidityRead()");
     if(TemperatureAndHumidityRead(&temp, &humi))
     {
@@ -127,6 +131,7 @@ void loop()
     {
         SerialUSB.println("ERROR: TemperatureAndHumidityRead");
     }
+#endif //C_SW_DHT11
 
     /* Get water temperature from DS18B20 */
     SerialUSB.println("INFO: Get DS18B20 Temperature");
