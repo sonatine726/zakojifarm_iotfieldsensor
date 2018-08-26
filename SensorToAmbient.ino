@@ -17,11 +17,11 @@ typedef int IRQn_Type;
 #include "Ambient.h"
 
 // Compile Switch
-#define C_SW_LTE 0
-#define C_SW_AMBIENT 0
-#define C_SW_DHT11 0
-#define C_SW_DS18B20 0
-#define C_SW_GPS 0
+#define C_SW_LTE 1
+#define C_SW_AMBIENT 1
+#define C_SW_DHT11 1
+#define C_SW_DS18B20 1
+#define C_SW_GPS 1
 #define C_SW_BATTERY_V 1
 
 
