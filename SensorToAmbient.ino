@@ -18,9 +18,11 @@ typedef int IRQn_Type;
 
 // Compile Switch
 #define C_SW_LTE 1
-#define C_SW_AMBIENT 0
-#define C_SW_DHT11 0
-#define C_SW_DS18B20 0
+#define C_SW_AMBIENT 1
+#define C_SW_DHT11 1
+#define C_SW_DS18B20 1
+#define C_SW_GPS 1
+
 
 
 //Common global
@@ -33,9 +35,11 @@ WioLTEClient WioClient(&Wio);
 constexpr int LOG_TEMP_BUF_SIZE = 32;
 
 RTClock rtc(RTCSEL_LSI);
-const time_t JAPAN_TIME_DIFF = 9 * 60 * 60; // UTC + 9h
+constexpr time_t JAPAN_TIME_DIFF = 9 * 60 * 60; // UTC + 9h
 
 // constexpr uint32* P_RTC_BKP0R = reinterpret_cast<uint32*>(RTC_BASE) + 0x50;
+
+constexpr float INVALID_TEMP_AND_HUMID = -127;
 
 
 #if C_SW_LTE
@@ -52,12 +56,12 @@ const char AMBIENT_WRITE_KEY[] = "13a769c5371e81ce";
 Ambient ambient;
 #endif //C_SW_AMBIENT
 
+constexpr double INVALID_GPS_VALUE = -1;
+#if C_SW_GPS
 //GPS global
-#define GPS_OVERFLOW_STRING "OVERFLOW"
-
 HardwareSerial* GpsSerial;
 TinyGPSPlus gps;
-const double INVALID_GPS_VALUE = -1;
+#endif //C_SW_GPS
 
 //NTP
 const char NTP_SERVER[] = "ntp.nict.jp";
@@ -101,10 +105,12 @@ void setup()
     SetupDS18B20();
 #endif //C_SW_DS18B20
 
+#if C_SW_GPS
     //Setup GPS
     GpsBegin(&Serial);
     Wio.PowerSupplyGrove(true);
     delay(500);
+#endif
 }
 
 void loop()
@@ -117,8 +123,8 @@ void loop()
     SerialUSB.flush();
 
     /* Get temperature and humidity */
-    float temp = 0;
-    float humi = 0;
+    float temp = INVALID_TEMP_AND_HUMID;
+    float humi = INVALID_TEMP_AND_HUMID;
 
 #if C_SW_DHT11
     SerialUSB.println("INFO: TemperatureAndHumidityRead()");
@@ -138,10 +144,11 @@ void loop()
     }
 #endif //C_SW_DHT11
 
+	float tempDs18b20 = INVALID_TEMP_AND_HUMID;
 #if C_SW_DS18B20
     /* Get water temperature from DS18B20 */
     SerialUSB.println("INFO: Get DS18B20 Temperature");
-    float tempDs18b20 = GetTemperatureDS18B20();
+    tempDs18b20 = GetTemperatureDS18B20();
     snprintf(cbuf, sizeof(cbuf), "INFO: DS18B20 temp: %f", tempDs18b20);
     SerialUSB.println(cbuf);
 
@@ -153,10 +160,12 @@ void loop()
 	}
 #endif //C_SW_DS18B20
 
+	bool validGps = false;
+	double lat, lng, meter;
+#if C_SW_GPS
     /* Get GPS */
     SerialUSB.println("INFO: GpsRead()");
-    double lat, lng, meter;
-    bool validGps = GpsRead(lat, lng, meter);
+    validGps = GpsRead(lat, lng, meter);
     if(validGps)
     {
         SerialUSB.println("GPS Value:");
@@ -169,6 +178,7 @@ void loop()
         snprintf(cbuf, sizeof(cbuf), "meter: %4.2f", meter);
         SerialUSB.println(cbuf);
     }
+#endif //C_SW_GPS
 
 #if C_SW_LTE && C_SW_AMBIENT
     /* Send to Ambient */
@@ -239,6 +249,7 @@ void ShutdownLTE()
 #endif //C_SW_LTE
 
 
+#if C_SW_DHT11
 //Temperature and humidity functions
 int TemperatureAndHumidityPin;
 
@@ -333,6 +344,7 @@ bool DHT11Check(const byte data[5])
 
     return (data[4] == sum) && (data[1] < 10) && (data[3] < 10);
 }
+#endif //C_SW_DHT11
 
 
 #if C_SW_DS18B20
@@ -351,6 +363,7 @@ float GetTemperatureDS18B20()
 #endif //C_SW_DS18B20
 
 
+#if C_SW_GPS
 //GPS functions
 void GpsBegin(HardwareSerial* serial)
 {
@@ -380,6 +393,7 @@ bool GpsRead(double& lat, double& lng, double& meter)
 
     return true;
 }
+#endif //C_SW_GPS
 
 #if C_SW_AMBIENT
 // Ambient functions
