@@ -16,6 +16,10 @@ typedef int IRQn_Type;
 #include <libmaple/pwr.h>
 #include "Ambient.h"
 
+// Compile Switch
+#define C_SW_LTE 0
+
+
 //Common global
 #define SENSOR_PIN    (WIOLTE_D38)
 #define LOOP_PERIOD_MSEC 60000 // milliseconds
@@ -32,9 +36,11 @@ const time_t JAPAN_TIME_DIFF = 9 * 60 * 60; // UTC + 9h
 
 
 //LTE global
+#if C_SW_LTE
 #define APN       "soracom.io"
 #define USERNAME  "sora"
 #define PASSWORD  "sora"
+#endif //C_SW_LTE
 
 //Ambient global
 unsigned int AMBIENT_CHANNEL_ID = 5701;
@@ -59,8 +65,12 @@ constexpr uint8_t DS18B20_TEMPERATURE_RESOLUTION_BIT = 12;
 
 void setup()
 {
+	Wio.Init();
+
     SerialUSB.println("INFO: setup()");
     SerialUSB.flush();
+
+#if C_SW_LTE
     //Setup LTE
     SerialUSB.println("INFO: Setup LTE");
     if(!SetupLTE()){
@@ -70,6 +80,7 @@ void setup()
     //Setup Ambient
     SerialUSB.println("INFO: Setup Ambient");
     ambient.begin(AMBIENT_CHANNEL_ID, AMBIENT_WRITE_KEY, &WioClient);
+#endif //C_SW_LTE
 
     //Setup DHT11
     SerialUSB.println("INFO: Setup DHT11");
@@ -145,6 +156,7 @@ void loop()
         SerialUSB.println(cbuf);
     }
 
+#if C_SW_LTE
     /* Send to Ambient */
     SerialUSB.println("INFO: SendToAmbient()");
     bool isSendSuccess;
@@ -161,8 +173,14 @@ void loop()
     {
         SerialUSB.println("ERROR: SendToAmbient");
     }
+#endif //C_SW_LTE
 
     /* Wait next loop */
+#if C_SW_LTE
+	UpdateRtcByNtp();
+	ShutdownLTE();
+#endif //C_SW_LTE
+
     unsigned long elapse = millis();
     snprintf(cbuf, sizeof(cbuf), "Run elapse: %ld msec", elapse);
     SerialUSB.println(cbuf);
@@ -173,14 +191,12 @@ void loop()
         SerialUSB.println(cbuf);
         SleepUntilNextLoop(waittime_sec);
     }
-
 }
 
-
+#if C_SW_LTE
 //LTE functions
 bool SetupLTE()
 {
-    Wio.Init();
     Wio.PowerSupplyLTE(true);
     delay(500);
 
@@ -199,12 +215,14 @@ bool SetupLTE()
     return true;
 }
 
+
 void ShutdownLTE()
 {
     Wio.Deactivate();  // Deactivate a PDP context. Added at v1.1.9
     Wio.TurnOff(); // Shutdown the LTE module. Added at v1.1.6
     Wio.PowerSupplyLTE(false); // Turn the power supply to LTE module off
 }
+#endif //C_SW_LTE
 
 
 //Temperature and humidity functions
@@ -458,6 +476,23 @@ void EnterStandbyMode(time_t wakeup_time)
     __WFI();
 }
 
+void UpdateRtcByNtp()
+{
+	struct tm current_time = { 0 };
+	if (GetNtpTime(Wio, current_time) == true)
+	{
+		time_t epoch = mktime(&current_time);
+		epoch += JAPAN_TIME_DIFF;
+
+		gmtime_r(&epoch, &current_time);
+		SerialUSB.println("INFO: Get Time From NTP Server. UTC = ");
+		SerialUSB.println(asctime(&current_time));
+
+		rtc.setTime(&current_time);
+		delay(10);  // RTCへの反映待ち
+	}
+}
+
 bool GetNtpTime(WioLTE& wio, tm& current_time)
 {
   if(!wio.SyncTime(NTP_SERVER))
@@ -471,29 +506,13 @@ bool GetNtpTime(WioLTE& wio, tm& current_time)
 
 void SleepUntilNextLoop(time_t sleeptime_sec)
 {
-    struct tm current_time = {0};
-    time_t epoch = 0;
-    if (GetNtpTime(Wio, current_time) == true)
-    {
-        epoch = mktime(&current_time);
-        epoch += JAPAN_TIME_DIFF;
-
-        gmtime_r(&epoch, &current_time);
-        SerialUSB.println("INFO: Get Time From NTP Server. UTC = ");
-        SerialUSB.println(asctime(&current_time));
-
-        rtc.setTime(&current_time);
-        delay(10);  // RTCへの反映待ち
-    }
-
+	struct tm current_time = { 0 };
     rtc.getTime(&current_time);
     SerialUSB.println("INFO: Current RTC time = ");
     SerialUSB.println(asctime(&current_time));
 
-    epoch = mktime(&current_time);
+	time_t epoch = mktime(&current_time);
     epoch += sleeptime_sec;
-
-    ShutdownLTE();
 
     EnterStandbyMode(epoch);
 }
