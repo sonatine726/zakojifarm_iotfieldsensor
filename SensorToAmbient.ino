@@ -17,11 +17,11 @@ typedef int IRQn_Type;
 #include "Ambient.h"
 
 // Compile Switch
-#define C_SW_LTE 1
-#define C_SW_AMBIENT 1
-#define C_SW_DHT11 1
-#define C_SW_DS18B20 1
-#define C_SW_GPS 1
+#define C_SW_LTE 0
+#define C_SW_AMBIENT 0
+#define C_SW_DHT11 0
+#define C_SW_DS18B20 0
+#define C_SW_GPS 0
 #define C_SW_BATTERY_V 1
 
 
@@ -85,7 +85,12 @@ void setup()
 	Wio.Init();
 
     SerialUSB.println("INFO: setup()");
-    
+
+	if (!Wio.TurnOnOrReset())
+	{
+		SerialUSB.println("ERROR: Wio.TurnOnOrReset");
+	}
+
 #if C_SW_LTE
     //Setup LTE
     SerialUSB.println("INFO: Setup LTE");
@@ -114,6 +119,8 @@ void setup()
 
 #if C_SW_BATTERY_V
 	ADC_COMMON->CCR |= (3UL << 22);
+	GPIOA_BASE->MODER &= ~(3UL << 10);
+	GPIOA_BASE->MODER |= (3UL << 10);
 #endif //C_SW_BATTERY_V
 
 #if C_SW_GPS
@@ -216,6 +223,21 @@ void loop()
 		snprintf(cbuf, sizeof(cbuf), "DEBUG: ADC1_BASE->CR1 %08X", ADC1_BASE->CR1);
 		SerialUSB.println(cbuf);
 	}
+
+	{
+		snprintf(cbuf, sizeof(cbuf), "GPIOA_BASE->MODER %08X", GPIOA_BASE->MODER);
+		SerialUSB.println(cbuf);
+	}
+
+	{
+		snprintf(cbuf, sizeof(cbuf), "GPIOA_BASE->AFRL %08X", GPIOA_BASE->AFR[0]);
+		SerialUSB.println(cbuf);
+	}
+
+	{
+		snprintf(cbuf, sizeof(cbuf), "GPIOA_BASE->AFRH %08X", GPIOA_BASE->AFR[1]);
+		SerialUSB.println(cbuf);
+	}
 #endif //C_SW_BATTERY_V
 
 #if C_SW_LTE && C_SW_AMBIENT
@@ -261,12 +283,6 @@ bool SetupLTE()
 {
     Wio.PowerSupplyLTE(true);
     delay(500);
-
-    if (!Wio.TurnOnOrReset())
-    {
-        SerialUSB.println("ERROR: Wio.TurnOnOrReset");
-        return false;
-    }
 
     if (!Wio.Activate(APN, USERNAME, PASSWORD))
     {
@@ -516,17 +532,27 @@ bool SendToAmbient(float temp, float humi, float water_temp, double lat, double 
 #if C_SW_BATTERY_V
 float GetExternalBatteryV()
 {
-	return static_cast<float>(analogRead(EXTERNAL_BATTERY_ADC_PIN)) * 3300 / 2048;
+	uint16 v = analogRead(EXTERNAL_BATTERY_ADC_PIN);
+	SerialUSB.println(v);
+	return v * 3300 / 2048;
+	//return static_cast<float>(analogRead(EXTERNAL_BATTERY_ADC_PIN)) * 3300 / 2048;
 }
 
 float GetInternalBatteryV()
 {
-	return static_cast<float>(analogRead(INTERNAL_BATTERY_ADC_PIN)) * 3300 / 2048;
+	uint16 v = adc_read(ADC1, 18);
+	//uint16 v = analogRead(INTERNAL_BATTERY_ADC_PIN);
+	SerialUSB.println(v);
+	return v * 3300 / 2048;
+	//return static_cast<float>(analogRead(INTERNAL_BATTERY_ADC_PIN)) * 3300 / 2048;
 }
 
 float GetInternalTemperature()
 {
-	return ((static_cast<float>(analogRead(INTERNAL_TEMPERATURE_ADC_PIN)) * 3300 / 4096 - 0.76) / 2.5) + 25;
+	uint16 t = adc_read(ADC1, 16);
+	SerialUSB.println(t);
+	return (t * 3300 / 4096 - 760) / 2.5 + 25;
+	//return ((static_cast<float>(analogRead(INTERNAL_TEMPERATURE_ADC_PIN)) * 3300 / 4096 - 0.76) / 2.5) + 25;
 }
 #endif //C_SW_BATTERY_V
 
