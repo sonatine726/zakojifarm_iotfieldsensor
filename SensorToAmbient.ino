@@ -20,6 +20,8 @@ typedef int IRQn_Type;
 #define C_SW_LTE 1
 #define C_SW_AMBIENT 0
 #define C_SW_DHT11 0
+#define C_SW_DS18B20 0
+
 
 //Common global
 #define SENSOR_PIN    (WIOLTE_D38)
@@ -60,11 +62,12 @@ const double INVALID_GPS_VALUE = -1;
 //NTP
 const char NTP_SERVER[] = "ntp.nict.jp";
 
+#if C_SW_DS18B20
 //DS18B20
 OneWire oneWire(WIOLTE_A4);
 DallasTemperature dS18b20(&oneWire);
 constexpr uint8_t DS18B20_TEMPERATURE_RESOLUTION_BIT = 12;
-
+#endif //C_SW_DS18B20
 
 void setup()
 {
@@ -92,9 +95,11 @@ void setup()
     TemperatureAndHumidityBegin(SENSOR_PIN);
 #endif //C_SW_DHT11
 
+#if C_SW_DS18B20
     //Setup DS18B20
     SerialUSB.println("INFO: SetupDS18B20");
     SetupDS18B20();
+#endif //C_SW_DS18B20
 
     //Setup GPS
     GpsBegin(&Serial);
@@ -133,6 +138,7 @@ void loop()
     }
 #endif //C_SW_DHT11
 
+#if C_SW_DS18B20
     /* Get water temperature from DS18B20 */
     SerialUSB.println("INFO: Get DS18B20 Temperature");
     float tempDs18b20 = GetTemperatureDS18B20();
@@ -145,7 +151,7 @@ void loop()
 		snprintf(logBuf, sizeof(logBuf), "%#08X", GPIOA_BASE->PUPDR);
 		SerialUSB.println(logBuf);
 	}
-
+#endif //C_SW_DS18B20
 
     /* Get GPS */
     SerialUSB.println("INFO: GpsRead()");
@@ -329,6 +335,7 @@ bool DHT11Check(const byte data[5])
 }
 
 
+#if C_SW_DS18B20
 /* Get water temperature from DS18B20 functions */
 void SetupDS18B20()
 {
@@ -341,6 +348,7 @@ float GetTemperatureDS18B20()
 	dS18b20.requestTemperatures();
     return dS18b20.getTempCByIndex(0);
 }
+#endif //C_SW_DS18B20
 
 
 //GPS functions
