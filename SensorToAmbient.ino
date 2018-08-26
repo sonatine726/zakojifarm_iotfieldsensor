@@ -22,6 +22,7 @@ typedef int IRQn_Type;
 #define C_SW_DHT11 1
 #define C_SW_DS18B20 1
 #define C_SW_GPS 1
+#define C_SW_BATTERY_V 1
 
 
 
@@ -73,6 +74,12 @@ DallasTemperature dS18b20(&oneWire);
 constexpr uint8_t DS18B20_TEMPERATURE_RESOLUTION_BIT = 12;
 #endif //C_SW_DS18B20
 
+#if C_SW_BATTERY_V
+constexpr unsigned int EXTERNAL_BATTERY_ADC_PIN = 5;
+constexpr unsigned int INTERNAL_BATTERY_ADC_PIN = 16;
+constexpr unsigned int INTERNAL_TEMPERATURE_ADC_PIN = 17;
+#endif //C_SW_BATTERY_V
+
 void setup()
 {
 	Wio.Init();
@@ -105,6 +112,10 @@ void setup()
     SetupDS18B20();
 #endif //C_SW_DS18B20
 
+#if C_SW_BATTERY_V
+	ADC_COMMON->CCR |= (3UL << 22);
+#endif //C_SW_BATTERY_V
+
 #if C_SW_GPS
     //Setup GPS
     GpsBegin(&Serial);
@@ -115,7 +126,7 @@ void setup()
 
 void loop()
 {
-    char cbuf[32] = {0};
+    char cbuf[64] = {0};
     struct tm current_time = {0};
     rtc.getTime(&current_time);
     snprintf(cbuf, sizeof(cbuf), "loop() : %s", asctime(&current_time));
@@ -179,6 +190,33 @@ void loop()
         SerialUSB.println(cbuf);
     }
 #endif //C_SW_GPS
+
+	float ext_battery_v = 0;
+	float in_battery_v = 0;
+	float in_temperature = 0;
+#if C_SW_BATTERY_V
+	ext_battery_v = GetExternalBatteryV();
+	snprintf(cbuf, sizeof(cbuf), "INFO: External Battery V %f mV", ext_battery_v);
+	SerialUSB.println(cbuf);
+
+	in_battery_v = GetInternalBatteryV();
+	snprintf(cbuf, sizeof(cbuf), "INFO: Internal Battery V %f mV", in_battery_v);
+	SerialUSB.println(cbuf);
+
+	in_temperature = GetInternalTemperature();
+	snprintf(cbuf, sizeof(cbuf), "INFO: Internal Temp %f", in_temperature);
+	SerialUSB.println(cbuf);
+
+	{
+		snprintf(cbuf, sizeof(cbuf), "DEBUG: ADC_COMMON->CCR %08X", ADC_COMMON->CCR);
+		SerialUSB.println(cbuf);
+	}
+
+	{
+		snprintf(cbuf, sizeof(cbuf), "DEBUG: ADC1_BASE->CR1 %08X", ADC1_BASE->CR1);
+		SerialUSB.println(cbuf);
+	}
+#endif //C_SW_BATTERY_V
 
 #if C_SW_LTE && C_SW_AMBIENT
     /* Send to Ambient */
@@ -475,6 +513,22 @@ bool SendToAmbient(float temp, float humi, float water_temp, double lat, double 
 }
 #endif //C_SW_AMBIENT
 
+#if C_SW_BATTERY_V
+float GetExternalBatteryV()
+{
+	return static_cast<float>(analogRead(EXTERNAL_BATTERY_ADC_PIN)) * 3300 / 2048;
+}
+
+float GetInternalBatteryV()
+{
+	return static_cast<float>(analogRead(INTERNAL_BATTERY_ADC_PIN)) * 3300 / 2048;
+}
+
+float GetInternalTemperature()
+{
+	return ((static_cast<float>(analogRead(INTERNAL_TEMPERATURE_ADC_PIN)) * 3300 / 4096 - 0.76) / 2.5) + 25;
+}
+#endif //C_SW_BATTERY_V
 
 //RTC functions
 void UpdateRtcByNtp()
