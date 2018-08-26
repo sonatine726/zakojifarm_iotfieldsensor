@@ -17,11 +17,11 @@ typedef int IRQn_Type;
 #include "Ambient.h"
 
 // Compile Switch
-#define C_SW_LTE 0
-#define C_SW_AMBIENT 0
-#define C_SW_DHT11 0
-#define C_SW_DS18B20 0
-#define C_SW_GPS 0
+#define C_SW_LTE 1
+#define C_SW_AMBIENT 1
+#define C_SW_DHT11 1
+#define C_SW_DS18B20 1
+#define C_SW_GPS 1
 #define C_SW_BATTERY_V 1
 
 
@@ -76,8 +76,8 @@ constexpr uint8_t DS18B20_TEMPERATURE_RESOLUTION_BIT = 12;
 
 #if C_SW_BATTERY_V
 constexpr unsigned int EXTERNAL_BATTERY_ADC_PIN = 5;
-constexpr unsigned int INTERNAL_BATTERY_ADC_PIN = 16;
-constexpr unsigned int INTERNAL_TEMPERATURE_ADC_PIN = 17;
+constexpr unsigned int INTERNAL_BATTERY_ADC_CHANNEL = 18;
+constexpr unsigned int INTERNAL_TEMPERATURE_ADC_CHANNEL = 16;
 #endif //C_SW_BATTERY_V
 
 void setup()
@@ -85,11 +85,6 @@ void setup()
 	Wio.Init();
 
     SerialUSB.println("INFO: setup()");
-
-	if (!Wio.TurnOnOrReset())
-	{
-		SerialUSB.println("ERROR: Wio.TurnOnOrReset");
-	}
 
 #if C_SW_LTE
     //Setup LTE
@@ -118,9 +113,7 @@ void setup()
 #endif //C_SW_DS18B20
 
 #if C_SW_BATTERY_V
-	ADC_COMMON->CCR |= (3UL << 22);
-	GPIOA_BASE->MODER &= ~(3UL << 10);
-	GPIOA_BASE->MODER |= (3UL << 10);
+	SetupADC();
 #endif //C_SW_BATTERY_V
 
 #if C_SW_GPS
@@ -170,12 +163,13 @@ void loop()
     snprintf(cbuf, sizeof(cbuf), "INFO: DS18B20 temp: %f", tempDs18b20);
     SerialUSB.println(cbuf);
 
-	{
-		SerialUSB.println("DEBUG: GPIOA_PUPDR = ");
-		char logBuf[LOG_TEMP_BUF_SIZE] = {0};
-		snprintf(logBuf, sizeof(logBuf), "%#08X", GPIOA_BASE->PUPDR);
-		SerialUSB.println(logBuf);
-	}
+	// [DEBUG]
+	//{
+	//	SerialUSB.println("DEBUG: GPIOA_PUPDR = ");
+	//	char logBuf[LOG_TEMP_BUF_SIZE] = {0};
+	//	snprintf(logBuf, sizeof(logBuf), "%#08X", GPIOA_BASE->PUPDR);
+	//	SerialUSB.println(logBuf);
+	//}
 #endif //C_SW_DS18B20
 
 	bool validGps = false;
@@ -214,30 +208,32 @@ void loop()
 	snprintf(cbuf, sizeof(cbuf), "INFO: Internal Temp %f", in_temperature);
 	SerialUSB.println(cbuf);
 
-	{
-		snprintf(cbuf, sizeof(cbuf), "DEBUG: ADC_COMMON->CCR %08X", ADC_COMMON->CCR);
-		SerialUSB.println(cbuf);
-	}
+	// [DEBUG]
+	//{
+	//	snprintf(cbuf, sizeof(cbuf), "DEBUG: ADC_COMMON->CCR %08X", ADC_COMMON->CCR);
+	//	SerialUSB.println(cbuf);
+	//}
 
-	{
-		snprintf(cbuf, sizeof(cbuf), "DEBUG: ADC1_BASE->CR1 %08X", ADC1_BASE->CR1);
-		SerialUSB.println(cbuf);
-	}
+	//{
+	//	snprintf(cbuf, sizeof(cbuf), "DEBUG: ADC1_BASE->CR1 %08X", ADC1_BASE->CR1);
+	//	SerialUSB.println(cbuf);
+	//}
 
-	{
-		snprintf(cbuf, sizeof(cbuf), "GPIOA_BASE->MODER %08X", GPIOA_BASE->MODER);
-		SerialUSB.println(cbuf);
-	}
+	//{
+	//	snprintf(cbuf, sizeof(cbuf), "GPIOA_BASE->MODER %08X", GPIOA_BASE->MODER);
+	//	SerialUSB.println(cbuf);
+	//}
 
-	{
-		snprintf(cbuf, sizeof(cbuf), "GPIOA_BASE->AFRL %08X", GPIOA_BASE->AFR[0]);
-		SerialUSB.println(cbuf);
-	}
+	//{
+	//	snprintf(cbuf, sizeof(cbuf), "GPIOA_BASE->AFRL %08X", GPIOA_BASE->AFR[0]);
+	//	SerialUSB.println(cbuf);
+	//}
 
-	{
-		snprintf(cbuf, sizeof(cbuf), "GPIOA_BASE->AFRH %08X", GPIOA_BASE->AFR[1]);
-		SerialUSB.println(cbuf);
-	}
+	//{
+	//	snprintf(cbuf, sizeof(cbuf), "GPIOA_BASE->AFRH %08X", GPIOA_BASE->AFR[1]);
+	//	SerialUSB.println(cbuf);
+	//}
+	//[DEBUG END]
 #endif //C_SW_BATTERY_V
 
 #if C_SW_LTE && C_SW_AMBIENT
@@ -246,11 +242,11 @@ void loop()
     bool isSendSuccess;
     if(validGps)
     {
-        isSendSuccess = SendToAmbient(temp, humi, tempDs18b20, lat, lng, meter);
+        isSendSuccess = SendToAmbient(temp, humi, tempDs18b20, ext_battery_v, in_battery_v, in_temperature, lat, lng, meter);
     }
     else
     {
-        isSendSuccess = SendToAmbient(temp, humi, tempDs18b20);
+        isSendSuccess = SendToAmbient(temp, humi, tempDs18b20, ext_battery_v, in_battery_v, in_temperature);
     }
 
     if(!isSendSuccess)
@@ -283,6 +279,11 @@ bool SetupLTE()
 {
     Wio.PowerSupplyLTE(true);
     delay(500);
+
+	if (!Wio.TurnOnOrReset())
+	{
+		SerialUSB.println("ERROR: Wio.TurnOnOrReset");
+	}
 
     if (!Wio.Activate(APN, USERNAME, PASSWORD))
     {
@@ -451,12 +452,12 @@ bool GpsRead(double& lat, double& lng, double& meter)
 
 #if C_SW_AMBIENT
 // Ambient functions
-bool SendToAmbient(float temp, float humi, float water_temp)
+bool SendToAmbient(float temp, float humi, float water_temp, float ext_battery_v, float in_battery_v, float in_temperature)
 {
-    return SendToAmbient(temp, humi, water_temp, INVALID_GPS_VALUE, INVALID_GPS_VALUE, INVALID_GPS_VALUE);
+    return SendToAmbient(temp, humi, water_temp, ext_battery_v, in_battery_v, in_temperature, INVALID_GPS_VALUE, INVALID_GPS_VALUE, INVALID_GPS_VALUE);
 }
 
-bool SendToAmbient(float temp, float humi, float water_temp, double lat, double lng, double meter)
+bool SendToAmbient(float temp, float humi, float water_temp, float ext_battery_v, float in_battery_v, float in_temperature, double lat, double lng, double meter)
 {
     if(!ambient.set(1, temp))
     {
@@ -478,6 +479,31 @@ bool SendToAmbient(float temp, float humi, float water_temp, double lat, double 
 	{
 		char logBuf[LOG_TEMP_BUF_SIZE] = { 0 };
 		snprintf(logBuf, sizeof(logBuf), "ERROR: ambient.set(3, %f)", water_temp);
+		SerialUSB.println(logBuf);
+		return false;
+	}
+
+	//float ext_battery_v, float in_battery_v, float in_temperature
+	if (!ambient.set(4, ext_battery_v))
+	{
+		char logBuf[LOG_TEMP_BUF_SIZE] = { 0 };
+		snprintf(logBuf, sizeof(logBuf), "ERROR: ambient.set(4, %f)", ext_battery_v);
+		SerialUSB.println(logBuf);
+		return false;
+	}
+
+	if (!ambient.set(5, in_battery_v))
+	{
+		char logBuf[LOG_TEMP_BUF_SIZE] = { 0 };
+		snprintf(logBuf, sizeof(logBuf), "ERROR: ambient.set(5, %f)", in_battery_v);
+		SerialUSB.println(logBuf);
+		return false;
+	}
+
+	if (!ambient.set(6, in_temperature))
+	{
+		char logBuf[LOG_TEMP_BUF_SIZE] = { 0 };
+		snprintf(logBuf, sizeof(logBuf), "ERROR: ambient.set(6, %f)", in_temperature);
 		SerialUSB.println(logBuf);
 		return false;
 	}
@@ -530,29 +556,32 @@ bool SendToAmbient(float temp, float humi, float water_temp, double lat, double 
 #endif //C_SW_AMBIENT
 
 #if C_SW_BATTERY_V
+void SetupADC()
+{
+	ADC_COMMON->CCR |= (3UL << 22);
+	GPIOA_BASE->MODER &= ~(3UL << 10);
+	GPIOA_BASE->MODER |= (3UL << 10);
+}
+
 float GetExternalBatteryV()
 {
-	uint16 v = analogRead(EXTERNAL_BATTERY_ADC_PIN);
-	SerialUSB.println(v);
-	return v * 3300 / 2048;
-	//return static_cast<float>(analogRead(EXTERNAL_BATTERY_ADC_PIN)) * 3300 / 2048;
+	const uint16 v = analogRead(EXTERNAL_BATTERY_ADC_PIN);
+	//SerialUSB.println(v);
+	return v * 3300 / 2048;  //v is Vbat/2.  ADC resolution is 12bit(4096)and max indicates 3300mv. So Vbat = v / 4096 * 3300 * 2 
 }
 
 float GetInternalBatteryV()
 {
-	uint16 v = adc_read(ADC1, 18);
-	//uint16 v = analogRead(INTERNAL_BATTERY_ADC_PIN);
-	SerialUSB.println(v);
-	return v * 3300 / 2048;
-	//return static_cast<float>(analogRead(INTERNAL_BATTERY_ADC_PIN)) * 3300 / 2048;
+	const uint16 v = adc_read(ADC1, INTERNAL_BATTERY_ADC_CHANNEL);
+	//SerialUSB.println(v);
+	return v * 3300 / 2048; //v is Vbat/2.  ADC resolution is 12bit(4096)and max indicates 3300mv. So Vbat = v / 4096 * 3300 * 2
 }
 
 float GetInternalTemperature()
 {
-	uint16 t = adc_read(ADC1, 16);
-	SerialUSB.println(t);
-	return (t * 3300 / 4096 - 760) / 2.5 + 25;
-	//return ((static_cast<float>(analogRead(INTERNAL_TEMPERATURE_ADC_PIN)) * 3300 / 4096 - 0.76) / 2.5) + 25;
+	const uint16 t = adc_read(ADC1, INTERNAL_TEMPERATURE_ADC_CHANNEL);
+	//SerialUSB.println(t);
+	return (t * 3300 / 4096 - 760) / 2.5 + 25; //Refer to STM32F405RG datasheet.
 }
 #endif //C_SW_BATTERY_V
 
