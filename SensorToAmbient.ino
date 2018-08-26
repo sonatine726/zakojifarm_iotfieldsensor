@@ -17,8 +17,8 @@ typedef int IRQn_Type;
 #include "Ambient.h"
 
 // Compile Switch
-#define C_SW_LTE 0
-
+#define C_SW_LTE 1
+#define C_SW_AMBIENT 0
 
 //Common global
 #define SENSOR_PIN    (WIOLTE_D38)
@@ -35,17 +35,19 @@ const time_t JAPAN_TIME_DIFF = 9 * 60 * 60; // UTC + 9h
 // constexpr uint32* P_RTC_BKP0R = reinterpret_cast<uint32*>(RTC_BASE) + 0x50;
 
 
-//LTE global
 #if C_SW_LTE
+//LTE global
 #define APN       "soracom.io"
 #define USERNAME  "sora"
 #define PASSWORD  "sora"
 #endif //C_SW_LTE
 
+#if C_SW_AMBIENT
 //Ambient global
 unsigned int AMBIENT_CHANNEL_ID = 5701;
 const char AMBIENT_WRITE_KEY[] = "13a769c5371e81ce";
 Ambient ambient;
+#endif //C_SW_AMBIENT
 
 //GPS global
 #define GPS_OVERFLOW_STRING "OVERFLOW"
@@ -68,8 +70,7 @@ void setup()
 	Wio.Init();
 
     SerialUSB.println("INFO: setup()");
-    SerialUSB.flush();
-
+    
 #if C_SW_LTE
     //Setup LTE
     SerialUSB.println("INFO: Setup LTE");
@@ -77,9 +78,11 @@ void setup()
         return;
     }
 
+#if C_SW_AMBIENT
     //Setup Ambient
     SerialUSB.println("INFO: Setup Ambient");
     ambient.begin(AMBIENT_CHANNEL_ID, AMBIENT_WRITE_KEY, &WioClient);
+#endif //C_SW_AMBIENT
 #endif //C_SW_LTE
 
     //Setup DHT11
@@ -156,7 +159,7 @@ void loop()
         SerialUSB.println(cbuf);
     }
 
-#if C_SW_LTE
+#if C_SW_LTE && C_SW_AMBIENT
     /* Send to Ambient */
     SerialUSB.println("INFO: SendToAmbient()");
     bool isSendSuccess;
@@ -173,7 +176,7 @@ void loop()
     {
         SerialUSB.println("ERROR: SendToAmbient");
     }
-#endif //C_SW_LTE
+#endif //C_SW_LTE && C_SW_AMBIENT
 
     /* Wait next loop */
 #if C_SW_LTE
@@ -365,7 +368,8 @@ bool GpsRead(double& lat, double& lng, double& meter)
     return true;
 }
 
-// LTE functions
+#if C_SW_AMBIENT
+// Ambient functions
 bool SendToAmbient(float temp, float humi, float water_temp)
 {
     return SendToAmbient(temp, humi, water_temp, INVALID_GPS_VALUE, INVALID_GPS_VALUE, INVALID_GPS_VALUE);
@@ -442,7 +446,39 @@ bool SendToAmbient(float temp, float humi, float water_temp, double lat, double 
 
     return true;
 }
+#endif //C_SW_AMBIENT
 
+
+//RTC functions
+void UpdateRtcByNtp()
+{
+	struct tm current_time = { 0 };
+	if (GetNtpTime(Wio, current_time) == true)
+	{
+		time_t epoch = mktime(&current_time);
+		epoch += JAPAN_TIME_DIFF;
+
+		gmtime_r(&epoch, &current_time);
+		SerialUSB.println("INFO: Get Time From NTP Server. UTC = ");
+		SerialUSB.println(asctime(&current_time));
+
+		rtc.setTime(&current_time);
+		delay(10);  // RTCへの反映待ち
+	}
+}
+
+bool GetNtpTime(WioLTE& wio, tm& current_time)
+{
+	if (!wio.SyncTime(NTP_SERVER))
+	{
+		SerialUSB.println("ERROR: SyncTime() error");
+		return false;
+	}
+
+	return wio.GetTime(&current_time);
+}
+
+//StanbyMode functions
 void EnterStandbyMode(time_t wakeup_time)
 {
     //Set AlarmA
@@ -474,34 +510,6 @@ void EnterStandbyMode(time_t wakeup_time)
     delay(10);
 
     __WFI();
-}
-
-void UpdateRtcByNtp()
-{
-	struct tm current_time = { 0 };
-	if (GetNtpTime(Wio, current_time) == true)
-	{
-		time_t epoch = mktime(&current_time);
-		epoch += JAPAN_TIME_DIFF;
-
-		gmtime_r(&epoch, &current_time);
-		SerialUSB.println("INFO: Get Time From NTP Server. UTC = ");
-		SerialUSB.println(asctime(&current_time));
-
-		rtc.setTime(&current_time);
-		delay(10);  // RTCへの反映待ち
-	}
-}
-
-bool GetNtpTime(WioLTE& wio, tm& current_time)
-{
-  if(!wio.SyncTime(NTP_SERVER))
-  {
-    SerialUSB.println("ERROR: SyncTime() error");
-    return false;
-  }
-
-  return wio.GetTime(&current_time);
 }
 
 void SleepUntilNextLoop(time_t sleeptime_sec)
