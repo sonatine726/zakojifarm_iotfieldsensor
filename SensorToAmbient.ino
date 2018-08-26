@@ -17,11 +17,11 @@ typedef int IRQn_Type;
 #include "Ambient.h"
 
 // Compile Switch
-#define C_SW_LTE 1
-#define C_SW_AMBIENT 1
-#define C_SW_DHT11 1
-#define C_SW_DS18B20 1
-#define C_SW_GPS 1
+#define C_SW_LTE 0
+#define C_SW_AMBIENT 0
+#define C_SW_DHT11 0
+#define C_SW_DS18B20 0
+#define C_SW_GPS 0
 #define C_SW_BATTERY_V 1
 
 
@@ -98,6 +98,9 @@ void setup()
     SerialUSB.println("INFO: Setup Ambient");
     ambient.begin(AMBIENT_CHANNEL_ID, AMBIENT_WRITE_KEY, &WioClient);
 #endif //C_SW_AMBIENT
+
+#else
+	delay(500);
 #endif //C_SW_LTE
 
 #if C_SW_DHT11
@@ -283,6 +286,7 @@ bool SetupLTE()
 	if (!Wio.TurnOnOrReset())
 	{
 		SerialUSB.println("ERROR: Wio.TurnOnOrReset");
+		return false;
 	}
 
     if (!Wio.Activate(APN, USERNAME, PASSWORD))
