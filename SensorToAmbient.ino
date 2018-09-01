@@ -9,6 +9,7 @@
 #include <OneWire.h>
 #include <DallasTemperature.h>
 #include <Wire.h>
+#include <SPI.h>
 
 typedef int IRQn_Type;
 #define __NVIC_PRIO_BITS          4
@@ -125,6 +126,8 @@ void setup()
         return;
     }
 
+	UpdateRtcByNtp();
+
 #if C_SW_AMBIENT
     //Setup Ambient
     SerialUSB.println("INFO: Setup Ambient");
@@ -148,6 +151,10 @@ void setup()
 #endif //C_SW_DS18B20
 
 #if C_SW_MS5540C
+	struct tm current_time = { 0 };
+	rtc.getTime(&current_time);
+
+	SetupExtRtc(current_time);
 	exRtcI2c.begin();
 #endif //C_SW_MS5540C
 
@@ -165,11 +172,6 @@ void setup()
 
 void loop()
 {
-
-#if C_SW_LTE
-	UpdateRtcByNtp();
-#endif //C_SW_LTE
-
 	char cbuf[64] = {0};
     struct tm current_time = {0};
     rtc.getTime(&current_time);
@@ -217,285 +219,6 @@ void loop()
 #endif //C_SW_DS18B20
 
 #if C_SW_MS5540C
-	exRtcI2c.beginTransmission(RTC_I2C_ADDR);
-	exRtcI2c.write(RTC_REG_CTR1);
-	exRtcI2c.write(0x20); //Write to RTC_REG_CTR1.STOP=1
-	exRtcI2c.write(0x00); //Write to RTC_REG_CTR2
-
-	rtc.getTime(&current_time);
-
-	uint8 sec_to_reg = 0;
-	uint32 sec = current_time.tm_sec;
-	if (sec >= 40)
-	{
-		sec_to_reg |= 1 << 6;
-		sec -= 40;
-	}
-	if (sec >= 20)
-	{
-		sec_to_reg |= 1 << 5;
-		sec -= 20;
-	}
-	if (sec >= 10)
-	{
-		sec_to_reg |= 1 << 4;
-		sec -= 10;
-	}
-	if (sec >= 8)
-	{
-		sec_to_reg |= 1 << 3;
-		sec -= 8;
-	}
-	if (sec >= 4)
-	{
-		sec_to_reg |= 1 << 2;
-		sec -= 4;
-	}
-	if (sec >= 2)
-	{
-		sec_to_reg |= 1 << 1;
-		sec -= 2;
-	}
-	if (sec == 1)
-	{
-		sec_to_reg |= 1;
-		sec -= 1;
-	}
-	assert(sec == 0);
-
-	exRtcI2c.write(sec_to_reg); //Write to RTC_REG_SEC
-
-
-	uint8 min_to_reg = 0;
-	uint32 min = current_time.tm_min;
-	if (min >= 40)
-	{
-		min_to_reg |= 1 << 6;
-		min -= 40;
-	}
-	if (min >= 20)
-	{
-		min_to_reg |= 1 << 5;
-		min -= 20;
-	}
-	if (min >= 10)
-	{
-		min_to_reg |= 1 << 4;
-		min -= 10;
-	}
-	if (min >= 8)
-	{
-		min_to_reg |= 1 << 3;
-		min -= 8;
-	}
-	if (min >= 4)
-	{
-		min_to_reg |= 1 << 2;
-		min -= 4;
-	}
-	if (min >= 2)
-	{
-		min_to_reg |= 1 << 1;
-		min -= 2;
-	}
-	if (min == 1)
-	{
-		min_to_reg |= 1;
-		min -= 1;
-	}
-	assert(min == 0);
-
-	exRtcI2c.write(min_to_reg); //Write to RTC_REG_MIN
-
-
-	uint8 hour_to_reg = 0;
-	uint32 hour = current_time.tm_hour;
-	if (hour >= 20)
-	{
-		hour_to_reg |= 1 << 5;
-		hour -= 20;
-	}
-	if (hour >= 10)
-	{
-		hour_to_reg |= 1 << 4;
-		hour -= 10;
-	}
-	if (hour >= 8)
-	{
-		hour_to_reg |= 1 << 3;
-		hour -= 8;
-	}
-	if (hour >= 4)
-	{
-		hour_to_reg |= 1 << 2;
-		hour -= 4;
-	}
-	if (hour >= 2)
-	{
-		hour_to_reg |= 1 << 1;
-		hour -= 2;
-	}
-	if (hour == 1)
-	{
-		hour_to_reg |= 1;
-		hour -= 1;
-	}
-	assert(hour == 0);
-
-	exRtcI2c.write(hour_to_reg); //Write to RTC_REG_HOUR
-
-
-	uint8 day_to_reg = 0;
-	uint32 day = current_time.tm_mday;
-	if (day >= 20)
-	{
-		day_to_reg |= 1 << 5;
-		day -= 20;
-	}
-	if (day >= 10)
-	{
-		day_to_reg |= 1 << 4;
-		day -= 10;
-	}
-	if (day >= 8)
-	{
-		day_to_reg |= 1 << 3;
-		day -= 8;
-	}
-	if (day >= 4)
-	{
-		day_to_reg |= 1 << 2;
-		day -= 4;
-	}
-	if (day >= 2)
-	{
-		day_to_reg |= 1 << 1;
-		day -= 2;
-	}
-	if (day == 1)
-	{
-		day_to_reg |= 1;
-		day -= 1;
-	}
-	assert(day == 0);
-
-	exRtcI2c.write(day_to_reg); //Write to RTC_REG_DAYS
-
-
-	uint8 weekday_to_reg = 0;
-	uint32 weekday = current_time.tm_wday;
-	if (weekday >= 4)
-	{
-		weekday_to_reg |= 1 << 2;
-		weekday -= 4;
-	}
-	if (weekday >= 2)
-	{
-		weekday_to_reg |= 1 << 1;
-		weekday -= 2;
-	}
-	if (weekday == 1)
-	{
-		weekday_to_reg |= 1;
-		weekday -= 1;
-	}
-	assert(weekday == 0);
-
-	exRtcI2c.write(weekday_to_reg); //Write to RTC_REG_WEEK
-
-	uint8 month_to_reg = 0;
-	uint32 month = current_time.tm_mon;
-	if (month >= 10)
-	{
-		month_to_reg |= 1 << 4;
-		month -= 10;
-	}
-	if (month >= 8)
-	{
-		month_to_reg |= 1 << 3;
-		month -= 8;
-	}
-	if (month >= 4)
-	{
-		month_to_reg |= 1 << 2;
-		month -= 4;
-	}
-	if (month >= 2)
-	{
-		month_to_reg |= 1 << 1;
-		month -= 2;
-	}
-	if (month == 1)
-	{
-		month_to_reg |= 1;
-		month -= 1;
-	}
-	assert(month == 0);
-
-	exRtcI2c.write(month_to_reg); //Write to RTC_REG_MONTH
-
-
-	uint8 year_to_reg = 0;
-	uint32 year = current_time.tm_year;
-	if (year >= 80)
-	{
-		year_to_reg |= 1 << 7;
-		year -= 80;
-	}
-	if (year >= 40)
-	{
-		year_to_reg |= 1 << 6;
-		year -= 40;
-	}
-	if (year >= 20)
-	{
-		year_to_reg |= 1 << 5;
-		year -= 20;
-	}
-	if (year >= 10)
-	{
-		year_to_reg |= 1 << 4;
-		year -= 10;
-	}
-	if (year >= 8)
-	{
-		year_to_reg |= 1 << 3;
-		year -= 8;
-	}
-	if (year >= 4)
-	{
-		year_to_reg |= 1 << 2;
-		year -= 4;
-	}
-	if (year >= 2)
-	{
-		year_to_reg |= 1 << 1;
-		year -= 2;
-	}
-	if (year == 1)
-	{
-		year_to_reg |= 1;
-		year -= 1;
-	}
-	assert(year == 0);
-
-	exRtcI2c.write(year_to_reg); //Write to RTC_REG_YEAR
-
-	exRtcI2c.write(0x00); //Write to RTC_REG_MIN_ALR
-	exRtcI2c.write(0x00); //Write to RTC_REG_HOUR_ALR
-	exRtcI2c.write(0x00); //Write to RTC_REG_DAY_ALR
-	exRtcI2c.write(0x00); //Write to RTC_REG_WEEK_ALR
-
-	exRtcI2c.write(0x80); //Write to RTC_REG_CLKO_FREQ
-
-	exRtcI2c.write(0x00); //Write to RTC_REG_TIMER_CTR
-	exRtcI2c.write(0x00); //Write to RTC_REG_TIMER
-	
-	exRtcI2c.endTransmission();
-
-
-
-
 	//[DEBUG]
 	{
 		exRtcI2c.beginTransmission(RTC_I2C_ADDR);
@@ -532,9 +255,6 @@ void loop()
 		snprintf(logBuf, sizeof(logBuf), "%#02X", regv);
 		SerialUSB.println(logBuf);
 	}
-
-
-
 #endif //C_SW_MS5540C
 
 	bool validGps = false;
@@ -796,6 +516,101 @@ float GetTemperatureDS18B20()
     return dS18b20.getTempCByIndex(0);
 }
 #endif //C_SW_DS18B20
+
+
+
+#if C_SW_MS5540C
+//External RTC functions
+void SetupExtRtc(tm& current_time)
+{
+	exRtcI2c.beginTransmission(RTC_I2C_ADDR);
+	exRtcI2c.write(RTC_REG_CTR1);
+	exRtcI2c.write(0x20); //Write to RTC_REG_CTR1.STOP=1
+	exRtcI2c.write(0x00); //Write to RTC_REG_CTR2
+
+	const uint8 sec_to_reg = GetRtcTimeRegValue(current_time.tm_sec);
+	exRtcI2c.write(sec_to_reg); //Write to RTC_REG_SEC
+
+	const uint8 min_to_reg = GetRtcTimeRegValue(current_time.tm_min);
+	exRtcI2c.write(min_to_reg); //Write to RTC_REG_MIN
+
+	const uint8 hour_to_reg = GetRtcTimeRegValue(current_time.tm_hour);
+	exRtcI2c.write(hour_to_reg); //Write to RTC_REG_HOUR
+
+	const uint8 day_to_reg = GetRtcTimeRegValue(current_time.tm_mday);
+	exRtcI2c.write(day_to_reg); //Write to RTC_REG_DAYS
+
+	const uint8 weekday_to_reg = GetRtcTimeRegValue(current_time.tm_wday);
+	exRtcI2c.write(weekday_to_reg); //Write to RTC_REG_WEEK
+
+	const uint8 month_to_reg = GetRtcTimeRegValue(current_time.tm_mon);
+	exRtcI2c.write(month_to_reg); //Write to RTC_REG_MONTH
+
+	const uint8 year_to_reg = GetRtcTimeRegValue(current_time.tm_year);
+	exRtcI2c.write(year_to_reg); //Write to RTC_REG_YEAR
+
+	exRtcI2c.write(0x00); //Write to RTC_REG_MIN_ALR
+	exRtcI2c.write(0x00); //Write to RTC_REG_HOUR_ALR
+	exRtcI2c.write(0x00); //Write to RTC_REG_DAY_ALR
+	exRtcI2c.write(0x00); //Write to RTC_REG_WEEK_ALR
+
+	exRtcI2c.write(0x80); //Write to RTC_REG_CLKO_FREQ
+
+	exRtcI2c.write(0x00); //Write to RTC_REG_TIMER_CTR
+	exRtcI2c.write(0x00); //Write to RTC_REG_TIMER
+
+	exRtcI2c.endTransmission();
+}
+
+uint8 GetRtcTimeRegValue(uint32 time)
+{
+	uint8 regv = 0;
+	if (time >= 80)
+	{
+		regv |= 1 << 7;
+		time -= 80;
+	}
+	if (time >= 40)
+	{
+		regv |= 1 << 6;
+		time -= 40;
+	}
+	if (time >= 20)
+	{
+		regv |= 1 << 5;
+		time -= 20;
+	}
+	if (time >= 10)
+	{
+		regv |= 1 << 4;
+		time -= 10;
+	}
+	if (time >= 8)
+	{
+		regv |= 1 << 3;
+		time -= 8;
+	}
+	if (time >= 4)
+	{
+		regv |= 1 << 2;
+		time -= 4;
+	}
+	if (time >= 2)
+	{
+		regv |= 1 << 1;
+		time -= 2;
+	}
+	if (time == 1)
+	{
+		regv |= 1;
+		time -= 1;
+	}
+	assert(time == 0);
+
+	return regv;
+}
+#endif //C_SW_MS5540C
+
 
 
 #if C_SW_GPS
