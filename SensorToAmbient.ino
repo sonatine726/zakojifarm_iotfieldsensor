@@ -614,11 +614,12 @@ uint8 GetRtcTimeRegValue(uint32 time)
 
 void SetupMs5540c()
 {
-	SPI.begin(); 
-	SPI.setBitOrder(MSBFIRST);
-	SPI.setClockDivider(SPI_CLOCK_DIV32); //divide 16 MHz to communicate on 500 kHz
-	//pinMode(CLOCK_PIN_FOR_MS5540C, OUTPUT);
-	delay(100);
+	SPI.begin(SPI_281_250KHZ, MSBFIRST, SPI_MODE0);
+
+	//SPI.begin(); 
+	//SPI.setBitOrder(MSBFIRST);
+	//SPI.setClockDivider(SPI_CLOCK_DIV32);
+	//delay(100);
 }
 
 void GetPressureAndTemperatureFromMs5540c(float& pressure, float& temperature)
@@ -648,12 +649,12 @@ void GetPressureAndTemperatureFromMs5540c(float& pressure, float& temperature)
 	temperature = CalculateTemperatureByMs5540c(temp_reg, c5, c6, dT, raw_temperature_decuple, temperature_compensation);
 
 	//Calculate pressure
-	pressure = CalculatePressureByMs5540c(press_reg, c2, c3, c4, dT, raw_temperature, temperature_compensation);
+	pressure = CalculatePressureByMs5540c(press_reg, c1, c2, c3, c4, dT, raw_temperature_decuple, temperature_compensation);
 }
 
 void ResetMs5540c()
 {
-	SPI.setDataMode(SPI_MODE0);
+	BeginSPItoMs5540c(SPI_MODE0);
 	SPI.transfer(0x15);
 	SPI.transfer(0x55);
 	SPI.transfer(0x40);
@@ -668,7 +669,7 @@ uint16 SendCommandAndGetWord(uint8 command_msb, uint8 command_lsb, unsigned int 
 
 	delay(wait_after_command_msec);
 
-	SPI.setDataMode(SPI_MODE1);
+	BeginSPItoMs5540c(SPI_MODE1);
 	uint16 word_msb = SPI.transfer(0x00);
 	word_msb <<= 8;
 	uint16 word_lsb = SPI.transfer(0x00);
@@ -689,13 +690,13 @@ float CalculateTemperatureByMs5540c(uint16 temp_reg, uint32 c5, uint32 c6, long&
 	return static_cast<float>(TEMP - TEMP_COMPENSATION) / 10;
 }
 
-float CalculatePressureByMs5540c(uint16 press_reg, uint32 c2, uint32 c3, uint32 c4, long dT, long raw_temperature_decuple, long temperature_compensation)
+float CalculatePressureByMs5540c(uint16 press_reg, uint32 c1, uint32 c2, uint32 c3, uint32 c4, long dT, long TEMP, long temperature_compensation)
 {
 	const long OFF = (c2 * 4) + (((c4 - 512) * dT) / 4096);
 	const long SENS = c1 + ((c3 * dT) / 1024) + 24576;
 	const long X = ((SENS * (press_reg - 7168)) / 16384) - OFF;
 	long P = X * 10 / 32 + 2500;
-	P -= GetCompensateValueForPressure(raw_temperature_decuple, temperature_compensation, P);
+	P -= GetCompensateValueForPressure(P, TEMP, temperature_compensation);
 	return P;
 }
 
@@ -712,6 +713,27 @@ long GetCompensateValueForTemperature(long TEMP, uint32 c6)
 	}
 
 	return t2;
+}
+
+long GetCompensateValueForPressure(uint16 press_reg, long TEMP, long temperature_compensation)
+{
+	long p2 = 0;
+	if (TEMP < 200)
+	{
+		p2 = 3 * temperature_compensation * (press_reg - 3500) / 16384;
+	}
+	else if (TEMP > 450)
+	{
+		p2 = temperature_compensation * (press_reg - 10000) / 8192;
+	}
+
+	return p2;
+}
+
+
+void BeginSPItoMs5540c(uint32 mode)
+{
+	SPI.begin(SPI_281_250KHZ, MSBFIRST, mode);
 }
 #endif //C_SW_MS5540C
 
