@@ -9,6 +9,7 @@
 #include <OneWire.h>
 #include <DallasTemperature.h>
 #include <Wire.h>
+#include <HardwareTimer.h>
 #include "Ms5540cSPI.h"
 
 typedef int IRQn_Type;
@@ -29,6 +30,8 @@ typedef int IRQn_Type;
 #define C_SW_BATTERY_V 0
 #define C_SW_MS5540C 1
 #define C_SW_SLEEP_WAIT 0
+#define C_SW_MS5540C_ADC_CLOCK_BY_ADC 1
+
 
 //Common global
 #define SENSOR_PIN    (WIOLTE_D38)
@@ -103,7 +106,7 @@ constexpr uint8 RTC_REG_CLKO_FREQ = 0x0D;
 constexpr uint8 RTC_REG_TIMER_CTR = 0x0E;
 constexpr uint8 RTC_REG_TIMER = 0x0F;
 
-constexpr uint8 CLOCK_PIN_FOR_MS5540C = 9;
+constexpr uint8 ADC_CLOCK_PIN_FOR_MS5540C = D20;
 
 Ms5540cSPI ms5540cSpi(1);
 #endif //C_SW_MS5540C
@@ -225,6 +228,11 @@ void loop()
 	float press_ms5540c = 0;
 	float temp_ms5540c = INVALID_TEMP_AND_HUMID;
 #if C_SW_MS5540C
+	if (!MakeAdcClockToMs5540c())
+	{
+		SerialUSB.println("ERROR: MakeAdcClockToMs5540c");
+	}
+
 	//[DEBUG]
 	{
 		exRtcI2c.beginTransmission(RTC_I2C_ADDR);
@@ -569,7 +577,7 @@ void SetupExtRtc(tm& current_time)
 	exRtcI2c.write(0x00); //Write to RTC_REG_DAY_ALR
 	exRtcI2c.write(0x00); //Write to RTC_REG_WEEK_ALR
 
-	exRtcI2c.write(0x80); //Write to RTC_REG_CLKO_FREQ
+	exRtcI2c.write(0x00); //Write to RTC_REG_CLKO_FREQ
 
 	exRtcI2c.write(0x00); //Write to RTC_REG_TIMER_CTR
 	exRtcI2c.write(0x00); //Write to RTC_REG_TIMER
@@ -766,6 +774,84 @@ long GetCompensateValueForPressure(uint16 press_reg, long TEMP, long temperature
 void BeginSPItoMs5540c(uint32 mode)
 {
 	ms5540cSpi.begin(SPI_281_250KHZ, MSBFIRST, mode);
+}
+
+bool MakeAdcClockToMs5540c()
+{
+	bool isSuccess = true;
+
+#if C_SW_MS5540C_ADC_CLOCK_BY_ADC
+	exRtcI2c.beginTransmission(RTC_I2C_ADDR);
+	exRtcI2c.write(RTC_REG_CLKO_FREQ);
+	exRtcI2c.write(0x80);
+	exRtcI2c.endTransmission();
+#else //C_SW_MS5540C_ADC_CLOCK_BY_ADC
+	isSuccess = MakeClockByPwm(ADC_CLOCK_PIN_FOR_MS5540C);
+#endif //C_SW_MS5540C_ADC_CLOCK_BY_ADC
+
+	return isSuccess;
+}
+
+struct TimerDevToHardwareTimer
+{
+	timer_dev* tdev;
+	HardwareTimer* timer;
+};
+
+//Currently, not extern Timer6 and Timer7
+extern HardwareTimer Timer6;
+extern HardwareTimer Timer7;
+
+const TimerDevToHardwareTimer TIMERDEV_TO_HARDWARETIMER_MAP[] = 
+{
+	{TIMER1, &Timer1},
+	{TIMER2, &Timer2},
+	{TIMER3, &Timer3},
+	{TIMER4, &Timer4},
+#ifdef STM32_HIGH_DENSITY
+	{TIMER5, &Timer5},
+	{TIMER6, &Timer6},
+	{TIMER7, &Timer7},
+	{TIMER8, &Timer8}
+#endif //STM32_HIGH_DENSITY
+};
+
+bool MakeClockByPwm(uint8_t pin)
+{
+	timer_dev *tdev = PIN_MAP[pin].timer_device;     // ピン対応のタイマーデバイスの取得 
+	const uint8 cc_channel = PIN_MAP[pin].timer_channel;  // ピン対応のタイマーチャンネルの取得
+
+	HardwareTimer* timer = NULL;
+	for (int i = 0; i < (sizeof(TIMERDEV_TO_HARDWARETIMER_MAP) / sizeof(TimerDevToHardwareTimer)); ++i)
+	{
+		if (TIMERDEV_TO_HARDWARETIMER_MAP[i].tdev == tdev)
+		{
+			timer = TIMERDEV_TO_HARDWARETIMER_MAP[i].timer;
+			break;
+		}
+	}
+
+	if (!(tdev && cc_channel && timer))
+	{
+		char cbuf[64];
+		snprintf(cbuf, sizeof(cbuf), "ERROR: Target pin invalid for pwm. %d %08X %d %08X ", pin, tdev, cc_channel, timer);
+		SerialUSB.println(cbuf);
+
+		return false;
+	}
+
+	pinMode(pin, PWM);
+
+	timer->pause();
+	timer->setPrescaleFactor(1344); //Clock prescale from 84MHz to 32.768 * 2 KHz
+	timer->setOverflow(2);        // Cycle is 32.768 KHz
+	timer->setMode(cc_channel, TIMER_PWM);
+	timer->setCompare(cc_channel, 1); // Duty ratio is 50%
+	timer->setCount(0);
+	timer->refresh();
+	timer->resume();
+
+	return true;
 }
 #endif //C_SW_MS5540C
 
