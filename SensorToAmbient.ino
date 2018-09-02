@@ -9,7 +9,7 @@
 #include <OneWire.h>
 #include <DallasTemperature.h>
 #include <Wire.h>
-#include <SPI.h>
+#include <HardwareSPI.h>
 
 typedef int IRQn_Type;
 #define __NVIC_PRIO_BITS          4
@@ -104,6 +104,7 @@ constexpr uint8 RTC_REG_TIMER = 0x0F;
 
 constexpr uint8 CLOCK_PIN_FOR_MS5540C = 9;
 
+HardwareSPI ms5540cSpi(1);
 #endif //C_SW_MS5540C
 
 
@@ -157,7 +158,8 @@ void setup()
 	rtc.getTime(&current_time);
 
 	SetupExtRtc(current_time);
-	exRtcI2c.begin();
+
+	SetupMs5540c();
 #endif //C_SW_MS5540C
 
 #if C_SW_BATTERY_V
@@ -179,7 +181,6 @@ void loop()
     rtc.getTime(&current_time);
     snprintf(cbuf, sizeof(cbuf), "loop() : %s", asctime(&current_time));
     SerialUSB.println(cbuf);
-    SerialUSB.flush();
 
     /* Get temperature and humidity */
     float temp = INVALID_TEMP_AND_HUMID;
@@ -220,6 +221,8 @@ void loop()
 	//}
 #endif //C_SW_DS18B20
 
+	float press_ms5540c = 0;
+	float temp_ms5540c = INVALID_TEMP_AND_HUMID;
 #if C_SW_MS5540C
 	//[DEBUG]
 	{
@@ -257,6 +260,11 @@ void loop()
 		snprintf(logBuf, sizeof(logBuf), "%#02X", regv);
 		SerialUSB.println(logBuf);
 	}
+
+	GetPressureAndTemperatureFromMs5540c(press_ms5540c, temp_ms5540c);
+	SerialUSB.println("INFO: MS5540C press and temp= ");
+	SerialUSB.println(press_ms5540c);
+	SerialUSB.println(temp_ms5540c);
 #endif //C_SW_MS5540C
 
 	bool validGps = false;
@@ -295,11 +303,6 @@ void loop()
 	snprintf(cbuf, sizeof(cbuf), "INFO: Internal Temp %f", in_temperature);
 	SerialUSB.println(cbuf);
 
-	// [DEBUG]
-	//{
-	//	snprintf(cbuf, sizeof(cbuf), "DEBUG: ADC_COMMON->CCR %08X", ADC_COMMON->CCR);
-	//	SerialUSB.println(cbuf);
-	//}
 
 	//{
 	//	snprintf(cbuf, sizeof(cbuf), "DEBUG: ADC1_BASE->CR1 %08X", ADC1_BASE->CR1);
@@ -525,6 +528,15 @@ float GetTemperatureDS18B20()
 //External RTC functions
 void SetupExtRtc(tm& current_time)
 {
+	// [DEBUG]
+	{
+		char cbuf[64];
+		snprintf(cbuf, sizeof(cbuf), "DEBUG: SetupExtRtc : %s", asctime(&current_time));
+		SerialUSB.println(cbuf);
+	}
+
+	exRtcI2c.begin();
+
 	exRtcI2c.beginTransmission(RTC_I2C_ADDR);
 	exRtcI2c.write(RTC_REG_CTR1);
 	exRtcI2c.write(0x20); //Write to RTC_REG_CTR1.STOP=1
@@ -614,12 +626,20 @@ uint8 GetRtcTimeRegValue(uint32 time)
 
 void SetupMs5540c()
 {
-	SPI.begin(SPI_281_250KHZ, MSBFIRST, SPI_MODE0);
+	ms5540cSpi.begin(SPI_281_250KHZ, MSBFIRST, SPI_MODE0);
 
-	//SPI.begin(); 
-	//SPI.setBitOrder(MSBFIRST);
-	//SPI.setClockDivider(SPI_CLOCK_DIV32);
-	//delay(100);
+	//[DEBUG]
+	{
+		char cbuf[64];
+		snprintf(cbuf, sizeof(cbuf), "DEBUG: GPIOA_BASE->AFR[0] %08X", GPIOA_BASE->AFR[0]);
+		SerialUSB.println(cbuf);
+		snprintf(cbuf, sizeof(cbuf), "DEBUG: GPIOA_BASE->AFR[1] %08X", GPIOA_BASE->AFR[1]);
+		SerialUSB.println(cbuf);
+		snprintf(cbuf, sizeof(cbuf), "DEBUG: GPIOB_BASE->AFR[0] %08X", GPIOB_BASE->AFR[0]);
+		SerialUSB.println(cbuf);
+		snprintf(cbuf, sizeof(cbuf), "DEBUG: GPIOB_BASE->AFR[1] %08X", GPIOB_BASE->AFR[1]);
+		SerialUSB.println(cbuf);
+	}
 }
 
 void GetPressureAndTemperatureFromMs5540c(float& pressure, float& temperature)
@@ -638,6 +658,17 @@ void GetPressureAndTemperatureFromMs5540c(float& pressure, float& temperature)
 	const uint32 c5 = (calib_reg2 >> 6) | ((calib_reg1 & 0x1) << 10);
 	const uint32 c6 = calib_reg2 & 0x3F;
 
+	// [DEBUG]
+	{
+		SerialUSB.println("DEBUG: Ms5540c calib values =");
+		SerialUSB.println(c1);
+		SerialUSB.println(c2);
+		SerialUSB.println(c3);
+		SerialUSB.println(c4);
+		SerialUSB.println(c5);
+		SerialUSB.println(c6);
+	}
+
 	//Get temperature register value
 	const uint16 temp_reg = SendCommandAndGetWord(0x1D, 0x20, 35);
 
@@ -655,24 +686,24 @@ void GetPressureAndTemperatureFromMs5540c(float& pressure, float& temperature)
 void ResetMs5540c()
 {
 	BeginSPItoMs5540c(SPI_MODE0);
-	SPI.transfer(0x15);
-	SPI.transfer(0x55);
-	SPI.transfer(0x40);
+	ms5540cSpi.transfer(0x15);
+	ms5540cSpi.transfer(0x55);
+	ms5540cSpi.transfer(0x40);
 }
 
 uint16 SendCommandAndGetWord(uint8 command_msb, uint8 command_lsb, unsigned int wait_after_command_msec)
 {
 	ResetMs5540c();
 
-	SPI.transfer(command_msb);
-	SPI.transfer(command_lsb);
+	ms5540cSpi.transfer(command_msb);
+	ms5540cSpi.transfer(command_lsb);
 
 	delay(wait_after_command_msec);
 
 	BeginSPItoMs5540c(SPI_MODE1);
-	uint16 word_msb = SPI.transfer(0x00);
+	uint16 word_msb = ms5540cSpi.transfer(0x00);
 	word_msb <<= 8;
-	uint16 word_lsb = SPI.transfer(0x00);
+	uint16 word_lsb = ms5540cSpi.transfer(0x00);
 	return word_msb | word_lsb;
 }
 
@@ -733,7 +764,7 @@ long GetCompensateValueForPressure(uint16 press_reg, long TEMP, long temperature
 
 void BeginSPItoMs5540c(uint32 mode)
 {
-	SPI.begin(SPI_281_250KHZ, MSBFIRST, mode);
+	ms5540cSpi.begin(SPI_281_250KHZ, MSBFIRST, mode);
 }
 #endif //C_SW_MS5540C
 
