@@ -215,14 +215,6 @@ void loop()
     tempDs18b20 = GetTemperatureDS18B20();
     snprintf(cbuf, sizeof(cbuf), "INFO: DS18B20 temp: %f", tempDs18b20);
     SerialUSB.println(cbuf);
-
-	// [DEBUG]
-	//{
-	//	SerialUSB.println("DEBUG: GPIOA_PUPDR = ");
-	//	char logBuf[LOG_TEMP_BUF_SIZE] = {0};
-	//	snprintf(logBuf, sizeof(logBuf), "%#08X", GPIOA_BASE->PUPDR);
-	//	SerialUSB.println(logBuf);
-	//}
 #endif //C_SW_DS18B20
 
 	float press_ms5540c = 0;
@@ -635,6 +627,7 @@ uint8 GetRtcTimeRegValue(uint32 time)
 
 void SetupMs5540c()
 {
+	gpio_set_af_mode(GPIOA, 5, 0);
 	ms5540cSpi.begin(SPI_281_250KHZ, MSBFIRST, SPI_MODE0);
 
 	//[DEBUG]
@@ -649,6 +642,37 @@ void SetupMs5540c()
 		snprintf(cbuf, sizeof(cbuf), "DEBUG: GPIOB_BASE->AFR[1] %08X", GPIOB_BASE->AFR[1]);
 		SerialUSB.println(cbuf);
 	}
+
+	// [DEBUG]
+	{
+		SerialUSB.println("DEBUG: misoPin = ");
+		SerialUSB.println(ms5540cSpi.misoPin());
+		SerialUSB.println("DEBUG: mosiPin = ");
+		SerialUSB.println(ms5540cSpi.mosiPin());
+		SerialUSB.println("DEBUG: sckPin = ");
+		SerialUSB.println(ms5540cSpi.sckPin());
+		SerialUSB.println("DEBUG: nssPin = ");
+		SerialUSB.println(ms5540cSpi.nssPin());
+
+		SerialUSB.println("DEBUG: GPIOA_PUPDR = ");
+		char logBuf[LOG_TEMP_BUF_SIZE] = {0};
+		snprintf(logBuf, sizeof(logBuf), "%08X", GPIOA_BASE->PUPDR);
+		SerialUSB.println(logBuf);
+
+		SerialUSB.println("DEBUG: GPIOB_PUPDR = ");
+		snprintf(logBuf, sizeof(logBuf), "%08X", GPIOB_BASE->PUPDR);
+		SerialUSB.println(logBuf);
+
+		SerialUSB.println("DEBUG: GPIOB_OSPEEDR = ");
+		snprintf(logBuf, sizeof(logBuf), "%08X", GPIOB_BASE->OSPEEDR);
+		SerialUSB.println(logBuf);
+
+		SerialUSB.println("DEBUG: GPIOB_OTYPER = ");
+		snprintf(logBuf, sizeof(logBuf), "%08X", GPIOB_BASE->OTYPER);
+		SerialUSB.println(logBuf);
+	}
+
+
 }
 
 void GetPressureAndTemperatureFromMs5540c(float& pressure, float& temperature)
@@ -658,6 +682,20 @@ void GetPressureAndTemperatureFromMs5540c(float& pressure, float& temperature)
 	const uint32 calib_reg2 = SendCommandAndGetWord(0x1D, 0x60, 0);
 	const uint32 calib_reg3 = SendCommandAndGetWord(0x1D, 0x90, 0);
 	const uint32 calib_reg4 = SendCommandAndGetWord(0x1D, 0xA0, 0);
+
+	// [DEBUG]
+	{
+		SerialUSB.println("DEBUG: Ms5540c calib regs =");
+		char cbuf[32];
+		snprintf(cbuf, sizeof(cbuf), "%08X", calib_reg1);
+		SerialUSB.println(cbuf);
+		snprintf(cbuf, sizeof(cbuf), "%08X", calib_reg2);
+		SerialUSB.println(cbuf);
+		snprintf(cbuf, sizeof(cbuf), "%08X", calib_reg3);
+		SerialUSB.println(cbuf);
+		snprintf(cbuf, sizeof(cbuf), "%08X", calib_reg4);
+		SerialUSB.println(cbuf);
+	}
 
 	//Get calibration value
 	const uint32 c1 = calib_reg1 >> 1;
@@ -704,8 +742,19 @@ uint16 SendCommandAndGetWord(uint8 command_msb, uint8 command_lsb, unsigned int 
 {
 	ResetMs5540c();
 
-	ms5540cSpi.transfer(command_msb);
-	ms5540cSpi.transfer(command_lsb);
+	//ms5540cSpi.transfer(command_msb);
+	//ms5540cSpi.transfer(command_lsb);
+
+	// [DEBUG]
+	uint8 command_ret1 = ms5540cSpi.transfer(command_msb);
+	uint8 command_ret2 = ms5540cSpi.transfer(command_lsb);
+	{
+		char cbuf[32];
+		snprintf(cbuf, sizeof(cbuf), "DEBUG: Commad1 %02X (ret is %02X)", command_msb, command_ret1);
+		SerialUSB.println(cbuf);
+		snprintf(cbuf, sizeof(cbuf), "DEBUG: Commad2 %02X (ret is %02X)", command_lsb, command_ret2);
+		SerialUSB.println(cbuf);
+	}
 
 	delay(wait_after_command_msec);
 

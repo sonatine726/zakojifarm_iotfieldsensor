@@ -354,6 +354,8 @@ static void disable_pwm(const stm32_pin_info *i) {
 }
 
 static void configure_gpios(spi_dev *dev, bool as_master) {
+	SerialUSB.println("DEBUG: configure_gpios");
+
     const spi_pins *pins = dev_to_spi_pins(dev);
 
     if (!pins) {
@@ -393,6 +395,9 @@ static void configure_gpios(spi_dev *dev, bool as_master) {
 		gpio_set_af_mode(mosii->gpio_device, mosii->gpio_bit, 6);
 	}
 #endif
+
+		SerialUSB.println("DEBUG: spi_config_gpios");
+
 
 		if(nssi) {
                     spi_config_gpios(dev, as_master, nssi->gpio_device, nssi->gpio_bit,
