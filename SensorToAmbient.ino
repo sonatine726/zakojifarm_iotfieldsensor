@@ -9,7 +9,7 @@
 #include <OneWire.h>
 #include <DallasTemperature.h>
 #include <Wire.h>
-#include <HardwareSPI.h>
+#include "Ms5540cSPI.h"
 
 typedef int IRQn_Type;
 #define __NVIC_PRIO_BITS          4
@@ -78,6 +78,7 @@ const char NTP_SERVER[] = "ntp.nict.jp";
 OneWire oneWire(WIOLTE_A4);
 DallasTemperature dS18b20(&oneWire);
 constexpr uint8_t DS18B20_TEMPERATURE_RESOLUTION_BIT = 12;
+
 #endif //C_SW_DS18B20
 
 #if C_SW_MS5540C
@@ -104,7 +105,7 @@ constexpr uint8 RTC_REG_TIMER = 0x0F;
 
 constexpr uint8 CLOCK_PIN_FOR_MS5540C = 9;
 
-HardwareSPI ms5540cSpi(1);
+Ms5540cSPI ms5540cSpi(1);
 #endif //C_SW_MS5540C
 
 
