@@ -28,7 +28,7 @@
  * @author Marti Bolivar <mbolivar@leaflabs.com>
  * @brief Wirish SPI implementation.
  */
-
+#include <stdio.h>
 #include "Ms5540cSPI.h"
 
 #include "timer.h"
@@ -39,10 +39,10 @@
 #include "boards.h"
 
 struct spi_pins {
-    uint8 nss;
-    uint8 sck;
-    uint8 miso;
-    uint8 mosi;
+    int8 nss;
+    int8 sck;
+    int8 miso;
+    int8 mosi;
 };
 
 static const spi_pins* dev_to_spi_pins(spi_dev *dev);
@@ -58,7 +58,7 @@ static void enable_device(spi_dev *dev,
 #undef BOARD_SPI1_SCK_PIN
 #undef BOARD_SPI1_MISO_PIN
 #undef BOARD_SPI1_MOSI_PIN
-#define BOARD_SPI1_NSS_PIN      Port2Pin('A', 4)
+#define BOARD_SPI1_NSS_PIN      -1
 #define BOARD_SPI1_MOSI_PIN     Port2Pin('A', 7)
 #define BOARD_SPI1_MISO_PIN     Port2Pin('A', 6)
 #define BOARD_SPI1_SCK_PIN      Port2Pin('B', 3)
@@ -338,13 +338,18 @@ static void enable_device(spi_dev *dev,
     uint32 cfg_flags = (endianness | SPI_DFF_8_BIT | SPI_SW_SLAVE |
                         (as_master ? SPI_SOFT_SS : 0));
 
+	SerialUSB.println("DEBUG: spi_init");
     spi_init(dev);
+	SerialUSB.println("configure_gpios");
     configure_gpios(dev, as_master);
+	SerialUSB.println("DEBUG: spi_master_enable");
     if (as_master) {
         spi_master_enable(dev, baud, mode, cfg_flags);
     } else {
         spi_slave_enable(dev, mode, cfg_flags);
     }
+	SerialUSB.println("DEBUG: spi_master_enable end");
+
 }
 
 static void disable_pwm(const stm32_pin_info *i) {
@@ -354,8 +359,6 @@ static void disable_pwm(const stm32_pin_info *i) {
 }
 
 static void configure_gpios(spi_dev *dev, bool as_master) {
-	SerialUSB.println("DEBUG: configure_gpios");
-
     const spi_pins *pins = dev_to_spi_pins(dev);
 
     if (!pins) {
@@ -366,6 +369,12 @@ static void configure_gpios(spi_dev *dev, bool as_master) {
     const stm32_pin_info *scki = &PIN_MAP[pins->sck];
     const stm32_pin_info *misoi = &PIN_MAP[pins->miso];
     const stm32_pin_info *mosii = &PIN_MAP[pins->mosi];
+
+	// [DEBUG]
+	char cbuf[32];
+	snprintf(cbuf, sizeof(cbuf), "DEBUG: nssi is %08X", nssi);
+	SerialUSB.println(cbuf);
+	// [DEBUG END]
 
 	if(nssi) {
 		disable_pwm(nssi);
@@ -395,10 +404,6 @@ static void configure_gpios(spi_dev *dev, bool as_master) {
 		gpio_set_af_mode(mosii->gpio_device, mosii->gpio_bit, 6);
 	}
 #endif
-
-		SerialUSB.println("DEBUG: spi_config_gpios");
-
-
 		if(nssi) {
                     spi_config_gpios(dev, as_master, nssi->gpio_device, nssi->gpio_bit,
                                                      scki->gpio_device, scki->gpio_bit, 

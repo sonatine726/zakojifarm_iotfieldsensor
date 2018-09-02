@@ -627,7 +627,7 @@ uint8 GetRtcTimeRegValue(uint32 time)
 
 void SetupMs5540c()
 {
-	gpio_set_af_mode(GPIOA, 5, 0);
+	//gpio_set_af_mode(GPIOA, 5, 0);
 	ms5540cSpi.begin(SPI_281_250KHZ, MSBFIRST, SPI_MODE0);
 
 	//[DEBUG]
@@ -754,11 +754,32 @@ uint16 SendCommandAndGetWord(uint8 command_msb, uint8 command_lsb, unsigned int 
 		SerialUSB.println(cbuf);
 		snprintf(cbuf, sizeof(cbuf), "DEBUG: Commad2 %02X (ret is %02X)", command_lsb, command_ret2);
 		SerialUSB.println(cbuf);
+		snprintf(cbuf, sizeof(cbuf), "DEBUG: SPI_SR = %08X", SPI1_BASE->SR);
+		SerialUSB.println(cbuf);
+		snprintf(cbuf, sizeof(cbuf), "DEBUG: SPI_CR1 = %08X", SPI1_BASE->CR1);
+		SerialUSB.println(cbuf);
+		snprintf(cbuf, sizeof(cbuf), "DEBUG: SPI_CR2 = %08X", SPI1_BASE->CR2);
+		SerialUSB.println(cbuf);
 	}
+	// [DEBUG END]
+
 
 	delay(wait_after_command_msec);
 
 	BeginSPItoMs5540c(SPI_MODE1);
+
+	// [DEBUG]
+	{
+		char cbuf[64];
+		snprintf(cbuf, sizeof(cbuf), "DEBUG: (2)SPI_SR = %08X", SPI1_BASE->SR);
+		SerialUSB.println(cbuf);
+		snprintf(cbuf, sizeof(cbuf), "DEBUG: (2)SPI_CR1 = %08X", SPI1_BASE->CR1);
+		SerialUSB.println(cbuf);
+		snprintf(cbuf, sizeof(cbuf), "DEBUG: (2)SPI_CR2 = %08X", SPI1_BASE->CR2);
+		SerialUSB.println(cbuf);
+	}
+	// [DEBUG END]
+
 	uint16 word_msb = ms5540cSpi.transfer(0x00);
 	word_msb <<= 8;
 	uint16 word_lsb = ms5540cSpi.transfer(0x00);
