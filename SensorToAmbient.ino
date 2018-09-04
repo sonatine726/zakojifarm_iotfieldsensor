@@ -35,8 +35,7 @@ typedef int IRQn_Type;
 
 //Common global
 #define SENSOR_PIN    (WIOLTE_D38)
-//#define LOOP_PERIOD_MSEC 60000 // milliseconds
-#define LOOP_PERIOD_MSEC 20000 // milliseconds
+#define LOOP_PERIOD_MSEC 60000 // milliseconds
 #define SLEEP_MSEC_WHEN_OVER_LOOP_PERIOD 10000 // milliseconds
 
 WioLTE Wio;
@@ -62,7 +61,7 @@ constexpr float INVALID_TEMP_AND_HUMID = -127;
 #if C_SW_AMBIENT
 //Ambient global
 unsigned int AMBIENT_CHANNEL_ID = 5701;
-const char AMBIENT_WRITE_KEY[] = "13a769c5371e81ce";
+const char AMBIENT_WRITE_KEY[] = "13a769ms5540c_c5371e81ce";
 Ambient ambient;
 #endif //C_SW_AMBIENT
 
@@ -109,6 +108,13 @@ constexpr uint8 RTC_REG_TIMER = 0x0F;
 constexpr uint8 ADC_CLOCK_PIN_FOR_MS5540C = Port2Pin('B', 4); // D20;
 
 Ms5540cSPI ms5540cSpi(1);
+
+uint32 ms5540c_c1;
+uint32 ms5540c_c2;
+uint32 ms5540c_c3;
+uint32 ms5540c_c4;
+uint32 ms5540c_c5;
+uint32 ms5540c_c6;
 #endif //C_SW_MS5540C
 
 
@@ -130,6 +136,7 @@ void setup()
 	//Setup LTE
 	SerialUSB.println("INFO: Setup LTE");
 	if (!SetupLTE()) {
+		SerialUSB.println("ERROR: SetupLTE");
 		return;
 	}
 
@@ -158,20 +165,19 @@ void setup()
 #endif //C_SW_DS18B20
 
 #if C_SW_MS5540C
+
+#if C_SW_MS5540C_ADC_CLOCK_BY_EXT_RTC
 	struct tm current_time = { 0 };
 	rtc.getTime(&current_time);
 
 	SetupExtRtc(current_time);
+#endif //C_SW_MS5540C_ADC_CLOCK_BY_EXT_RTC
 
-	SetupMs5540c();
-
-	//[DEBUG]
+	if (!SetupMs5540c())
 	{
-		char cbuf[64] = { 0 };
-		snprintf(cbuf, sizeof(cbuf), "DEBUG: RCC_CFGR = %08X", RCC_BASE->CFGR);
-		SerialUSB.println(cbuf);
+		SerialUSB.println("ERROR: SetupMs5540c");
+		return;
 	}
-	//[DEBUG END]
 #endif //C_SW_MS5540C
 
 #if C_SW_BATTERY_V
@@ -202,13 +208,8 @@ void loop()
 	SerialUSB.println("INFO: TemperatureAndHumidityRead()");
 	if (TemperatureAndHumidityRead(&temp, &humi))
 	{
-		//Send to serial
-		SerialUSB.print("Current humidity = ");
-		SerialUSB.print(humi);
-		SerialUSB.print("%  ");
-		SerialUSB.print("temperature = ");
-		SerialUSB.print(temp);
-		SerialUSB.println("C");
+		snprintf(cbuf, sizeof(cbuf), "INFO: humid = %f%%, temp = %f C", humi, temp);
+		SerialUSB.println(cbuf);
 	}
 	else
 	{
@@ -228,55 +229,9 @@ void loop()
 	float press_ms5540c = 0;
 	float temp_ms5540c = INVALID_TEMP_AND_HUMID;
 #if C_SW_MS5540C
-	if (!MakeAdcClockToMs5540c())
-	{
-		SerialUSB.println("ERROR: MakeAdcClockToMs5540c");
-	}
-
-	//[DEBUG]
-	{
-		exRtcI2c.beginTransmission(RTC_I2C_ADDR);
-		exRtcI2c.write(RTC_REG_SEC);
-		exRtcI2c.endTransmission();
-
-		uint8_t regv;
-		exRtcI2c.requestFrom(RTC_I2C_ADDR, 1);
-		while (exRtcI2c.available())
-		{
-			regv = exRtcI2c.read(); // receive a byte as character
-		}
-
-		SerialUSB.println("DEBUG: RTC8564 RTC_REG_SEC = ");
-		char logBuf[LOG_TEMP_BUF_SIZE] = { 0 };
-		snprintf(logBuf, sizeof(logBuf), "%#02X", regv);
-		SerialUSB.println(logBuf);
-	}
-
-	{
-		exRtcI2c.beginTransmission(RTC_I2C_ADDR);
-		exRtcI2c.write(RTC_REG_CLKO_FREQ);
-		exRtcI2c.endTransmission();
-
-		uint8_t regv;
-		exRtcI2c.requestFrom(RTC_I2C_ADDR, 1);
-		while (exRtcI2c.available())
-		{
-			regv = exRtcI2c.read(); // receive a byte as character
-		}
-
-		SerialUSB.println("DEBUG: RTC8564 RTC_REG_CLKO_FREQ = ");
-		char logBuf[LOG_TEMP_BUF_SIZE] = { 0 };
-		snprintf(logBuf, sizeof(logBuf), "%#02X", regv);
-		SerialUSB.println(logBuf);
-	}
-
-	//while (1)
-	//{
 	GetPressureAndTemperatureFromMs5540c(press_ms5540c, temp_ms5540c);
-	SerialUSB.println("INFO: MS5540C press and temp= ");
-	SerialUSB.println(press_ms5540c);
-	SerialUSB.println(temp_ms5540c);
-	//}
+	snprintf(cbuf, sizeof(cbuf), "INFO: MS5540C press = %f mbar, temp = %f C", press_ms5540c, temp_ms5540c);
+	SerialUSB.println(cbuf);
 #endif //C_SW_MS5540C
 
 	bool validGps = false;
@@ -315,7 +270,7 @@ void loop()
 	snprintf(cbuf, sizeof(cbuf), "INFO: Internal Temp %f", in_temperature);
 	SerialUSB.println(cbuf);
 
-
+	//// [DEBUG]
 	//{
 	//	snprintf(cbuf, sizeof(cbuf), "DEBUG: ADC1_BASE->CR1 %08X", ADC1_BASE->CR1);
 	//	SerialUSB.println(cbuf);
@@ -335,7 +290,7 @@ void loop()
 	//	snprintf(cbuf, sizeof(cbuf), "GPIOA_BASE->AFRH %08X", GPIOA_BASE->AFR[1]);
 	//	SerialUSB.println(cbuf);
 	//}
-	//[DEBUG END]
+	//// [DEBUG END]
 #endif //C_SW_BATTERY_V
 
 #if C_SW_LTE && C_SW_AMBIENT
@@ -344,11 +299,11 @@ void loop()
 	bool isSendSuccess;
 	if (validGps)
 	{
-		isSendSuccess = SendToAmbient(temp, humi, tempDs18b20, ext_battery_v, in_battery_v, in_temperature, lat, lng, meter);
+		isSendSuccess = SendToAmbient(temp, humi, tempDs18b20, press_ms5540c, temp_ms5540c, ext_battery_v, in_battery_v, in_temperature, lat, lng, meter);
 	}
 	else
 	{
-		isSendSuccess = SendToAmbient(temp, humi, tempDs18b20, ext_battery_v, in_battery_v, in_temperature);
+		isSendSuccess = SendToAmbient(temp, humi, tempDs18b20, press_ms5540c, temp_ms5540c, ext_battery_v, in_battery_v, in_temperature);
 	}
 
 	if (!isSendSuccess)
@@ -385,8 +340,7 @@ void loop()
 
 	SleepUntilNextLoop(waittime_sec);
 #else //C_SW_SLEEP_WAIT
-	//delay(LOOP_PERIOD_MSEC);
-	delay(5000);
+	delay(LOOP_PERIOD_MSEC);
 #endif //C_SW_SLEEP_WAIT
 }
 
@@ -637,69 +591,73 @@ uint8 GetRtcTimeRegValue(uint32 time)
 	return regv;
 }
 
-void SetupMs5540c()
+bool SetupMs5540c()
 {
 	//Set AF of pins for MS5540C
 	gpio_set_af_mode(GPIOA, 5, 0);
 	gpio_set_af_mode(GPIOB, 4, 2);
 
 	ms5540cSpi.begin(SPI_281_250KHZ, MSBFIRST, SPI_MODE0);
-	//ms5540cSpi.begin(SPI_562_500KHZ, MSBFIRST, SPI_MODE0);
 
-	//[DEBUG]
+	if (!MakeAdcClockToMs5540c())
 	{
-		char cbuf[64];
-		snprintf(cbuf, sizeof(cbuf), "DEBUG: GPIOA_BASE->AFR[0] %08X", GPIOA_BASE->AFR[0]);
-		SerialUSB.println(cbuf);
-		snprintf(cbuf, sizeof(cbuf), "DEBUG: GPIOA_BASE->AFR[1] %08X", GPIOA_BASE->AFR[1]);
-		SerialUSB.println(cbuf);
-		snprintf(cbuf, sizeof(cbuf), "DEBUG: GPIOB_BASE->AFR[0] %08X", GPIOB_BASE->AFR[0]);
-		SerialUSB.println(cbuf);
-		snprintf(cbuf, sizeof(cbuf), "DEBUG: GPIOB_BASE->AFR[1] %08X", GPIOB_BASE->AFR[1]);
-		SerialUSB.println(cbuf);
+		SerialUSB.println("ERROR: MakeAdcClockToMs5540c");
+		return false;
 	}
 
-	// [DEBUG]
-	{
-		SerialUSB.println("DEBUG: misoPin = ");
-		SerialUSB.println(ms5540cSpi.misoPin());
-		SerialUSB.println("DEBUG: mosiPin = ");
-		SerialUSB.println(ms5540cSpi.mosiPin());
-		SerialUSB.println("DEBUG: sckPin = ");
-		SerialUSB.println(ms5540cSpi.sckPin());
-		SerialUSB.println("DEBUG: nssPin = ");
-		SerialUSB.println(ms5540cSpi.nssPin());
+	GetMs5540cCalibrationValues();
 
-		SerialUSB.println("DEBUG: GPIOA_PUPDR = ");
-		char logBuf[LOG_TEMP_BUF_SIZE] = { 0 };
-		snprintf(logBuf, sizeof(logBuf), "%08X", GPIOA_BASE->PUPDR);
-		SerialUSB.println(logBuf);
+	return true;
 
-		SerialUSB.println("DEBUG: GPIOB_PUPDR = ");
-		snprintf(logBuf, sizeof(logBuf), "%08X", GPIOB_BASE->PUPDR);
-		SerialUSB.println(logBuf);
+	////[DEBUG]
+	//{
+	//	char cbuf[64];
+	//	snprintf(cbuf, sizeof(cbuf), "DEBUG: GPIOA_BASE->AFR[0] %08X", GPIOA_BASE->AFR[0]);
+	//	SerialUSB.println(cbuf);
+	//	snprintf(cbuf, sizeof(cbuf), "DEBUG: GPIOA_BASE->AFR[1] %08X", GPIOA_BASE->AFR[1]);
+	//	SerialUSB.println(cbuf);
+	//	snprintf(cbuf, sizeof(cbuf), "DEBUG: GPIOB_BASE->AFR[0] %08X", GPIOB_BASE->AFR[0]);
+	//	SerialUSB.println(cbuf);
+	//	snprintf(cbuf, sizeof(cbuf), "DEBUG: GPIOB_BASE->AFR[1] %08X", GPIOB_BASE->AFR[1]);
+	//	SerialUSB.println(cbuf);
 
-		SerialUSB.println("DEBUG: GPIOB_OSPEEDR = ");
-		snprintf(logBuf, sizeof(logBuf), "%08X", GPIOB_BASE->OSPEEDR);
-		SerialUSB.println(logBuf);
+	//	SerialUSB.println("DEBUG: misoPin = ");
+	//	SerialUSB.println(ms5540cSpi.misoPin());
+	//	SerialUSB.println("DEBUG: mosiPin = ");
+	//	SerialUSB.println(ms5540cSpi.mosiPin());
+	//	SerialUSB.println("DEBUG: sckPin = ");
+	//	SerialUSB.println(ms5540cSpi.sckPin());
+	//	SerialUSB.println("DEBUG: nssPin = ");
+	//	SerialUSB.println(ms5540cSpi.nssPin());
 
-		SerialUSB.println("DEBUG: GPIOB_OTYPER = ");
-		snprintf(logBuf, sizeof(logBuf), "%08X", GPIOB_BASE->OTYPER);
-		SerialUSB.println(logBuf);
+	//	SerialUSB.println("DEBUG: GPIOA_PUPDR = ");
+	//	snprintf(cbuf, sizeof(cbuf), "%08X", GPIOA_BASE->PUPDR);
+	//	SerialUSB.println(cbuf);
 
-		SerialUSB.println("DEBUG: GPIOB_MODER = ");
-		snprintf(logBuf, sizeof(logBuf), "%08X", GPIOB_BASE->MODER);
-		SerialUSB.println(logBuf);
+	//	SerialUSB.println("DEBUG: GPIOB_PUPDR = ");
+	//	snprintf(cbuf, sizeof(cbuf), "%08X", GPIOB_BASE->PUPDR);
+	//	SerialUSB.println(cbuf);
 
-		SerialUSB.println("DEBUG: GPIOB_OTYPER = ");
-		snprintf(logBuf, sizeof(logBuf), "%08X", GPIOB_BASE->OTYPER);
-		SerialUSB.println(logBuf);
-	}
+	//	SerialUSB.println("DEBUG: GPIOB_OSPEEDR = ");
+	//	snprintf(cbuf, sizeof(cbuf), "%08X", GPIOB_BASE->OSPEEDR);
+	//	SerialUSB.println(cbuf);
 
+	//	SerialUSB.println("DEBUG: GPIOB_OTYPER = ");
+	//	snprintf(cbuf, sizeof(cbuf), "%08X", GPIOB_BASE->OTYPER);
+	//	SerialUSB.println(cbuf);
 
+	//	SerialUSB.println("DEBUG: GPIOB_MODER = ");
+	//	snprintf(cbuf, sizeof(cbuf), "%08X", GPIOB_BASE->MODER);
+	//	SerialUSB.println(cbuf);
+
+	//	SerialUSB.println("DEBUG: GPIOB_OTYPER = ");
+	//	snprintf(cbuf, sizeof(cbuf), "%08X", GPIOB_BASE->OTYPER);
+	//	SerialUSB.println(cbuf);
+	//}
+	//// [DEBUG END]
 }
 
-void GetPressureAndTemperatureFromMs5540c(float& pressure, float& temperature)
+void GetMs5540cCalibrationValues()
 {
 	//Read calibration register
 	const uint32 calib_reg1 = SendCommandAndGetWord(0x1D, 0x50, 0);
@@ -707,51 +665,50 @@ void GetPressureAndTemperatureFromMs5540c(float& pressure, float& temperature)
 	const uint32 calib_reg3 = SendCommandAndGetWord(0x1D, 0x90, 0);
 	const uint32 calib_reg4 = SendCommandAndGetWord(0x1D, 0xA0, 0);
 
-	// [DEBUG]
-	{
-		SerialUSB.println("DEBUG: Ms5540c calib regs =");
-		char cbuf[32];
-		snprintf(cbuf, sizeof(cbuf), "%08X", calib_reg1);
-		SerialUSB.println(cbuf);
-		snprintf(cbuf, sizeof(cbuf), "%08X", calib_reg2);
-		SerialUSB.println(cbuf);
-		snprintf(cbuf, sizeof(cbuf), "%08X", calib_reg3);
-		SerialUSB.println(cbuf);
-		snprintf(cbuf, sizeof(cbuf), "%08X", calib_reg4);
-		SerialUSB.println(cbuf);
-	}
+	//// [DEBUG]
+	//{
+	//	SerialUSB.println("DEBUG: Ms5540c calib regs =");
+	//	char cbuf[32];
+	//	snprintf(cbuf, sizeof(cbuf), "%08X", calib_reg1);
+	//	SerialUSB.println(cbuf);
+	//	snprintf(cbuf, sizeof(cbuf), "%08X", calib_reg2);
+	//	SerialUSB.println(cbuf);
+	//	snprintf(cbuf, sizeof(cbuf), "%08X", calib_reg3);
+	//	SerialUSB.println(cbuf);
+	//	snprintf(cbuf, sizeof(cbuf), "%08X", calib_reg4);
+	//	SerialUSB.println(cbuf);
+	//}
+	//// [DEBUG END]
 
 	//Get calibration value
-	const uint32 c1 = calib_reg1 >> 1;
-	const uint32 c2 = ((calib_reg3 & 0x3F) << 6) | (calib_reg4 & 0x3F);
-	const uint32 c3 = (calib_reg4 >> 6);
-	const uint32 c4 = (calib_reg3 >> 6);
-	const uint32 c5 = (calib_reg2 >> 6) | ((calib_reg1 & 0x1) << 10);
-	const uint32 c6 = calib_reg2 & 0x3F;
+	ms5540c_c1 = calib_reg1 >> 1;
+	ms5540c_c2 = ((calib_reg3 & 0x3F) << 6) | (calib_reg4 & 0x3F);
+	ms5540c_c3 = (calib_reg4 >> 6);
+	ms5540c_c4 = (calib_reg3 >> 6);
+	ms5540c_c5 = (calib_reg2 >> 6) | ((calib_reg1 & 0x1) << 10);
+	ms5540c_c6 = calib_reg2 & 0x3F;
 
-	// [DEBUG]
-	{
-		SerialUSB.println("DEBUG: Ms5540c calib values =");
-		SerialUSB.println(c1);
-		SerialUSB.println(c2);
-		SerialUSB.println(c3);
-		SerialUSB.println(c4);
-		SerialUSB.println(c5);
-		SerialUSB.println(c6);
-	}
+	SerialUSB.println("INFO: Ms5540c calibration values =");
+	SerialUSB.println(ms5540c_c1);
+	SerialUSB.println(ms5540c_c2);
+	SerialUSB.println(ms5540c_c3);
+	SerialUSB.println(ms5540c_c4);
+	SerialUSB.println(ms5540c_c5);
+	SerialUSB.println(ms5540c_c6);
+}
 
-	//Get temperature register value
+void GetPressureAndTemperatureFromMs5540c(float& pressure, float& temperature)
+{
+	long dT, raw_temperature_decuple, temperature_compensation;//data holders for interim results of temperature calculation
+
+	//Get temperature register value and calculate temperature
 	const uint16 temp_reg = SendCommandAndGetWord(0x0F, 0x20, 35);
+	temperature = CalculateTemperatureByMs5540c(temp_reg, dT, raw_temperature_decuple, temperature_compensation);
 
-	//Get pressure register value
+
+	//Get pressure register value and calculate pressure
 	const uint16 press_reg = SendCommandAndGetWord(0x0F, 0x40, 35);
-
-	//Calculate temperature
-	long dT, raw_temperature_decuple, temperature_compensation;
-	temperature = CalculateTemperatureByMs5540c(temp_reg, c5, c6, dT, raw_temperature_decuple, temperature_compensation);
-
-	//Calculate pressure
-	pressure = CalculatePressureByMs5540c(press_reg, c1, c2, c3, c4, dT, raw_temperature_decuple, temperature_compensation);
+	pressure = CalculatePressureByMs5540c(press_reg, dT, raw_temperature_decuple, temperature_compensation);
 }
 
 void ResetMs5540c()
@@ -766,96 +723,96 @@ uint16 SendCommandAndGetWord(uint8 command_msb, uint8 command_lsb, unsigned int 
 {
 	ResetMs5540c();
 
-	//ms5540cSpi.transfer(command_msb);
-	//ms5540cSpi.transfer(command_lsb);
+	ms5540cSpi.transfer(command_msb);
+	ms5540cSpi.transfer(command_lsb);
 
 	// [DEBUG]
-	uint8 command_ret1 = ms5540cSpi.transfer(command_msb);
-	uint8 command_ret2 = ms5540cSpi.transfer(command_lsb);
-	{
-		char cbuf[32];
-		snprintf(cbuf, sizeof(cbuf), "DEBUG: Commad1 %02X (ret is %02X)", command_msb, command_ret1);
-		SerialUSB.println(cbuf);
-		snprintf(cbuf, sizeof(cbuf), "DEBUG: Commad2 %02X (ret is %02X)", command_lsb, command_ret2);
-		SerialUSB.println(cbuf);
-		snprintf(cbuf, sizeof(cbuf), "DEBUG: SPI_SR = %08X", SPI1_BASE->SR);
-		SerialUSB.println(cbuf);
-		snprintf(cbuf, sizeof(cbuf), "DEBUG: SPI_CR1 = %08X", SPI1_BASE->CR1);
-		SerialUSB.println(cbuf);
-		snprintf(cbuf, sizeof(cbuf), "DEBUG: SPI_CR2 = %08X", SPI1_BASE->CR2);
-		SerialUSB.println(cbuf);
-	}
-	// [DEBUG END]
+	//uint8 command_ret1 = ms5540cSpi.transfer(command_msb);
+	//uint8 command_ret2 = ms5540cSpi.transfer(command_lsb);
+	//{
+	//	char cbuf[32];
+	//	snprintf(cbuf, sizeof(cbuf), "DEBUG: Commad1 %02X (ret is %02X)", command_msb, command_ret1);
+	//	SerialUSB.println(cbuf);
+	//	snprintf(cbuf, sizeof(cbuf), "DEBUG: Commad2 %02X (ret is %02X)", command_lsb, command_ret2);
+	//	SerialUSB.println(cbuf);
+	//	snprintf(cbuf, sizeof(cbuf), "DEBUG: SPI_SR = %08X", SPI1_BASE->SR);
+	//	SerialUSB.println(cbuf);
+	//	snprintf(cbuf, sizeof(cbuf), "DEBUG: SPI_CR1 = %08X", SPI1_BASE->CR1);
+	//	SerialUSB.println(cbuf);
+	//	snprintf(cbuf, sizeof(cbuf), "DEBUG: SPI_CR2 = %08X", SPI1_BASE->CR2);
+	//	SerialUSB.println(cbuf);
+	//}
+	//// [DEBUG END]
 
 
 	delay(wait_after_command_msec);
 
 	BeginSPItoMs5540c(SPI_MODE1);
 
-	// [DEBUG]
-	{
-		char cbuf[64];
-		snprintf(cbuf, sizeof(cbuf), "DEBUG: (2)SPI_SR = %08X", SPI1_BASE->SR);
-		SerialUSB.println(cbuf);
-		snprintf(cbuf, sizeof(cbuf), "DEBUG: (2)SPI_CR1 = %08X", SPI1_BASE->CR1);
-		SerialUSB.println(cbuf);
-		snprintf(cbuf, sizeof(cbuf), "DEBUG: (2)SPI_CR2 = %08X", SPI1_BASE->CR2);
-		SerialUSB.println(cbuf);
-	}
-	// [DEBUG END]
+	//// [DEBUG]
+	//{
+	//	char cbuf[64];
+	//	snprintf(cbuf, sizeof(cbuf), "DEBUG: (2)SPI_SR = %08X", SPI1_BASE->SR);
+	//	SerialUSB.println(cbuf);
+	//	snprintf(cbuf, sizeof(cbuf), "DEBUG: (2)SPI_CR1 = %08X", SPI1_BASE->CR1);
+	//	SerialUSB.println(cbuf);
+	//	snprintf(cbuf, sizeof(cbuf), "DEBUG: (2)SPI_CR2 = %08X", SPI1_BASE->CR2);
+	//	SerialUSB.println(cbuf);
+	//}
+	//// [DEBUG END]
 
 	uint16 word_msb = ms5540cSpi.transfer(0x00);
 
-	// [DEBUG]
-	{
-		char cbuf[64];
-		snprintf(cbuf, sizeof(cbuf), "DEBUG: Ret word_msb = %04X", word_msb);
-		SerialUSB.println(cbuf);
-	}
-	// [DEBUG END]
+	//// [DEBUG]
+	//{
+	//	char cbuf[64];
+	//	snprintf(cbuf, sizeof(cbuf), "DEBUG: Ret word_msb = %04X", word_msb);
+	//	SerialUSB.println(cbuf);
+	//}
+	//// [DEBUG END]
 
 	word_msb <<= 8;
 	uint16 word_lsb = ms5540cSpi.transfer(0x00);
 
-	// [DEBUG]
-	{
-		char cbuf[64];
-		snprintf(cbuf, sizeof(cbuf), "DEBUG: Ret word_lsb = %04X", word_lsb);
-		SerialUSB.println(cbuf);
-	}
-	// [DEBUG END]
+	//// [DEBUG]
+	//{
+	//	char cbuf[64];
+	//	snprintf(cbuf, sizeof(cbuf), "DEBUG: Ret word_lsb = %04X", word_lsb);
+	//	SerialUSB.println(cbuf);
+	//}
+	//// [DEBUG END]
 
 	return word_msb | word_lsb;
 }
 
-float CalculateTemperatureByMs5540c(uint16 temp_reg, uint32 c5, uint32 c6, long& r_dT, long& r_raw_temperature_decuple, long& r_temperature_compensation)
+float CalculateTemperatureByMs5540c(uint16 temp_reg, long& r_dT, long& r_raw_temperature_decuple, long& r_temperature_compensation)
 {
-	const long UT1 = (c5 * 8) + 20224;
+	const long UT1 = (ms5540c_c5 * 8) + 20224;
 	const long dT = (temp_reg - UT1);
-	long TEMP = 200 + ((dT * (c6 + 50)) / 1024);
-	const long TEMP_COMPENSATION = GetCompensateValueForTemperature(TEMP, c6);
+	long TEMP = 200 + ((dT * (ms5540c_c6 + 50)) / 1024);
+	const long TEMP_COMPENSATION = GetCompensateValueForTemperature(TEMP, ms5540c_c6);
 
-	// [DEBUG]
-	{
-		SerialUSB.println("DEBUG: CalculateTemperatureByMs5540c values = ");
+	//// [DEBUG]
+	//{
+	//	SerialUSB.println("DEBUG: CalculateTemperatureByMs5540c values = ");
 
-		char cbuf[64];
-		snprintf(cbuf, sizeof(cbuf), "temp_reg = %d", temp_reg);
-		SerialUSB.println(cbuf);
+	//	char cbuf[64];
+	//	snprintf(cbuf, sizeof(cbuf), "temp_reg = %d", temp_reg);
+	//	SerialUSB.println(cbuf);
 
-		snprintf(cbuf, sizeof(cbuf), "UT1 = %d", UT1);
-		SerialUSB.println(cbuf);
+	//	snprintf(cbuf, sizeof(cbuf), "UT1 = %d", UT1);
+	//	SerialUSB.println(cbuf);
 
-		snprintf(cbuf, sizeof(cbuf), "dT = %d", dT);
-		SerialUSB.println(cbuf);
+	//	snprintf(cbuf, sizeof(cbuf), "dT = %d", dT);
+	//	SerialUSB.println(cbuf);
 
-		snprintf(cbuf, sizeof(cbuf), "TEMP = %d", TEMP);
-		SerialUSB.println(cbuf);
+	//	snprintf(cbuf, sizeof(cbuf), "TEMP = %d", TEMP);
+	//	SerialUSB.println(cbuf);
 
-		snprintf(cbuf, sizeof(cbuf), "TEMP_COMPENSATION = %d", TEMP_COMPENSATION);
-		SerialUSB.println(cbuf);
-	}
-	// [DEBUG END]
+	//	snprintf(cbuf, sizeof(cbuf), "TEMP_COMPENSATION = %d", TEMP_COMPENSATION);
+	//	SerialUSB.println(cbuf);
+	//}
+	//// [DEBUG END]
 
 	r_dT = dT;
 	r_raw_temperature_decuple = TEMP;
@@ -864,61 +821,61 @@ float CalculateTemperatureByMs5540c(uint16 temp_reg, uint32 c5, uint32 c6, long&
 	return static_cast<float>(TEMP - TEMP_COMPENSATION) / 10;
 }
 
-float CalculatePressureByMs5540c(uint16 press_reg, uint32 c1, uint32 c2, uint32 c3, uint32 c4, long dT, long TEMP, long temperature_compensation)
+float CalculatePressureByMs5540c(uint16 press_reg, long dT, long TEMP, long temperature_compensation)
 {
-	const long OFF = (c2 * 4) + (((c4 - 512) * dT) / 4096);
-	const long SENS = c1 + ((c3 * dT) / 1024) + 24576;
+	const long OFF = (ms5540c_c2 * 4) + (((ms5540c_c4 - 512) * dT) / 4096);
+	const long SENS = ms5540c_c1 + ((ms5540c_c3 * dT) / 1024) + 24576;
 	const long X = ((SENS * (press_reg - 7168)) / 16384) - OFF;
 	long P = X * 10 / 32 + 2500;
 
-	// [DEBUG]
-	{
-		SerialUSB.println("DEBUG: CalculatePressureByMs5540c values = ");
+	//// [DEBUG]
+	//{
+	//	SerialUSB.println("DEBUG: CalculatePressureByMs5540c values = ");
 
-		char cbuf[64];
-		snprintf(cbuf, sizeof(cbuf), "press_reg = %d", press_reg);
-		SerialUSB.println(cbuf);
+	//	char cbuf[64];
+	//	snprintf(cbuf, sizeof(cbuf), "press_reg = %d", press_reg);
+	//	SerialUSB.println(cbuf);
 
-		snprintf(cbuf, sizeof(cbuf), "dT = %d", dT);
-		SerialUSB.println(cbuf);
+	//	snprintf(cbuf, sizeof(cbuf), "dT = %d", dT);
+	//	SerialUSB.println(cbuf);
 
-		snprintf(cbuf, sizeof(cbuf), "TEMP = %d", TEMP);
-		SerialUSB.println(cbuf);
+	//	snprintf(cbuf, sizeof(cbuf), "TEMP = %d", TEMP);
+	//	SerialUSB.println(cbuf);
 
-		snprintf(cbuf, sizeof(cbuf), "temperature_compensation = %d", temperature_compensation);
-		SerialUSB.println(cbuf);
+	//	snprintf(cbuf, sizeof(cbuf), "temperature_compensation = %d", temperature_compensation);
+	//	SerialUSB.println(cbuf);
 
-		snprintf(cbuf, sizeof(cbuf), "OFF = %d", OFF);
-		SerialUSB.println(cbuf);
+	//	snprintf(cbuf, sizeof(cbuf), "OFF = %d", OFF);
+	//	SerialUSB.println(cbuf);
 
-		snprintf(cbuf, sizeof(cbuf), "SENS = %d", SENS);
-		SerialUSB.println(cbuf);
+	//	snprintf(cbuf, sizeof(cbuf), "SENS = %d", SENS);
+	//	SerialUSB.println(cbuf);
 
-		snprintf(cbuf, sizeof(cbuf), "X = %d", X);
-		SerialUSB.println(cbuf);
+	//	snprintf(cbuf, sizeof(cbuf), "X = %d", X);
+	//	SerialUSB.println(cbuf);
 
-		snprintf(cbuf, sizeof(cbuf), "P = %d", P);
-		SerialUSB.println(cbuf);
+	//	snprintf(cbuf, sizeof(cbuf), "P = %d", P);
+	//	SerialUSB.println(cbuf);
 
-		snprintf(cbuf, sizeof(cbuf), "pressure_compensation = %d", GetCompensateValueForPressure(P, TEMP, temperature_compensation));
-		SerialUSB.println(cbuf);
-	}
-	// [DEBUG END]
+	//	snprintf(cbuf, sizeof(cbuf), "pressure_compensation = %d", GetCompensateValueForPressure(P, TEMP, temperature_compensation));
+	//	SerialUSB.println(cbuf);
+	//}
+	//// [DEBUG END]
 
 	P -= GetCompensateValueForPressure(P, TEMP, temperature_compensation);
-	return P;
+	return static_cast<float>(P) / 10;
 }
 
-long GetCompensateValueForTemperature(long TEMP, uint32 c6)
+long GetCompensateValueForTemperature(long TEMP, uint32 ms5540c_c6)
 {
 	long t2 = 0;
 	if (TEMP < 200)
 	{
-		t2 = 11 * (c6 + 24) * (200 - TEMP) * (200 - TEMP) / 1048576;
+		t2 = 11 * (ms5540c_c6 + 24) * (200 - TEMP) * (200 - TEMP) / 1048576;
 	}
 	else if (TEMP > 450)
 	{
-		t2 = 3 * (c6 + 24) * (450 - TEMP) * (450 - TEMP) / 1048576;
+		t2 = 3 * (ms5540c_c6 + 24) * (450 - TEMP) * (450 - TEMP) / 1048576;
 	}
 
 	return t2;
@@ -959,6 +916,44 @@ bool MakeAdcClockToMs5540c()
 #endif //C_SW_MS5540C_ADC_CLOCK_BY_EXT_RTC
 
 	return isSuccess;
+
+	////[DEBUG]
+	//{
+	//	exRtcI2c.beginTransmission(RTC_I2C_ADDR);
+	//	exRtcI2c.write(RTC_REG_SEC);
+	//	exRtcI2c.endTransmission();
+
+	//	uint8_t regv;
+	//	exRtcI2c.requestFrom(RTC_I2C_ADDR, 1);
+	//	while (exRtcI2c.available())
+	//	{
+	//		regv = exRtcI2c.read(); // receive a byte as character
+	//	}
+
+	//	SerialUSB.println("DEBUG: RTC8564 RTC_REG_SEC = ");
+	//	char logBuf[LOG_TEMP_BUF_SIZE] = { 0 };
+	//	snprintf(logBuf, sizeof(logBuf), "%#02X", regv);
+	//	SerialUSB.println(logBuf);
+	//}
+
+	//{
+	//	exRtcI2c.beginTransmission(RTC_I2C_ADDR);
+	//	exRtcI2c.write(RTC_REG_CLKO_FREQ);
+	//	exRtcI2c.endTransmission();
+
+	//	uint8_t regv;
+	//	exRtcI2c.requestFrom(RTC_I2C_ADDR, 1);
+	//	while (exRtcI2c.available())
+	//	{
+	//		regv = exRtcI2c.read(); // receive a byte as character
+	//	}
+
+	//	SerialUSB.println("DEBUG: RTC8564 RTC_REG_CLKO_FREQ = ");
+	//	char logBuf[LOG_TEMP_BUF_SIZE] = { 0 };
+	//	snprintf(logBuf, sizeof(logBuf), "%#02X", regv);
+	//	SerialUSB.println(logBuf);
+	//}
+	//// [DEBUG END]
 }
 
 struct TimerDevToHardwareTimer
@@ -1020,41 +1015,41 @@ bool MakeClockByPwm(uint8_t pin)
 	timer->refresh();
 	timer->resume();
 
-	// [DEBUG]
-	{
-		char logBuf[LOG_TEMP_BUF_SIZE] = { 0 };
-		snprintf(logBuf, sizeof(logBuf), "%08X", GPIOB_BASE->PUPDR);
-		SerialUSB.println(logBuf);
-
-		SerialUSB.println("DEBUG: GPIOB_OSPEEDR(2) = ");
-		snprintf(logBuf, sizeof(logBuf), "%08X", GPIOB_BASE->OSPEEDR);
-		SerialUSB.println(logBuf);
-
-		SerialUSB.println("DEBUG: GPIOB_OTYPER(2) = ");
-		snprintf(logBuf, sizeof(logBuf), "%08X", GPIOB_BASE->OTYPER);
-		SerialUSB.println(logBuf);
-
-		SerialUSB.println("DEBUG: GPIOB_MODER(2) = ");
-		snprintf(logBuf, sizeof(logBuf), "%08X", GPIOB_BASE->MODER);
-		SerialUSB.println(logBuf);
-
-		SerialUSB.println("DEBUG: GPIOB_OTYPER(2) = ");
-		snprintf(logBuf, sizeof(logBuf), "%08X", GPIOB_BASE->OTYPER);
-		SerialUSB.println(logBuf);
-
-		//[DEBUG]
-		snprintf(logBuf, sizeof(logBuf), "DEBUG: GPIOA_BASE->AFR[0] %08X", GPIOA_BASE->AFR[0]);
-		SerialUSB.println(logBuf);
-		snprintf(logBuf, sizeof(logBuf), "DEBUG: GPIOA_BASE->AFR[1] %08X", GPIOA_BASE->AFR[1]);
-		SerialUSB.println(logBuf);
-		snprintf(logBuf, sizeof(logBuf), "DEBUG: GPIOB_BASE->AFR[0] %08X", GPIOB_BASE->AFR[0]);
-		SerialUSB.println(logBuf);
-		snprintf(logBuf, sizeof(logBuf), "DEBUG: GPIOB_BASE->AFR[1] %08X", GPIOB_BASE->AFR[1]);
-		SerialUSB.println(logBuf);
-	}
-	//[DEBUG END]
-
 	return true;
+
+	//// [DEBUG]
+	//{
+	//	char logBuf[LOG_TEMP_BUF_SIZE] = { 0 };
+	//	snprintf(logBuf, sizeof(logBuf), "%08X", GPIOB_BASE->PUPDR);
+	//	SerialUSB.println(logBuf);
+
+	//	SerialUSB.println("DEBUG: GPIOB_OSPEEDR(2) = ");
+	//	snprintf(logBuf, sizeof(logBuf), "%08X", GPIOB_BASE->OSPEEDR);
+	//	SerialUSB.println(logBuf);
+
+	//	SerialUSB.println("DEBUG: GPIOB_OTYPER(2) = ");
+	//	snprintf(logBuf, sizeof(logBuf), "%08X", GPIOB_BASE->OTYPER);
+	//	SerialUSB.println(logBuf);
+
+	//	SerialUSB.println("DEBUG: GPIOB_MODER(2) = ");
+	//	snprintf(logBuf, sizeof(logBuf), "%08X", GPIOB_BASE->MODER);
+	//	SerialUSB.println(logBuf);
+
+	//	SerialUSB.println("DEBUG: GPIOB_OTYPER(2) = ");
+	//	snprintf(logBuf, sizeof(logBuf), "%08X", GPIOB_BASE->OTYPER);
+	//	SerialUSB.println(logBuf);
+
+	//	//[DEBUG]
+	//	snprintf(logBuf, sizeof(logBuf), "DEBUG: GPIOA_BASE->AFR[0] %08X", GPIOA_BASE->AFR[0]);
+	//	SerialUSB.println(logBuf);
+	//	snprintf(logBuf, sizeof(logBuf), "DEBUG: GPIOA_BASE->AFR[1] %08X", GPIOA_BASE->AFR[1]);
+	//	SerialUSB.println(logBuf);
+	//	snprintf(logBuf, sizeof(logBuf), "DEBUG: GPIOB_BASE->AFR[0] %08X", GPIOB_BASE->AFR[0]);
+	//	SerialUSB.println(logBuf);
+	//	snprintf(logBuf, sizeof(logBuf), "DEBUG: GPIOB_BASE->AFR[1] %08X", GPIOB_BASE->AFR[1]);
+	//	SerialUSB.println(logBuf);
+	//}
+	////[DEBUG END]
 }
 #endif //C_SW_MS5540C
 
@@ -1093,12 +1088,12 @@ bool GpsRead(double& lat, double& lng, double& meter)
 
 #if C_SW_AMBIENT
 // Ambient functions
-bool SendToAmbient(float temp, float humi, float water_temp, float ext_battery_v, float in_battery_v, float in_temperature)
+bool SendToAmbient(float temp, float humi, float water_temp, float ms5540c_press, float ms5540c_temp, float ext_battery_v, float in_battery_v, float in_temperature)
 {
-	return SendToAmbient(temp, humi, water_temp, ext_battery_v, in_battery_v, in_temperature, INVALID_GPS_VALUE, INVALID_GPS_VALUE, INVALID_GPS_VALUE);
+	return SendToAmbient(temp, humi, water_temp, ms5540c_press, ms5540c_temp, ext_battery_v, in_battery_v, in_temperature, INVALID_GPS_VALUE, INVALID_GPS_VALUE, INVALID_GPS_VALUE);
 }
 
-bool SendToAmbient(float temp, float humi, float water_temp, float ext_battery_v, float in_battery_v, float in_temperature, double lat, double lng, double meter)
+bool SendToAmbient(float temp, float humi, float water_temp, float ms5540c_press, float ms5540c_temp, float ext_battery_v, float in_battery_v, float in_temperature, double lat, double lng, double meter)
 {
 	if (!ambient.set(1, temp))
 	{
@@ -1145,6 +1140,22 @@ bool SendToAmbient(float temp, float humi, float water_temp, float ext_battery_v
 	{
 		char logBuf[LOG_TEMP_BUF_SIZE] = { 0 };
 		snprintf(logBuf, sizeof(logBuf), "ERROR: ambient.set(6, %f)", in_temperature);
+		SerialUSB.println(logBuf);
+		return false;
+	}
+
+	if (!ambient.set(7, ms5540c_press))
+	{
+		char logBuf[LOG_TEMP_BUF_SIZE] = { 0 };
+		snprintf(logBuf, sizeof(logBuf), "ERROR: ambient.set(7, %f)", ms5540c_press);
+		SerialUSB.println(logBuf);
+		return false;
+	}
+
+	if (!ambient.set(8, ms5540c_temp))
+	{
+		char logBuf[LOG_TEMP_BUF_SIZE] = { 0 };
+		snprintf(logBuf, sizeof(logBuf), "ERROR: ambient.set(8, %f)", ms5540c_temp);
 		SerialUSB.println(logBuf);
 		return false;
 	}
