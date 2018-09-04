@@ -1,0 +1,1 @@
+﻿C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\Common7\IDE\VC\VCTargets\Microsoft.Cpp.Platform.targets(61,5): error MSB8038: プラットフォーム ツールセットが定義されていません。プロジェクト プロパティ UI で使用可能なプラットフォーム ツールセットのいずれかを選択してください。
