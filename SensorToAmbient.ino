@@ -23,13 +23,13 @@ typedef int IRQn_Type;
 
 // Compile Switch
 #define C_SW_LTE 1
-#define C_SW_AMBIENT 0
-#define C_SW_DHT11 0
-#define C_SW_DS18B20 0
-#define C_SW_GPS 0
-#define C_SW_BATTERY_V 0
+#define C_SW_AMBIENT 1
+#define C_SW_DHT11 1
+#define C_SW_DS18B20 1
+#define C_SW_GPS 1
+#define C_SW_BATTERY_V 1
 #define C_SW_MS5540C 1
-#define C_SW_SLEEP_WAIT 0
+#define C_SW_SLEEP_WAIT 1
 #define C_SW_MS5540C_ADC_CLOCK_BY_EXT_RTC 0
 
 
@@ -1185,17 +1185,17 @@ bool SendToAmbient(float temp, float humi, float water_temp, float ms5540c_press
 		}
 	}
 
-	if (meter != INVALID_GPS_VALUE)
-	{
-		snprintf(cbuf, sizeof(cbuf), "%4.2f", meter);
-		if (!ambient.set(3, cbuf))
-		{
-			char logBuf[LOG_TEMP_BUF_SIZE] = { 0 };
-			snprintf(logBuf, sizeof(logBuf), "ERROR: ambient.set(3, %s)", cbuf);
-			SerialUSB.println(logBuf);
-			return false;
-		}
-	}
+	//if (meter != INVALID_GPS_VALUE)
+	//{
+	//	snprintf(cbuf, sizeof(cbuf), "%4.2f", meter);
+	//	if (!ambient.set(3, cbuf))
+	//	{
+	//		char logBuf[LOG_TEMP_BUF_SIZE] = { 0 };
+	//		snprintf(logBuf, sizeof(logBuf), "ERROR: ambient.set(3, %s)", cbuf);
+	//		SerialUSB.println(logBuf);
+	//		return false;
+	//	}
+	//}
 
 	if (!ambient.send())
 	{
