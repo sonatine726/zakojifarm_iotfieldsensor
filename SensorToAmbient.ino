@@ -30,7 +30,7 @@ typedef int IRQn_Type;
 #define C_SW_BATTERY_V 0
 #define C_SW_MS5540C 1
 #define C_SW_SLEEP_WAIT 0
-#define C_SW_MS5540C_ADC_CLOCK_BY_ADC 1
+#define C_SW_MS5540C_ADC_CLOCK_BY_EXT_RTC 0
 
 
 //Common global
@@ -42,7 +42,7 @@ typedef int IRQn_Type;
 WioLTE Wio;
 WioLTEClient WioClient(&Wio);
 
-constexpr int LOG_TEMP_BUF_SIZE = 32;
+constexpr int LOG_TEMP_BUF_SIZE = 64;
 
 RTClock rtc(RTCSEL_LSI);
 constexpr time_t JAPAN_TIME_DIFF = 9 * 60 * 60; // UTC + 9h
@@ -106,7 +106,7 @@ constexpr uint8 RTC_REG_CLKO_FREQ = 0x0D;
 constexpr uint8 RTC_REG_TIMER_CTR = 0x0E;
 constexpr uint8 RTC_REG_TIMER = 0x0F;
 
-constexpr uint8 ADC_CLOCK_PIN_FOR_MS5540C = D20;
+constexpr uint8 ADC_CLOCK_PIN_FOR_MS5540C = Port2Pin('B', 4); // D20;
 
 Ms5540cSPI ms5540cSpi(1);
 #endif //C_SW_MS5540C
@@ -122,23 +122,23 @@ void setup()
 {
 	Wio.Init();
 
-    SerialUSB.println("INFO: setup()");
+	SerialUSB.println("INFO: setup()");
 
 	Wio.PowerSupplyGrove(true);
 
 #if C_SW_LTE
-    //Setup LTE
-    SerialUSB.println("INFO: Setup LTE");
-    if(!SetupLTE()){
-        return;
-    }
+	//Setup LTE
+	SerialUSB.println("INFO: Setup LTE");
+	if (!SetupLTE()) {
+		return;
+	}
 
 	UpdateRtcByNtp();
 
 #if C_SW_AMBIENT
-    //Setup Ambient
-    SerialUSB.println("INFO: Setup Ambient");
-    ambient.begin(AMBIENT_CHANNEL_ID, AMBIENT_WRITE_KEY, &WioClient);
+	//Setup Ambient
+	SerialUSB.println("INFO: Setup Ambient");
+	ambient.begin(AMBIENT_CHANNEL_ID, AMBIENT_WRITE_KEY, &WioClient);
 #endif //C_SW_AMBIENT
 
 #else //C_SW_LTE
@@ -146,15 +146,15 @@ void setup()
 #endif //C_SW_LTE
 
 #if C_SW_DHT11
-    //Setup DHT11
-    SerialUSB.println("INFO: Setup DHT11");
-    TemperatureAndHumidityBegin(SENSOR_PIN);
+	//Setup DHT11
+	SerialUSB.println("INFO: Setup DHT11");
+	TemperatureAndHumidityBegin(SENSOR_PIN);
 #endif //C_SW_DHT11
 
 #if C_SW_DS18B20
-    //Setup DS18B20
-    SerialUSB.println("INFO: SetupDS18B20");
-    SetupDS18B20();
+	//Setup DS18B20
+	SerialUSB.println("INFO: SetupDS18B20");
+	SetupDS18B20();
 #endif //C_SW_DS18B20
 
 #if C_SW_MS5540C
@@ -164,6 +164,14 @@ void setup()
 	SetupExtRtc(current_time);
 
 	SetupMs5540c();
+
+	//[DEBUG]
+	{
+		char cbuf[64] = { 0 };
+		snprintf(cbuf, sizeof(cbuf), "DEBUG: RCC_CFGR = %08X", RCC_BASE->CFGR);
+		SerialUSB.println(cbuf);
+	}
+	//[DEBUG END]
 #endif //C_SW_MS5540C
 
 #if C_SW_BATTERY_V
@@ -171,50 +179,50 @@ void setup()
 #endif //C_SW_BATTERY_V
 
 #if C_SW_GPS
-    //Setup GPS
-    GpsBegin(&Serial);
-    Wio.PowerSupplyGrove(true);
-    delay(500);
+	//Setup GPS
+	GpsBegin(&Serial);
+	Wio.PowerSupplyGrove(true);
+	delay(500);
 #endif
 }
 
 void loop()
 {
-	char cbuf[64] = {0};
-    struct tm current_time = {0};
-    rtc.getTime(&current_time);
-    snprintf(cbuf, sizeof(cbuf), "loop() : %s", asctime(&current_time));
-    SerialUSB.println(cbuf);
+	char cbuf[64] = { 0 };
+	struct tm current_time = { 0 };
+	rtc.getTime(&current_time);
+	snprintf(cbuf, sizeof(cbuf), "loop() : %s", asctime(&current_time));
+	SerialUSB.println(cbuf);
 
-    /* Get temperature and humidity */
-    float temp = INVALID_TEMP_AND_HUMID;
-    float humi = INVALID_TEMP_AND_HUMID;
+	/* Get temperature and humidity */
+	float temp = INVALID_TEMP_AND_HUMID;
+	float humi = INVALID_TEMP_AND_HUMID;
 
 #if C_SW_DHT11
-    SerialUSB.println("INFO: TemperatureAndHumidityRead()");
-    if(TemperatureAndHumidityRead(&temp, &humi))
-    {
-        //Send to serial
-        SerialUSB.print("Current humidity = ");
-        SerialUSB.print(humi);
-        SerialUSB.print("%  ");
-        SerialUSB.print("temperature = ");
-        SerialUSB.print(temp);
-        SerialUSB.println("C");
-    }
-    else
-    {
-        SerialUSB.println("ERROR: TemperatureAndHumidityRead");
-    }
+	SerialUSB.println("INFO: TemperatureAndHumidityRead()");
+	if (TemperatureAndHumidityRead(&temp, &humi))
+	{
+		//Send to serial
+		SerialUSB.print("Current humidity = ");
+		SerialUSB.print(humi);
+		SerialUSB.print("%  ");
+		SerialUSB.print("temperature = ");
+		SerialUSB.print(temp);
+		SerialUSB.println("C");
+	}
+	else
+	{
+		SerialUSB.println("ERROR: TemperatureAndHumidityRead");
+	}
 #endif //C_SW_DHT11
 
 	float tempDs18b20 = INVALID_TEMP_AND_HUMID;
 #if C_SW_DS18B20
-    /* Get water temperature from DS18B20 */
-    SerialUSB.println("INFO: Get DS18B20 Temperature");
-    tempDs18b20 = GetTemperatureDS18B20();
-    snprintf(cbuf, sizeof(cbuf), "INFO: DS18B20 temp: %f", tempDs18b20);
-    SerialUSB.println(cbuf);
+	/* Get water temperature from DS18B20 */
+	SerialUSB.println("INFO: Get DS18B20 Temperature");
+	tempDs18b20 = GetTemperatureDS18B20();
+	snprintf(cbuf, sizeof(cbuf), "INFO: DS18B20 temp: %f", tempDs18b20);
+	SerialUSB.println(cbuf);
 #endif //C_SW_DS18B20
 
 	float press_ms5540c = 0;
@@ -262,30 +270,33 @@ void loop()
 		SerialUSB.println(logBuf);
 	}
 
+	//while (1)
+	//{
 	GetPressureAndTemperatureFromMs5540c(press_ms5540c, temp_ms5540c);
 	SerialUSB.println("INFO: MS5540C press and temp= ");
 	SerialUSB.println(press_ms5540c);
 	SerialUSB.println(temp_ms5540c);
+	//}
 #endif //C_SW_MS5540C
 
 	bool validGps = false;
 	double lat, lng, meter;
 #if C_SW_GPS
-    /* Get GPS */
-    SerialUSB.println("INFO: GpsRead()");
-    validGps = GpsRead(lat, lng, meter);
-    if(validGps)
-    {
-        SerialUSB.println("GPS Value:");
-        snprintf(cbuf, sizeof(cbuf), "lat: %12.8f", lat);
-        SerialUSB.println(cbuf);
+	/* Get GPS */
+	SerialUSB.println("INFO: GpsRead()");
+	validGps = GpsRead(lat, lng, meter);
+	if (validGps)
+	{
+		SerialUSB.println("GPS Value:");
+		snprintf(cbuf, sizeof(cbuf), "lat: %12.8f", lat);
+		SerialUSB.println(cbuf);
 
-        snprintf(cbuf, sizeof(cbuf), "lng: %12.8f", lng);
-        SerialUSB.println(cbuf);
+		snprintf(cbuf, sizeof(cbuf), "lng: %12.8f", lng);
+		SerialUSB.println(cbuf);
 
-        snprintf(cbuf, sizeof(cbuf), "meter: %4.2f", meter);
-        SerialUSB.println(cbuf);
-    }
+		snprintf(cbuf, sizeof(cbuf), "meter: %4.2f", meter);
+		SerialUSB.println(cbuf);
+	}
 #endif //C_SW_GPS
 
 	float ext_battery_v = 0;
@@ -328,28 +339,28 @@ void loop()
 #endif //C_SW_BATTERY_V
 
 #if C_SW_LTE && C_SW_AMBIENT
-    /* Send to Ambient */
-    SerialUSB.println("INFO: SendToAmbient()");
-    bool isSendSuccess;
-    if(validGps)
-    {
-        isSendSuccess = SendToAmbient(temp, humi, tempDs18b20, ext_battery_v, in_battery_v, in_temperature, lat, lng, meter);
-    }
-    else
-    {
-        isSendSuccess = SendToAmbient(temp, humi, tempDs18b20, ext_battery_v, in_battery_v, in_temperature);
-    }
+	/* Send to Ambient */
+	SerialUSB.println("INFO: SendToAmbient()");
+	bool isSendSuccess;
+	if (validGps)
+	{
+		isSendSuccess = SendToAmbient(temp, humi, tempDs18b20, ext_battery_v, in_battery_v, in_temperature, lat, lng, meter);
+	}
+	else
+	{
+		isSendSuccess = SendToAmbient(temp, humi, tempDs18b20, ext_battery_v, in_battery_v, in_temperature);
+	}
 
-    if(!isSendSuccess)
-    {
-        SerialUSB.println("ERROR: SendToAmbient");
-    }
+	if (!isSendSuccess)
+	{
+		SerialUSB.println("ERROR: SendToAmbient");
+	}
 #endif //C_SW_LTE && C_SW_AMBIENT
 
-    /* Wait next loop */
-    unsigned long elapse = millis();
-    snprintf(cbuf, sizeof(cbuf), "Run elapse: %ld msec", elapse);
-    SerialUSB.println(cbuf);
+	/* Wait next loop */
+	unsigned long elapse = millis();
+	snprintf(cbuf, sizeof(cbuf), "Run elapse: %ld msec", elapse);
+	SerialUSB.println(cbuf);
 
 #if C_SW_SLEEP_WAIT
 	time_t waittime_sec = 0;
@@ -361,9 +372,9 @@ void loop()
 	{
 		waittime_sec = SLEEP_MSEC_WHEN_OVER_LOOP_PERIOD / 1000;
 	}
-    
+
 	snprintf(cbuf, sizeof(cbuf), "Wait next loop: %ld sec", waittime_sec);
-    SerialUSB.println(cbuf);
+	SerialUSB.println(cbuf);
 
 	Wio.PowerSupplyGrove(false);
 
@@ -372,9 +383,10 @@ void loop()
 	ShutdownLTE();
 #endif //C_SW_LTE
 
-    SleepUntilNextLoop(waittime_sec);
+	SleepUntilNextLoop(waittime_sec);
 #else //C_SW_SLEEP_WAIT
-	delay(LOOP_PERIOD_MSEC);
+	//delay(LOOP_PERIOD_MSEC);
+	delay(5000);
 #endif //C_SW_SLEEP_WAIT
 }
 
@@ -382,8 +394,8 @@ void loop()
 //LTE functions
 bool SetupLTE()
 {
-    Wio.PowerSupplyLTE(true);
-    delay(500);
+	Wio.PowerSupplyLTE(true);
+	delay(500);
 
 	if (!Wio.TurnOnOrReset())
 	{
@@ -391,21 +403,21 @@ bool SetupLTE()
 		return false;
 	}
 
-    if (!Wio.Activate(APN, USERNAME, PASSWORD))
-    {
-        SerialUSB.println("ERROR: Wio.Activate");
-        return false;
-    }
+	if (!Wio.Activate(APN, USERNAME, PASSWORD))
+	{
+		SerialUSB.println("ERROR: Wio.Activate");
+		return false;
+	}
 
-    return true;
+	return true;
 }
 
 
 void ShutdownLTE()
 {
-    Wio.Deactivate();  // Deactivate a PDP context. Added at v1.1.9
-    Wio.TurnOff(); // Shutdown the LTE module. Added at v1.1.6
-    Wio.PowerSupplyLTE(false); // Turn the power supply to LTE module off
+	Wio.Deactivate();  // Deactivate a PDP context. Added at v1.1.9
+	Wio.TurnOff(); // Shutdown the LTE module. Added at v1.1.6
+	Wio.PowerSupplyLTE(false); // Turn the power supply to LTE module off
 }
 #endif //C_SW_LTE
 
@@ -416,94 +428,94 @@ int TemperatureAndHumidityPin;
 
 void TemperatureAndHumidityBegin(int pin)
 {
-    TemperatureAndHumidityPin = pin;
-    DHT11Init(TemperatureAndHumidityPin);
+	TemperatureAndHumidityPin = pin;
+	DHT11Init(TemperatureAndHumidityPin);
 }
 
 bool TemperatureAndHumidityRead(float* temperature, float* humidity)
 {
-    byte data[5] = {0};
+	byte data[5] = { 0 };
 
-    DHT11Start(TemperatureAndHumidityPin);
-    for (int i = 0; i < 5; i++)
-    {
-        data[i] = DHT11ReadByte(TemperatureAndHumidityPin);
-    }
-    DHT11Finish(TemperatureAndHumidityPin);
+	DHT11Start(TemperatureAndHumidityPin);
+	for (int i = 0; i < 5; i++)
+	{
+		data[i] = DHT11ReadByte(TemperatureAndHumidityPin);
+	}
+	DHT11Finish(TemperatureAndHumidityPin);
 
-    if(!DHT11Check(data))
-    {
-    return false;
-    }
+	if (!DHT11Check(data))
+	{
+		return false;
+	}
 
-    *humidity = (float)data[0] + (float)data[1] / 10.0f;
-    *temperature = (float)data[2] + (float)data[3] / 10.0f;
+	*humidity = (float)data[0] + (float)data[1] / 10.0f;
+	*temperature = (float)data[2] + (float)data[3] / 10.0f;
 
-    return true;
+	return true;
 }
 
 void DHT11Init(int pin)
 {
-    digitalWrite(pin, HIGH);
-    pinMode(pin, OUTPUT);
+	digitalWrite(pin, HIGH);
+	pinMode(pin, OUTPUT);
 }
 
 void DHT11Start(int pin)
 {
-    // Host the start of signal
-    digitalWrite(pin, LOW);
-    delay(18);
+	// Host the start of signal
+	digitalWrite(pin, LOW);
+	delay(18);
 
-    // Pulled up to wait for
-    pinMode(pin, INPUT);
-    while (!digitalRead(pin)) ;
+	// Pulled up to wait for
+	pinMode(pin, INPUT);
+	while (!digitalRead(pin));
 
-    // Response signal
-    while (digitalRead(pin)) ;
+	// Response signal
+	while (digitalRead(pin));
 
-    // Pulled ready to output
-    while (!digitalRead(pin)) ;
+	// Pulled ready to output
+	while (!digitalRead(pin));
 }
 
 byte DHT11ReadByte(int pin)
 {
-    byte data = 0;
+	byte data = 0;
 
-    for (int i = 0; i < 8; i++)
-    {
-        while (digitalRead(pin)) ;
+	for (int i = 0; i < 8; i++)
+	{
+		while (digitalRead(pin));
 
-        while (!digitalRead(pin)) ;
-        unsigned long start = micros();
+		while (!digitalRead(pin));
+		unsigned long start = micros();
 
-        while (digitalRead(pin)) ;
-        unsigned long finish = micros();
+		while (digitalRead(pin));
+		unsigned long finish = micros();
 
-        if ((unsigned long)(finish - start) > 50)
-        {
-            data |= 1 << (7 - i);
-        }
-    }
+		if ((unsigned long)(finish - start) > 50)
+		{
+			data |= 1 << (7 - i);
+		}
+	}
 
-    return data;
+	return data;
 }
 
 void DHT11Finish(int pin)
 {
-    while (!digitalRead(pin)) ;
-    digitalWrite(pin, HIGH);
-    pinMode(pin, OUTPUT);
+	while (!digitalRead(pin));
+	digitalWrite(pin, HIGH);
+	pinMode(pin, OUTPUT);
 }
 
 bool DHT11Check(const byte data[5])
 {
-    byte sum = 0;
-    for (int i = 0; i < 4; ++i)
-    {
-        sum += data[i];
-    }
+	byte sum = 0;
+	for (int i = 0; i < 4; ++i)
+	{
+		sum += data[i];
+	}
 
-    return (data[4] == sum) && (data[1] < 10) && (data[3] < 10);
+	return (data[4] == sum) && (data[1] < 10) && (data[3] < 10);
 }
 #endif //C_SW_DHT11
 
@@ -512,14 +524,14 @@ bool DHT11Check(const byte data[5])
 /* Get water temperature from DS18B20 functions */
 void SetupDS18B20()
 {
-    dS18b20.begin();
-    dS18b20.setResolution(DS18B20_TEMPERATURE_RESOLUTION_BIT);
+	dS18b20.begin();
+	dS18b20.setResolution(DS18B20_TEMPERATURE_RESOLUTION_BIT);
 }
 
 float GetTemperatureDS18B20()
 {
 	dS18b20.requestTemperatures();
-    return dS18b20.getTempCByIndex(0);
+	return dS18b20.getTempCByIndex(0);
 }
 #endif //C_SW_DS18B20
 
@@ -627,8 +639,12 @@ uint8 GetRtcTimeRegValue(uint32 time)
 
 void SetupMs5540c()
 {
-	//gpio_set_af_mode(GPIOA, 5, 0);
+	//Set AF of pins for MS5540C
+	gpio_set_af_mode(GPIOA, 5, 0);
+	gpio_set_af_mode(GPIOB, 4, 2);
+
 	ms5540cSpi.begin(SPI_281_250KHZ, MSBFIRST, SPI_MODE0);
+	//ms5540cSpi.begin(SPI_562_500KHZ, MSBFIRST, SPI_MODE0);
 
 	//[DEBUG]
 	{
@@ -655,7 +671,7 @@ void SetupMs5540c()
 		SerialUSB.println(ms5540cSpi.nssPin());
 
 		SerialUSB.println("DEBUG: GPIOA_PUPDR = ");
-		char logBuf[LOG_TEMP_BUF_SIZE] = {0};
+		char logBuf[LOG_TEMP_BUF_SIZE] = { 0 };
 		snprintf(logBuf, sizeof(logBuf), "%08X", GPIOA_BASE->PUPDR);
 		SerialUSB.println(logBuf);
 
@@ -665,6 +681,14 @@ void SetupMs5540c()
 
 		SerialUSB.println("DEBUG: GPIOB_OSPEEDR = ");
 		snprintf(logBuf, sizeof(logBuf), "%08X", GPIOB_BASE->OSPEEDR);
+		SerialUSB.println(logBuf);
+
+		SerialUSB.println("DEBUG: GPIOB_OTYPER = ");
+		snprintf(logBuf, sizeof(logBuf), "%08X", GPIOB_BASE->OTYPER);
+		SerialUSB.println(logBuf);
+
+		SerialUSB.println("DEBUG: GPIOB_MODER = ");
+		snprintf(logBuf, sizeof(logBuf), "%08X", GPIOB_BASE->MODER);
 		SerialUSB.println(logBuf);
 
 		SerialUSB.println("DEBUG: GPIOB_OTYPER = ");
@@ -717,10 +741,10 @@ void GetPressureAndTemperatureFromMs5540c(float& pressure, float& temperature)
 	}
 
 	//Get temperature register value
-	const uint16 temp_reg = SendCommandAndGetWord(0x1D, 0x20, 35);
+	const uint16 temp_reg = SendCommandAndGetWord(0x0F, 0x20, 35);
 
 	//Get pressure register value
-	const uint16 press_reg = SendCommandAndGetWord(0x1D, 0x40, 35);
+	const uint16 press_reg = SendCommandAndGetWord(0x0F, 0x40, 35);
 
 	//Calculate temperature
 	long dT, raw_temperature_decuple, temperature_compensation;
@@ -781,8 +805,26 @@ uint16 SendCommandAndGetWord(uint8 command_msb, uint8 command_lsb, unsigned int 
 	// [DEBUG END]
 
 	uint16 word_msb = ms5540cSpi.transfer(0x00);
+
+	// [DEBUG]
+	{
+		char cbuf[64];
+		snprintf(cbuf, sizeof(cbuf), "DEBUG: Ret word_msb = %04X", word_msb);
+		SerialUSB.println(cbuf);
+	}
+	// [DEBUG END]
+
 	word_msb <<= 8;
 	uint16 word_lsb = ms5540cSpi.transfer(0x00);
+
+	// [DEBUG]
+	{
+		char cbuf[64];
+		snprintf(cbuf, sizeof(cbuf), "DEBUG: Ret word_lsb = %04X", word_lsb);
+		SerialUSB.println(cbuf);
+	}
+	// [DEBUG END]
+
 	return word_msb | word_lsb;
 }
 
@@ -792,6 +834,28 @@ float CalculateTemperatureByMs5540c(uint16 temp_reg, uint32 c5, uint32 c6, long&
 	const long dT = (temp_reg - UT1);
 	long TEMP = 200 + ((dT * (c6 + 50)) / 1024);
 	const long TEMP_COMPENSATION = GetCompensateValueForTemperature(TEMP, c6);
+
+	// [DEBUG]
+	{
+		SerialUSB.println("DEBUG: CalculateTemperatureByMs5540c values = ");
+
+		char cbuf[64];
+		snprintf(cbuf, sizeof(cbuf), "temp_reg = %d", temp_reg);
+		SerialUSB.println(cbuf);
+
+		snprintf(cbuf, sizeof(cbuf), "UT1 = %d", UT1);
+		SerialUSB.println(cbuf);
+
+		snprintf(cbuf, sizeof(cbuf), "dT = %d", dT);
+		SerialUSB.println(cbuf);
+
+		snprintf(cbuf, sizeof(cbuf), "TEMP = %d", TEMP);
+		SerialUSB.println(cbuf);
+
+		snprintf(cbuf, sizeof(cbuf), "TEMP_COMPENSATION = %d", TEMP_COMPENSATION);
+		SerialUSB.println(cbuf);
+	}
+	// [DEBUG END]
 
 	r_dT = dT;
 	r_raw_temperature_decuple = TEMP;
@@ -806,6 +870,41 @@ float CalculatePressureByMs5540c(uint16 press_reg, uint32 c1, uint32 c2, uint32 
 	const long SENS = c1 + ((c3 * dT) / 1024) + 24576;
 	const long X = ((SENS * (press_reg - 7168)) / 16384) - OFF;
 	long P = X * 10 / 32 + 2500;
+
+	// [DEBUG]
+	{
+		SerialUSB.println("DEBUG: CalculatePressureByMs5540c values = ");
+
+		char cbuf[64];
+		snprintf(cbuf, sizeof(cbuf), "press_reg = %d", press_reg);
+		SerialUSB.println(cbuf);
+
+		snprintf(cbuf, sizeof(cbuf), "dT = %d", dT);
+		SerialUSB.println(cbuf);
+
+		snprintf(cbuf, sizeof(cbuf), "TEMP = %d", TEMP);
+		SerialUSB.println(cbuf);
+
+		snprintf(cbuf, sizeof(cbuf), "temperature_compensation = %d", temperature_compensation);
+		SerialUSB.println(cbuf);
+
+		snprintf(cbuf, sizeof(cbuf), "OFF = %d", OFF);
+		SerialUSB.println(cbuf);
+
+		snprintf(cbuf, sizeof(cbuf), "SENS = %d", SENS);
+		SerialUSB.println(cbuf);
+
+		snprintf(cbuf, sizeof(cbuf), "X = %d", X);
+		SerialUSB.println(cbuf);
+
+		snprintf(cbuf, sizeof(cbuf), "P = %d", P);
+		SerialUSB.println(cbuf);
+
+		snprintf(cbuf, sizeof(cbuf), "pressure_compensation = %d", GetCompensateValueForPressure(P, TEMP, temperature_compensation));
+		SerialUSB.println(cbuf);
+	}
+	// [DEBUG END]
+
 	P -= GetCompensateValueForPressure(P, TEMP, temperature_compensation);
 	return P;
 }
@@ -850,14 +949,14 @@ bool MakeAdcClockToMs5540c()
 {
 	bool isSuccess = true;
 
-#if C_SW_MS5540C_ADC_CLOCK_BY_ADC
+#if C_SW_MS5540C_ADC_CLOCK_BY_EXT_RTC
 	exRtcI2c.beginTransmission(RTC_I2C_ADDR);
 	exRtcI2c.write(RTC_REG_CLKO_FREQ);
 	exRtcI2c.write(0x80);
 	exRtcI2c.endTransmission();
-#else //C_SW_MS5540C_ADC_CLOCK_BY_ADC
+#else //C_SW_MS5540C_ADC_CLOCK_BY_EXT_RTC
 	isSuccess = MakeClockByPwm(ADC_CLOCK_PIN_FOR_MS5540C);
-#endif //C_SW_MS5540C_ADC_CLOCK_BY_ADC
+#endif //C_SW_MS5540C_ADC_CLOCK_BY_EXT_RTC
 
 	return isSuccess;
 }
@@ -872,7 +971,7 @@ struct TimerDevToHardwareTimer
 extern HardwareTimer Timer6;
 extern HardwareTimer Timer7;
 
-const TimerDevToHardwareTimer TIMERDEV_TO_HARDWARETIMER_MAP[] = 
+const TimerDevToHardwareTimer TIMERDEV_TO_HARDWARETIMER_MAP[] =
 {
 	{TIMER1, &Timer1},
 	{TIMER2, &Timer2},
@@ -913,13 +1012,47 @@ bool MakeClockByPwm(uint8_t pin)
 	pinMode(pin, PWM);
 
 	timer->pause();
-	timer->setPrescaleFactor(1344); //Clock prescale from 84MHz to 32.768 * 2 KHz
+	timer->setPrescaleFactor(640); //Clock prescale from 42MHz to 32.768 * 2 KHz
 	timer->setOverflow(2);        // Cycle is 32.768 KHz
 	timer->setMode(cc_channel, TIMER_PWM);
 	timer->setCompare(cc_channel, 1); // Duty ratio is 50%
 	timer->setCount(0);
 	timer->refresh();
 	timer->resume();
+
+	// [DEBUG]
+	{
+		char logBuf[LOG_TEMP_BUF_SIZE] = { 0 };
+		snprintf(logBuf, sizeof(logBuf), "%08X", GPIOB_BASE->PUPDR);
+		SerialUSB.println(logBuf);
+
+		SerialUSB.println("DEBUG: GPIOB_OSPEEDR(2) = ");
+		snprintf(logBuf, sizeof(logBuf), "%08X", GPIOB_BASE->OSPEEDR);
+		SerialUSB.println(logBuf);
+
+		SerialUSB.println("DEBUG: GPIOB_OTYPER(2) = ");
+		snprintf(logBuf, sizeof(logBuf), "%08X", GPIOB_BASE->OTYPER);
+		SerialUSB.println(logBuf);
+
+		SerialUSB.println("DEBUG: GPIOB_MODER(2) = ");
+		snprintf(logBuf, sizeof(logBuf), "%08X", GPIOB_BASE->MODER);
+		SerialUSB.println(logBuf);
+
+		SerialUSB.println("DEBUG: GPIOB_OTYPER(2) = ");
+		snprintf(logBuf, sizeof(logBuf), "%08X", GPIOB_BASE->OTYPER);
+		SerialUSB.println(logBuf);
+
+		//[DEBUG]
+		snprintf(logBuf, sizeof(logBuf), "DEBUG: GPIOA_BASE->AFR[0] %08X", GPIOA_BASE->AFR[0]);
+		SerialUSB.println(logBuf);
+		snprintf(logBuf, sizeof(logBuf), "DEBUG: GPIOA_BASE->AFR[1] %08X", GPIOA_BASE->AFR[1]);
+		SerialUSB.println(logBuf);
+		snprintf(logBuf, sizeof(logBuf), "DEBUG: GPIOB_BASE->AFR[0] %08X", GPIOB_BASE->AFR[0]);
+		SerialUSB.println(logBuf);
+		snprintf(logBuf, sizeof(logBuf), "DEBUG: GPIOB_BASE->AFR[1] %08X", GPIOB_BASE->AFR[1]);
+		SerialUSB.println(logBuf);
+	}
+	//[DEBUG END]
 
 	return true;
 }
@@ -930,31 +1063,31 @@ bool MakeClockByPwm(uint8_t pin)
 //GPS functions
 void GpsBegin(HardwareSerial* serial)
 {
-    GpsSerial = serial;
-    GpsSerial->begin(9600);
+	GpsSerial = serial;
+	GpsSerial->begin(9600);
 }
 
 bool GpsRead(double& lat, double& lng, double& meter)
 {
-    while(GpsSerial->available())
-    {
-        if(gps.encode(GpsSerial->read()))
-        {
-          break;
-        }
-    }
+	while (GpsSerial->available())
+	{
+		if (gps.encode(GpsSerial->read()))
+		{
+			break;
+		}
+	}
 
-    if(!gps.location.isValid())
-    {
-        SerialUSB.println("INFO: GPS location not valid");
-        return false;
-    }
+	if (!gps.location.isValid())
+	{
+		SerialUSB.println("INFO: GPS location not valid");
+		return false;
+	}
 
-    lat = gps.location.lat();
-    lng = gps.location.lng();
-    meter = gps.altitude.meters();
+	lat = gps.location.lat();
+	lng = gps.location.lng();
+	meter = gps.altitude.meters();
 
-    return true;
+	return true;
 }
 #endif //C_SW_GPS
 
@@ -962,26 +1095,26 @@ bool GpsRead(double& lat, double& lng, double& meter)
 // Ambient functions
 bool SendToAmbient(float temp, float humi, float water_temp, float ext_battery_v, float in_battery_v, float in_temperature)
 {
-    return SendToAmbient(temp, humi, water_temp, ext_battery_v, in_battery_v, in_temperature, INVALID_GPS_VALUE, INVALID_GPS_VALUE, INVALID_GPS_VALUE);
+	return SendToAmbient(temp, humi, water_temp, ext_battery_v, in_battery_v, in_temperature, INVALID_GPS_VALUE, INVALID_GPS_VALUE, INVALID_GPS_VALUE);
 }
 
 bool SendToAmbient(float temp, float humi, float water_temp, float ext_battery_v, float in_battery_v, float in_temperature, double lat, double lng, double meter)
 {
-    if(!ambient.set(1, temp))
-    {
-        char logBuf[LOG_TEMP_BUF_SIZE] = {0};
-        snprintf(logBuf, sizeof(logBuf), "ERROR: ambient.set(1, %f)", temp);
-        SerialUSB.println(logBuf);
-        return false;
-    }
+	if (!ambient.set(1, temp))
+	{
+		char logBuf[LOG_TEMP_BUF_SIZE] = { 0 };
+		snprintf(logBuf, sizeof(logBuf), "ERROR: ambient.set(1, %f)", temp);
+		SerialUSB.println(logBuf);
+		return false;
+	}
 
-    if(!ambient.set(2, humi))
-    {
-        char logBuf[LOG_TEMP_BUF_SIZE] = {0};
-        snprintf(logBuf, sizeof(logBuf), "ERROR: ambient.set(2, %f)", humi);
-        SerialUSB.println(logBuf);
-        return false;
-    }
+	if (!ambient.set(2, humi))
+	{
+		char logBuf[LOG_TEMP_BUF_SIZE] = { 0 };
+		snprintf(logBuf, sizeof(logBuf), "ERROR: ambient.set(2, %f)", humi);
+		SerialUSB.println(logBuf);
+		return false;
+	}
 
 	if (!ambient.set(3, water_temp))
 	{
@@ -1016,50 +1149,50 @@ bool SendToAmbient(float temp, float humi, float water_temp, float ext_battery_v
 		return false;
 	}
 
-    char cbuf[16];
-    if(lat != INVALID_GPS_VALUE)
-    {
-        snprintf(cbuf, sizeof(cbuf), "%12.8f", lat);
-        if(!ambient.set(9, cbuf))
-        {
-            char logBuf[LOG_TEMP_BUF_SIZE] = {0};
-            snprintf(logBuf, sizeof(logBuf), "ERROR: ambient.set(9, %s)", cbuf);
-            SerialUSB.println(logBuf);
-            return false;
-        }
-    }
+	char cbuf[16];
+	if (lat != INVALID_GPS_VALUE)
+	{
+		snprintf(cbuf, sizeof(cbuf), "%12.8f", lat);
+		if (!ambient.set(9, cbuf))
+		{
+			char logBuf[LOG_TEMP_BUF_SIZE] = { 0 };
+			snprintf(logBuf, sizeof(logBuf), "ERROR: ambient.set(9, %s)", cbuf);
+			SerialUSB.println(logBuf);
+			return false;
+		}
+	}
 
-    if(lng != INVALID_GPS_VALUE)
-    {
-        snprintf(cbuf, sizeof(cbuf), "%12.8f", lng);
-        if(!ambient.set(10, cbuf))
-        {
-            char logBuf[LOG_TEMP_BUF_SIZE] = {0};
-            snprintf(logBuf, sizeof(logBuf), "ERROR: ambient.set(10, %s)", cbuf);
-            SerialUSB.println(logBuf);
-            return false;
-        }
-    }
+	if (lng != INVALID_GPS_VALUE)
+	{
+		snprintf(cbuf, sizeof(cbuf), "%12.8f", lng);
+		if (!ambient.set(10, cbuf))
+		{
+			char logBuf[LOG_TEMP_BUF_SIZE] = { 0 };
+			snprintf(logBuf, sizeof(logBuf), "ERROR: ambient.set(10, %s)", cbuf);
+			SerialUSB.println(logBuf);
+			return false;
+		}
+	}
 
-    if(meter != INVALID_GPS_VALUE)
-    {
-        snprintf(cbuf, sizeof(cbuf), "%4.2f", meter);
-        if(!ambient.set(3, cbuf))
-        {
-            char logBuf[LOG_TEMP_BUF_SIZE] = {0};
-            snprintf(logBuf, sizeof(logBuf), "ERROR: ambient.set(3, %s)", cbuf);
-            SerialUSB.println(logBuf);
-            return false;
-        }
-    }
+	if (meter != INVALID_GPS_VALUE)
+	{
+		snprintf(cbuf, sizeof(cbuf), "%4.2f", meter);
+		if (!ambient.set(3, cbuf))
+		{
+			char logBuf[LOG_TEMP_BUF_SIZE] = { 0 };
+			snprintf(logBuf, sizeof(logBuf), "ERROR: ambient.set(3, %s)", cbuf);
+			SerialUSB.println(logBuf);
+			return false;
+		}
+	}
 
-    if(!ambient.send())
-    {
-        SerialUSB.println("ERROR: ambient.send");
-        return false;
-    }
+	if (!ambient.send())
+	{
+		SerialUSB.println("ERROR: ambient.send");
+		return false;
+	}
 
-    return true;
+	return true;
 }
 #endif //C_SW_AMBIENT
 
@@ -1125,46 +1258,46 @@ bool GetNtpTime(WioLTE& wio, tm& current_time)
 //StanbyMode functions
 void EnterStandbyMode(time_t wakeup_time)
 {
-    //Set AlarmA
-    rtc.turnOffAlarmA();
-    rtc_enter_config_mode();
-    RTC_BASE->ISR &= ~(1 << RTC_ISR_ALRAF_BIT);
-    rtc_exit_config_mode();
+	//Set AlarmA
+	rtc.turnOffAlarmA();
+	rtc_enter_config_mode();
+	RTC_BASE->ISR &= ~(1 << RTC_ISR_ALRAF_BIT);
+	rtc_exit_config_mode();
 
-    *bb_perip(&EXTI_BASE->PR, EXTI_RTC_ALARM_BIT) = 1;
-    {
-        struct tm tm_waketime = {0};
-        gmtime_r(&wakeup_time, &tm_waketime);
-        SerialUSB.println("INFO: Next wakeup time : ");
-        SerialUSB.println(asctime(&tm_waketime));
-        delay(10);
-    }
+	*bb_perip(&EXTI_BASE->PR, EXTI_RTC_ALARM_BIT) = 1;
+	{
+		struct tm tm_waketime = { 0 };
+		gmtime_r(&wakeup_time, &tm_waketime);
+		SerialUSB.println("INFO: Next wakeup time : ");
+		SerialUSB.println(asctime(&tm_waketime));
+		delay(10);
+	}
 
-    PWR_BASE->CR |= (1 << PWR_CR_PDDS);
-    PWR_BASE->CR |= (1 << PWR_CR_CWUF);
-    while(PWR_BASE->CSR & (1 << PWR_CSR_WUF))
-    {
-        SerialUSB.println("DEBUG: Wait PWR_CSR_WUF clear");
-    } // WUPがクリアされるまで待機
+	PWR_BASE->CR |= (1 << PWR_CR_PDDS);
+	PWR_BASE->CR |= (1 << PWR_CR_CWUF);
+	while (PWR_BASE->CSR & (1 << PWR_CSR_WUF))
+	{
+		SerialUSB.println("DEBUG: Wait PWR_CSR_WUF clear");
+	} // WUPがクリアされるまで待機
 
-    rtc.setAlarmATime(wakeup_time, false, false);
+	rtc.setAlarmATime(wakeup_time, false, false);
 
-    SerialUSB.println("DEBUG: Enter Standby Mode");
-    SCB->SCR |= (SCB_SCR_SLEEPDEEP_Msk);
-    delay(10);
+	SerialUSB.println("DEBUG: Enter Standby Mode");
+	SCB->SCR |= (SCB_SCR_SLEEPDEEP_Msk);
+	delay(10);
 
-    __WFI();
+	__WFI();
 }
 
 void SleepUntilNextLoop(time_t sleeptime_sec)
 {
 	struct tm current_time = { 0 };
-    rtc.getTime(&current_time);
-    SerialUSB.println("INFO: Current RTC time = ");
-    SerialUSB.println(asctime(&current_time));
+	rtc.getTime(&current_time);
+	SerialUSB.println("INFO: Current RTC time = ");
+	SerialUSB.println(asctime(&current_time));
 
 	time_t epoch = mktime(&current_time);
-    epoch += sleeptime_sec;
+	epoch += sleeptime_sec;
 
-    EnterStandbyMode(epoch);
+	EnterStandbyMode(epoch);
 }

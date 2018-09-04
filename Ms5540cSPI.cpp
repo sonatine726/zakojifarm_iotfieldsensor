@@ -338,17 +338,13 @@ static void enable_device(spi_dev *dev,
     uint32 cfg_flags = (endianness | SPI_DFF_8_BIT | SPI_SW_SLAVE |
                         (as_master ? SPI_SOFT_SS : 0));
 
-	SerialUSB.println("DEBUG: spi_init");
     spi_init(dev);
-	SerialUSB.println("configure_gpios");
     configure_gpios(dev, as_master);
-	SerialUSB.println("DEBUG: spi_master_enable");
     if (as_master) {
         spi_master_enable(dev, baud, mode, cfg_flags);
     } else {
         spi_slave_enable(dev, mode, cfg_flags);
     }
-	SerialUSB.println("DEBUG: spi_master_enable end");
 
 }
 
@@ -369,12 +365,6 @@ static void configure_gpios(spi_dev *dev, bool as_master) {
     const stm32_pin_info *scki = &PIN_MAP[pins->sck];
     const stm32_pin_info *misoi = &PIN_MAP[pins->miso];
     const stm32_pin_info *mosii = &PIN_MAP[pins->mosi];
-
-	// [DEBUG]
-	char cbuf[32];
-	snprintf(cbuf, sizeof(cbuf), "DEBUG: nssi is %08X", nssi);
-	SerialUSB.println(cbuf);
-	// [DEBUG END]
 
 	if(nssi) {
 		disable_pwm(nssi);
