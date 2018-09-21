@@ -60,8 +60,10 @@ constexpr float INVALID_TEMP_AND_HUMID = -127;
 
 #if C_SW_AMBIENT
 //Ambient global
-unsigned int AMBIENT_CHANNEL_ID = 5701;
-const char AMBIENT_WRITE_KEY[] = "13a769ms5540c_c5371e81ce";
+//unsigned int AMBIENT_CHANNEL_ID = 5701;
+//const char AMBIENT_WRITE_KEY[] = "13a769ms5540c_c5371e81ce";
+unsigned int AMBIENT_CHANNEL_ID = 6359;
+const char AMBIENT_WRITE_KEY[] = "12ad25a29e628a86";
 Ambient ambient;
 #endif //C_SW_AMBIENT
 
