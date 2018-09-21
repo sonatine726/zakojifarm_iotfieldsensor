@@ -1,0 +1,115 @@
+EESchema Schematic File Version 4
+EELAYER 26 0
+EELAYER END
+$Descr A4 11693 8268
+encoding utf-8
+Sheet 1 1
+Title ""
+Date ""
+Rev ""
+Comp ""
+Comment1 ""
+Comment2 ""
+Comment3 ""
+Comment4 ""
+$EndDescr
+$Comp
+L Connector_Generic:Conn_01x04 J?
+U 1 1 5BE0F275
+P 1300 1900
+F 0 "J?" H 1380 1892 50  0000 L CNN
+F 1 "Conn_01x04" H 1380 1801 50  0000 L CNN
+F 2 "" H 1300 1900 50  0001 C CNN
+F 3 "~" H 1300 1900 50  0001 C CNN
+	1    1300 1900
+	-1   0    0    -1  
+$EndComp
+$Comp
+L Connector_Generic:Conn_01x04 J?
+U 1 1 5BE0F3B8
+P 1300 3200
+F 0 "J?" H 1380 3192 50  0000 L CNN
+F 1 "Conn_01x04" H 1380 3101 50  0000 L CNN
+F 2 "" H 1300 3200 50  0001 C CNN
+F 3 "~" H 1300 3200 50  0001 C CNN
+	1    1300 3200
+	-1   0    0    -1  
+$EndComp
+$Comp
+L Connector_Generic:Conn_01x04 J?
+U 1 1 5BE0F3E4
+P 1300 4600
+F 0 "J?" H 1380 4592 50  0000 L CNN
+F 1 "Conn_01x04" H 1380 4501 50  0000 L CNN
+F 2 "" H 1300 4600 50  0001 C CNN
+F 3 "~" H 1300 4600 50  0001 C CNN
+	1    1300 4600
+	-1   0    0    -1  
+$EndComp
+$Comp
+L Connector_Generic:Conn_01x04 J?
+U 1 1 5BE0F456
+P 4950 1850
+F 0 "J?" H 4870 2167 50  0000 C CNN
+F 1 "Conn_01x04" H 4870 2076 50  0000 C CNN
+F 2 "" H 4950 1850 50  0001 C CNN
+F 3 "~" H 4950 1850 50  0001 C CNN
+	1    4950 1850
+	1    0    0    -1  
+$EndComp
+$Comp
+L Connector_Generic:Conn_01x04 J?
+U 1 1 5BE0F4CE
+P 4900 3150
+F 0 "J?" H 4820 3467 50  0000 C CNN
+F 1 "Conn_01x04" H 4820 3376 50  0000 C CNN
+F 2 "" H 4900 3150 50  0001 C CNN
+F 3 "~" H 4900 3150 50  0001 C CNN
+	1    4900 3150
+	1    0    0    -1  
+$EndComp
+$Comp
+L Connector_Generic:Conn_01x04 J?
+U 1 1 5BE0F523
+P 4900 4550
+F 0 "J?" H 4820 4867 50  0000 C CNN
+F 1 "Conn_01x04" H 4820 4776 50  0000 C CNN
+F 2 "" H 4900 4550 50  0001 C CNN
+F 3 "~" H 4900 4550 50  0001 C CNN
+	1    4900 4550
+	1    0    0    -1  
+$EndComp
+$Comp
+L Connector_Generic:Conn_01x06 J?
+U 1 1 5BE0FB43
+P 2200 750
+F 0 "J?" V 2166 362 50  0000 R CNN
+F 1 "Conn_01x06" V 2075 362 50  0000 R CNN
+F 2 "" H 2200 750 50  0001 C CNN
+F 3 "~" H 2200 750 50  0001 C CNN
+	1    2200 750 
+	0    -1   -1   0   
+$EndComp
+$Comp
+L Connector_Generic:Conn_01x06 J?
+U 1 1 5BE0FBD1
+P 4000 750
+F 0 "J?" V 3966 362 50  0000 R CNN
+F 1 "Conn_01x06" V 3875 362 50  0000 R CNN
+F 2 "" H 4000 750 50  0001 C CNN
+F 3 "~" H 4000 750 50  0001 C CNN
+	1    4000 750 
+	0    -1   -1   0   
+$EndComp
+$Comp
+L Connector_Generic:Conn_01x02 J?
+U 1 1 5BE0FD4D
+P 3950 5450
+F 0 "J?" V 3823 5530 50  0000 L CNN
+F 1 "Conn_01x02" V 3914 5530 50  0000 L CNN
+F 2 "" H 3950 5450 50  0001 C CNN
+F 3 "~" H 3950 5450 50  0001 C CNN
+	1    3950 5450
+	0    1    1    0   
+$EndComp
+$EndSCHEMATC
