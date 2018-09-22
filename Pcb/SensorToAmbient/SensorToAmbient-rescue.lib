@@ -1,11 +1,11 @@
 EESchema-LIBRARY Version 2.4
 #encoding utf-8
 #
-# SensorToAmbient-rescue:Conn_01x02-Connector_Generic
+# Conn_01x02-Connector_Generic
 #
-DEF SensorToAmbient-rescue:Conn_01x02-Connector_Generic J 0 40 Y N 1 F N
+DEF Conn_01x02-Connector_Generic J 0 40 Y N 1 F N
 F0 "J" 0 100 50 H V C CNN
-F1 "SensorToAmbient-rescue:Conn_01x02-Connector_Generic" 0 -200 50 H V C CNN
+F1 "Conn_01x02-Connector_Generic" 0 -200 50 H V C CNN
 F2 "" 0 0 50 H I C CNN
 F3 "" 0 0 50 H I C CNN
 $FPLIST
@@ -20,11 +20,11 @@ X Pin_2 2 -200 -100 150 R 50 50 1 1 P
 ENDDRAW
 ENDDEF
 #
-# SensorToAmbient-rescue:Conn_01x04-Connector_Generic
+# Conn_01x04-Connector_Generic
 #
-DEF SensorToAmbient-rescue:Conn_01x04-Connector_Generic J 0 40 Y N 1 F N
+DEF Conn_01x04-Connector_Generic J 0 40 Y N 1 F N
 F0 "J" 0 200 50 H V C CNN
-F1 "SensorToAmbient-rescue:Conn_01x04-Connector_Generic" 0 -300 50 H V C CNN
+F1 "Conn_01x04-Connector_Generic" 0 -300 50 H V C CNN
 F2 "" 0 0 50 H I C CNN
 F3 "" 0 0 50 H I C CNN
 $FPLIST
@@ -43,11 +43,11 @@ X Pin_4 4 -200 -200 150 R 50 50 1 1 P
 ENDDRAW
 ENDDEF
 #
-# SensorToAmbient-rescue:Conn_01x06-Connector_Generic
+# Conn_01x06-Connector_Generic
 #
-DEF SensorToAmbient-rescue:Conn_01x06-Connector_Generic J 0 40 Y N 1 F N
+DEF Conn_01x06-Connector_Generic J 0 40 Y N 1 F N
 F0 "J" 0 300 50 H V C CNN
-F1 "SensorToAmbient-rescue:Conn_01x06-Connector_Generic" 0 -400 50 H V C CNN
+F1 "Conn_01x06-Connector_Generic" 0 -400 50 H V C CNN
 F2 "" 0 0 50 H I C CNN
 F3 "" 0 0 50 H I C CNN
 $FPLIST
@@ -70,11 +70,11 @@ X Pin_6 6 -200 -300 150 R 50 50 1 1 P
 ENDDRAW
 ENDDEF
 #
-# SensorToAmbient-rescue:DCDC_PowerBoost500-SensorToAmbient_dedicated
+# DCDC_PowerBoost500-SensorToAmbient_dedicated
 #
-DEF SensorToAmbient-rescue:DCDC_PowerBoost500-SensorToAmbient_dedicated DCDC 0 40 Y Y 1 F N
+DEF DCDC_PowerBoost500-SensorToAmbient_dedicated DCDC 0 40 Y Y 1 F N
 F0 "DCDC" 0 400 50 H V C CNN
-F1 "SensorToAmbient-rescue:DCDC_PowerBoost500-SensorToAmbient_dedicated" 0 -350 50 H V C CNN
+F1 "DCDC_PowerBoost500-SensorToAmbient_dedicated" 0 -350 50 H V C CNN
 F2 "" 0 400 50 H I C CNN
 F3 "" 0 400 50 H I C CNN
 DRAW
@@ -88,11 +88,11 @@ X Vout 6 300 -200 100 L 50 50 1 1 w
 ENDDRAW
 ENDDEF
 #
-# SensorToAmbient-rescue:R-Device
+# R-Device
 #
-DEF SensorToAmbient-rescue:R-Device R 0 0 N Y 1 F N
+DEF R-Device R 0 0 N Y 1 F N
 F0 "R" 80 0 50 V V C CNN
-F1 "SensorToAmbient-rescue:R-Device" 0 0 50 V V C CNN
+F1 "R-Device" 0 0 50 V V C CNN
 F2 "" -70 0 50 V I C CNN
 F3 "" 0 0 50 H I C CNN
 $FPLIST
@@ -105,11 +105,11 @@ X ~ 2 0 -150 50 U 50 50 1 1 P
 ENDDRAW
 ENDDEF
 #
-# SensorToAmbient-rescue:RTC-8564NB-SensorToAmbient_dedicated
+# RTC-8564NB-SensorToAmbient_dedicated
 #
-DEF SensorToAmbient-rescue:RTC-8564NB-SensorToAmbient_dedicated RTC 0 40 Y Y 1 F N
+DEF RTC-8564NB-SensorToAmbient_dedicated RTC 0 40 Y Y 1 F N
 F0 "RTC" 0 300 50 H V C CNN
-F1 "SensorToAmbient-rescue:RTC-8564NB-SensorToAmbient_dedicated" 50 -300 50 H V C CNN
+F1 "RTC-8564NB-SensorToAmbient_dedicated" 50 -300 50 H V C CNN
 F2 "" 0 300 50 H I C CNN
 F3 "" 0 300 50 H I C CNN
 DRAW
@@ -125,11 +125,11 @@ X VDD 8 -450 -150 100 R 50 50 1 1 W
 ENDDRAW
 ENDDEF
 #
-# SensorToAmbient-rescue:SN74HC125N-SensorToAmbient_dedicated
+# SN74HC125N-SensorToAmbient_dedicated
 #
-DEF SensorToAmbient-rescue:SN74HC125N-SensorToAmbient_dedicated 3SB 0 40 Y Y 1 F N
+DEF SN74HC125N-SensorToAmbient_dedicated 3SB 0 40 Y Y 1 F N
 F0 "3SB" 0 400 50 H V C CNN
-F1 "SensorToAmbient-rescue:SN74HC125N-SensorToAmbient_dedicated" 0 -450 50 H V C CNN
+F1 "SN74HC125N-SensorToAmbient_dedicated" 0 -450 50 H V C CNN
 F2 "" 0 450 50 H I C CNN
 F3 "" 0 450 50 H I C CNN
 DRAW
