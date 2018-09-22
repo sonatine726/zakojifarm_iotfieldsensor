@@ -2,7 +2,7 @@
 
   (general
     (thickness 1.6)
-    (drawings 5)
+    (drawings 3)
     (tracks 0)
     (zones 0)
     (modules 14)
@@ -707,8 +707,6 @@
       (net 22 "Net-(J8-Pad4)"))
   )
 
-  (gr_line (start 76.79 30.79) (end 76.79 75.957) (layer F.SilkS) (width 0.2) (tstamp 5BAA4B0B))
-  (gr_arc (start 81.57 30.78) (end 81.57 26) (angle -90) (layer F.SilkS) (width 0.2) (tstamp 5BAA4B0A))
   (gr_line (start 38.22 30.79) (end 38.22 75.957) (layer F.SilkS) (width 0.2))
   (gr_arc (start 43 30.78) (end 43 26) (angle -90) (layer F.SilkS) (width 0.2))
   (gr_line (start 43 26) (end 81.573 26) (layer F.SilkS) (width 0.2))
