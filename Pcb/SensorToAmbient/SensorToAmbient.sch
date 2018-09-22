@@ -15,144 +15,144 @@ Comment3 ""
 Comment4 ""
 $EndDescr
 $Comp
-L SensorToAmbient-rescue:Conn_01x04-Connector_Generic J?
+L SensorToAmbient-rescue:Conn_01x04-Connector_Grove J1
 U 1 1 5BE0F275
 P 1300 2350
-F 0 "J?" H 1380 2342 50  0000 L CNN
+F 0 "J1" H 1380 2342 50  0000 L CNN
 F 1 "Conn_01x04" H 1380 2251 50  0000 L CNN
-F 2 "" H 1300 2350 50  0001 C CNN
+F 2 "SensorToAmbient:Grove_2mm_4pin_angle" H 1300 2350 50  0001 C CNN
 F 3 "~" H 1300 2350 50  0001 C CNN
 	1    1300 2350
 	-1   0    0    -1  
 $EndComp
 $Comp
-L SensorToAmbient-rescue:Conn_01x04-Connector_Generic J?
+L SensorToAmbient-rescue:Conn_01x04-Connector_Grove J2
 U 1 1 5BE0F3B8
 P 1300 3650
-F 0 "J?" H 1380 3642 50  0000 L CNN
+F 0 "J2" H 1380 3642 50  0000 L CNN
 F 1 "Conn_01x04" H 1380 3551 50  0000 L CNN
-F 2 "" H 1300 3650 50  0001 C CNN
+F 2 "SensorToAmbient:Grove_2mm_4pin_angle" H 1300 3650 50  0001 C CNN
 F 3 "~" H 1300 3650 50  0001 C CNN
 	1    1300 3650
 	-1   0    0    -1  
 $EndComp
 $Comp
-L SensorToAmbient-rescue:Conn_01x04-Connector_Generic J?
+L SensorToAmbient-rescue:Conn_01x04-Connector_Grove J3
 U 1 1 5BE0F3E4
 P 1300 5050
-F 0 "J?" H 1380 5042 50  0000 L CNN
+F 0 "J3" H 1380 5042 50  0000 L CNN
 F 1 "Conn_01x04" H 1380 4951 50  0000 L CNN
-F 2 "" H 1300 5050 50  0001 C CNN
+F 2 "SensorToAmbient:Grove_2mm_4pin_angle" H 1300 5050 50  0001 C CNN
 F 3 "~" H 1300 5050 50  0001 C CNN
 	1    1300 5050
 	-1   0    0    -1  
 $EndComp
 $Comp
-L SensorToAmbient-rescue:Conn_01x04-Connector_Generic J?
+L SensorToAmbient-rescue:Conn_01x04-Connector_Grove J9
 U 1 1 5BE0F456
-P 5100 2300
-F 0 "J?" H 5020 2617 50  0000 C CNN
-F 1 "Conn_01x04" H 5020 2526 50  0000 C CNN
-F 2 "" H 5100 2300 50  0001 C CNN
-F 3 "~" H 5100 2300 50  0001 C CNN
-	1    5100 2300
-	1    0    0    -1  
+P 5100 2400
+F 0 "J9" H 5020 2717 50  0000 C CNN
+F 1 "Conn_01x04" H 5020 2626 50  0000 C CNN
+F 2 "SensorToAmbient:Grove_2mm_4pin_angle" H 5100 2400 50  0001 C CNN
+F 3 "~" H 5100 2400 50  0001 C CNN
+	1    5100 2400
+	1    0    0    1   
 $EndComp
 $Comp
-L SensorToAmbient-rescue:Conn_01x04-Connector_Generic J?
+L SensorToAmbient-rescue:Conn_01x04-Connector_Grove J8
 U 1 1 5BE0F523
-P 5050 5000
-F 0 "J?" H 4970 5317 50  0000 C CNN
-F 1 "Conn_01x04" H 4970 5226 50  0000 C CNN
-F 2 "" H 5050 5000 50  0001 C CNN
-F 3 "~" H 5050 5000 50  0001 C CNN
-	1    5050 5000
-	1    0    0    -1  
+P 5050 5100
+F 0 "J8" H 4970 5417 50  0000 C CNN
+F 1 "Conn_01x04" H 4970 5326 50  0000 C CNN
+F 2 "SensorToAmbient:Grove_2mm_4pin_angle" H 5050 5100 50  0001 C CNN
+F 3 "~" H 5050 5100 50  0001 C CNN
+	1    5050 5100
+	1    0    0    1   
 $EndComp
 $Comp
-L SensorToAmbient-rescue:Conn_01x06-Connector_Generic J?
+L SensorToAmbient-rescue:Conn_01x06-Connector_Generic J4
 U 1 1 5BE0FB43
 P 2200 650
-F 0 "J?" V 2166 262 50  0000 R CNN
+F 0 "J4" V 2166 262 50  0000 R CNN
 F 1 "Conn_01x06" V 2075 262 50  0000 R CNN
-F 2 "" H 2200 650 50  0001 C CNN
+F 2 "Connectors_JST:JST_XH_B06B-XH-A_06x2.50mm_Straight" H 2200 650 50  0001 C CNN
 F 3 "~" H 2200 650 50  0001 C CNN
 	1    2200 650 
 	0    -1   -1   0   
 $EndComp
 $Comp
-L SensorToAmbient-rescue:Conn_01x06-Connector_Generic J?
+L SensorToAmbient-rescue:Conn_01x06-Connector_Generic J6
 U 1 1 5BE0FBD1
 P 4000 650
-F 0 "J?" V 3966 262 50  0000 R CNN
+F 0 "J6" V 3966 262 50  0000 R CNN
 F 1 "Conn_01x06" V 3875 262 50  0000 R CNN
-F 2 "" H 4000 650 50  0001 C CNN
+F 2 "Connectors_JST:JST_XH_B06B-XH-A_06x2.50mm_Straight" H 4000 650 50  0001 C CNN
 F 3 "~" H 4000 650 50  0001 C CNN
 	1    4000 650 
 	0    -1   -1   0   
 $EndComp
 $Comp
-L SensorToAmbient-rescue:Conn_01x02-Connector_Generic J?
+L SensorToAmbient-rescue:Conn_01x02-Connector_Generic J5
 U 1 1 5BE0FD4D
 P 3950 5900
-F 0 "J?" V 3823 5980 50  0000 L CNN
+F 0 "J5" V 3823 5980 50  0000 L CNN
 F 1 "Conn_01x02" V 3914 5980 50  0000 L CNN
-F 2 "" H 3950 5900 50  0001 C CNN
+F 2 "Connectors_JST:JST_XH_B02B-XH-A_02x2.50mm_Straight" H 3950 5900 50  0001 C CNN
 F 3 "~" H 3950 5900 50  0001 C CNN
 	1    3950 5900
 	0    1    1    0   
 $EndComp
 $Comp
-L SensorToAmbient-rescue:SN74HC125N-SensorToAmbient_dedicated 3SB?
+L SensorToAmbient-rescue:SN74HC125N-SensorToAmbient_dedicated 3SB1
 U 1 1 5BE112A4
 P 3500 2300
-F 0 "3SB?" V 3454 2678 50  0000 L CNN
+F 0 "3SB1" V 3454 2678 50  0000 L CNN
 F 1 "SN74HC125N" V 3545 2678 50  0000 L CNN
-F 2 "" H 3500 2750 50  0001 C CNN
+F 2 "digikey-footprints:DIP-14_W3mm" H 3500 2750 50  0001 C CNN
 F 3 "" H 3500 2750 50  0001 C CNN
 	1    3500 2300
 	0    -1   -1   0   
 $EndComp
 $Comp
-L SensorToAmbient-rescue:RTC-8564NB-SensorToAmbient_dedicated RTC?
+L SensorToAmbient-rescue:RTC-8564NB-SensorToAmbient_dedicated RTC1
 U 1 1 5BE1164D
 P 3450 3600
-F 0 "RTC?" H 3450 4015 50  0000 C CNN
+F 0 "RTC1" H 3450 4015 50  0000 C CNN
 F 1 "RTC-8564NB" H 3450 3924 50  0000 C CNN
-F 2 "" H 3450 3900 50  0001 C CNN
+F 2 "SensorToAmbient:RTC-8564NB_Akiduki" H 3450 3900 50  0001 C CNN
 F 3 "" H 3450 3900 50  0001 C CNN
 	1    3450 3600
 	0    -1   -1   0   
 $EndComp
 $Comp
-L SensorToAmbient-rescue:DCDC_PowerBoost500-SensorToAmbient_dedicated DCDC?
+L SensorToAmbient-rescue:DCDC_PowerBoost500-SensorToAmbient_dedicated DCDC1
 U 1 1 5BE11987
 P 2600 5200
-F 0 "DCDC?" H 2656 5725 50  0000 C CNN
+F 0 "DCDC1" H 2656 5725 50  0000 C CNN
 F 1 "DCDC_PowerBoost500" H 2656 5634 50  0000 C CNN
-F 2 "" H 2600 5600 50  0001 C CNN
+F 2 "SensorToAmbient:DCDC_PowerBoost500" H 2600 5600 50  0001 C CNN
 F 3 "" H 2600 5600 50  0001 C CNN
 	1    2600 5200
 	1    0    0    -1  
 $EndComp
 $Comp
-L SensorToAmbient-rescue:R-Device R?
+L SensorToAmbient-rescue:R-Device R1
 U 1 1 5BE11B05
 P 4200 4850
-F 0 "R?" H 4270 4896 50  0000 L CNN
-F 1 "R" H 4270 4805 50  0000 L CNN
-F 2 "" V 4130 4850 50  0001 C CNN
+F 0 "R1" H 4270 4896 50  0000 L CNN
+F 1 "100K" H 4270 4805 50  0000 L CNN
+F 2 "Resistors_THT:R_Axial_DIN0207_L6.3mm_D2.5mm_P7.62mm_Horizontal" V 4130 4850 50  0001 C CNN
 F 3 "~" H 4200 4850 50  0001 C CNN
 	1    4200 4850
 	1    0    0    -1  
 $EndComp
 $Comp
-L SensorToAmbient-rescue:R-Device R?
+L SensorToAmbient-rescue:R-Device R2
 U 1 1 5BE11C1B
 P 4200 5350
-F 0 "R?" H 4270 5396 50  0000 L CNN
-F 1 "R" H 4270 5305 50  0000 L CNN
-F 2 "" V 4130 5350 50  0001 C CNN
+F 0 "R2" H 4270 5396 50  0000 L CNN
+F 1 "100K" H 4270 5305 50  0000 L CNN
+F 2 "Resistors_THT:R_Axial_DIN0207_L6.3mm_D2.5mm_P7.62mm_Horizontal" V 4130 5350 50  0001 C CNN
 F 3 "~" H 4200 5350 50  0001 C CNN
 	1    4200 5350
 	1    0    0    -1  
@@ -173,7 +173,7 @@ Connection ~ 2300 1550
 Wire Wire Line
 	1500 5150 2200 5150
 Wire Wire Line
-	2200 5150 2200 1450
+	2200 5150 2200 3050
 Wire Wire Line
 	2200 1450 4000 1450
 Connection ~ 2200 1450
@@ -193,12 +193,6 @@ Wire Wire Line
 Connection ~ 3250 2900
 Wire Wire Line
 	1500 2550 1650 2550
-Wire Wire Line
-	1650 2550 1650 3050
-Wire Wire Line
-	1650 3050 3750 3050
-Wire Wire Line
-	3750 3050 3750 2700
 Wire Wire Line
 	1500 2450 1900 2450
 Wire Wire Line
@@ -324,7 +318,7 @@ Wire Wire Line
 Wire Wire Line
 	4200 5000 4850 5000
 Wire Wire Line
-	4200 5550 4800 5550
+	4200 5550 4600 5550
 Wire Wire Line
 	4800 5550 4800 5200
 Wire Wire Line
@@ -375,12 +369,12 @@ Wire Wire Line
 Wire Wire Line
 	4800 3150 4800 3600
 $Comp
-L SensorToAmbient-rescue:Conn_01x04-Connector_Generic J?
+L SensorToAmbient-rescue:Conn_01x04-Connector_I2C J7
 U 1 1 5BE0F4CE
 P 5050 3600
-F 0 "J?" H 4970 3917 50  0000 C CNN
+F 0 "J7" H 4970 3917 50  0000 C CNN
 F 1 "Conn_01x04" H 4970 3826 50  0000 C CNN
-F 2 "" H 5050 3600 50  0001 C CNN
+F 2 "SensorToAmbient:Grove_2mm_4pin_angle" H 5050 3600 50  0001 C CNN
 F 3 "~" H 5050 3600 50  0001 C CNN
 	1    5050 3600
 	1    0    0    -1  
@@ -424,6 +418,79 @@ Wire Wire Line
 Wire Wire Line
 	4650 5100 4850 5100
 Connection ~ 4650 2400
-NoConn ~ 3300 3150
-NoConn ~ 3400 3150
+$Comp
+L power:PWR_FLAG #FLG0101
+U 1 1 5BA60C30
+P 3550 5900
+F 0 "#FLG0101" H 3550 5975 50  0001 C CNN
+F 1 "PWR_FLAG" H 3550 6074 50  0000 C CNN
+F 2 "" H 3550 5900 50  0001 C CNN
+F 3 "~" H 3550 5900 50  0001 C CNN
+	1    3550 5900
+	1    0    0    -1  
+$EndComp
+$Comp
+L power:GND #PWR0101
+U 1 1 5BA60C83
+P 3550 6100
+F 0 "#PWR0101" H 3550 5850 50  0001 C CNN
+F 1 "GND" H 3555 5927 50  0000 C CNN
+F 2 "" H 3550 6100 50  0001 C CNN
+F 3 "" H 3550 6100 50  0001 C CNN
+	1    3550 6100
+	1    0    0    -1  
+$EndComp
+$Comp
+L power:GND #PWR0102
+U 1 1 5BA60CC1
+P 4600 5900
+F 0 "#PWR0102" H 4600 5650 50  0001 C CNN
+F 1 "GND" H 4605 5727 50  0000 C CNN
+F 2 "" H 4600 5900 50  0001 C CNN
+F 3 "" H 4600 5900 50  0001 C CNN
+	1    4600 5900
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	4600 5550 4600 5900
+Connection ~ 4600 5550
+Wire Wire Line
+	4600 5550 4800 5550
+Wire Wire Line
+	3550 5900 3550 6100
+$Comp
+L power:GND #PWR0103
+U 1 1 5BA6679C
+P 2100 5950
+F 0 "#PWR0103" H 2100 5700 50  0001 C CNN
+F 1 "GND" H 2105 5777 50  0000 C CNN
+F 2 "" H 2100 5950 50  0001 C CNN
+F 3 "" H 2100 5950 50  0001 C CNN
+	1    2100 5950
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	2100 4950 2100 5950
+Connection ~ 2100 4950
+Wire Wire Line
+	4850 4900 4850 4550
+Wire Wire Line
+	4850 4550 2950 4550
+Wire Wire Line
+	2950 4550 2950 3150
+Wire Wire Line
+	2950 3150 3300 3150
+Wire Wire Line
+	1650 2550 1650 3000
+Wire Wire Line
+	1650 3000 3750 3000
+Wire Wire Line
+	3750 3000 3750 2700
+Wire Wire Line
+	3400 3150 3400 3050
+Wire Wire Line
+	3400 3050 2200 3050
+Connection ~ 2200 3050
+Wire Wire Line
+	2200 3050 2200 1450
 $EndSCHEMATC

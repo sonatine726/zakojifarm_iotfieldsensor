@@ -16,15 +16,38 @@ S -50 -95 0 -105 1 1 6 N
 S -50 5 0 -5 1 1 6 N
 S -50 50 50 -150 1 1 10 f
 X Pin_1 1 -200 0 150 R 50 50 1 1 P
-X Pin_2 2 -200 -100 150 R 50 50 1 1 P
+X Pin_2 2 -200 -100 150 R 50 50 1 1 w
 ENDDRAW
 ENDDEF
 #
-# SensorToAmbient-rescue:Conn_01x04-Connector_Generic
+# SensorToAmbient-rescue:Conn_01x04-Connector_Grove
 #
-DEF SensorToAmbient-rescue:Conn_01x04-Connector_Generic J 0 40 Y N 1 F N
+DEF SensorToAmbient-rescue:Conn_01x04-Connector_Grove J 0 40 Y N 1 F N
 F0 "J" 0 200 50 H V C CNN
-F1 "SensorToAmbient-rescue:Conn_01x04-Connector_Generic" 0 -300 50 H V C CNN
+F1 "SensorToAmbient-rescue:Conn_01x04-Connector_Grove" 0 -300 50 H V C CNN
+F2 "" 0 0 50 H I C CNN
+F3 "" 0 0 50 H I C CNN
+$FPLIST
+ Connector*:*_1x??_*
+$ENDFPLIST
+DRAW
+S -50 -195 0 -205 1 1 6 N
+S -50 -95 0 -105 1 1 6 N
+S -50 5 0 -5 1 1 6 N
+S -50 105 0 95 1 1 6 N
+S -50 150 50 -250 1 1 10 f
+X Pin_1 1 -200 100 150 R 50 50 1 1 P
+X Pin_2 2 -200 0 150 R 50 50 1 1 w
+X Pin_3 3 -200 -100 150 R 50 50 1 1 P
+X Pin_4 4 -200 -200 150 R 50 50 1 1 P
+ENDDRAW
+ENDDEF
+#
+# SensorToAmbient-rescue:Conn_01x04-Connector_I2C
+#
+DEF SensorToAmbient-rescue:Conn_01x04-Connector_I2C J 0 40 Y N 1 F N
+F0 "J" 0 200 50 H V C CNN
+F1 "SensorToAmbient-rescue:Conn_01x04-Connector_I2C" 0 -300 50 H V C CNN
 F2 "" 0 0 50 H I C CNN
 F3 "" 0 0 50 H I C CNN
 $FPLIST
@@ -116,7 +139,7 @@ DRAW
 S -350 250 350 -250 0 1 0 N
 X CLKOE 1 450 150 100 L 50 50 1 1 I
 X CLKOUT 2 450 50 100 L 50 50 1 1 O
-X INT 3 450 -50 100 L 50 50 1 1 I
+X INT 3 450 -50 100 L 50 50 1 1 O
 X VSS 4 450 -150 100 L 50 50 1 1 P
 X SDA 5 -450 150 100 R 50 50 1 1 B
 X SCL 6 -450 50 100 R 50 50 1 1 I
@@ -148,6 +171,32 @@ X 2A 5 -400 -150 100 R 50 50 1 1 I
 X 2Y 6 -400 -250 100 R 50 50 1 1 O
 X GND 7 -400 -350 100 R 50 50 1 1 P
 X 3Y 8 400 -350 100 L 50 50 1 1 O
+ENDDRAW
+ENDDEF
+#
+# power:GND
+#
+DEF power:GND #PWR 0 0 Y Y 1 F P
+F0 "#PWR" 0 -250 50 H I C CNN
+F1 "power:GND" 0 -150 50 H V C CNN
+F2 "" 0 0 50 H I C CNN
+F3 "" 0 0 50 H I C CNN
+DRAW
+P 6 0 1 0 0 0 0 -50 50 -50 0 -100 -50 -50 0 -50 N
+X GND 1 0 0 0 D 50 50 1 1 W N
+ENDDRAW
+ENDDEF
+#
+# power:PWR_FLAG
+#
+DEF power:PWR_FLAG #FLG 0 0 N N 1 F P
+F0 "#FLG" 0 75 50 H I C CNN
+F1 "power:PWR_FLAG" 0 150 50 H V C CNN
+F2 "" 0 0 50 H I C CNN
+F3 "" 0 0 50 H I C CNN
+DRAW
+P 6 0 1 0 0 0 0 50 -40 75 0 100 40 75 0 50 N
+X pwr 1 0 0 0 U 50 50 0 0 w
 ENDDRAW
 ENDDEF
 #
