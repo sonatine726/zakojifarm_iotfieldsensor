@@ -48,10 +48,10 @@ F 3 "~" H 1300 5050 50  0001 C CNN
 	-1   0    0    -1  
 $EndComp
 $Comp
-L SensorToAmbient-rescue:Conn_01x04-Connector_Grove J9
+L SensorToAmbient-rescue:Conn_01x04-Connector_Grove J6
 U 1 1 5BE0F456
 P 5100 2400
-F 0 "J9" H 5020 2717 50  0000 C CNN
+F 0 "J6" H 5020 2717 50  0000 C CNN
 F 1 "Conn_01x04" H 5020 2626 50  0000 C CNN
 F 2 "SensorToAmbient:Grove_2mm_4pin_angle" H 5100 2400 50  0001 C CNN
 F 3 "~" H 5100 2400 50  0001 C CNN
@@ -59,10 +59,10 @@ F 3 "~" H 5100 2400 50  0001 C CNN
 	1    0    0    1   
 $EndComp
 $Comp
-L SensorToAmbient-rescue:Conn_01x04-Connector_Grove J8
+L SensorToAmbient-rescue:Conn_01x04-Connector_Grove J4
 U 1 1 5BE0F523
 P 5050 5100
-F 0 "J8" H 4970 5417 50  0000 C CNN
+F 0 "J4" H 4970 5417 50  0000 C CNN
 F 1 "Conn_01x04" H 4970 5326 50  0000 C CNN
 F 2 "SensorToAmbient:Grove_2mm_4pin_angle" H 5050 5100 50  0001 C CNN
 F 3 "~" H 5050 5100 50  0001 C CNN
@@ -70,34 +70,34 @@ F 3 "~" H 5050 5100 50  0001 C CNN
 	1    0    0    1   
 $EndComp
 $Comp
-L SensorToAmbient-rescue:Conn_01x06-Connector_Generic J4
+L SensorToAmbient-rescue:Conn_01x06-Connector_Generic J8
 U 1 1 5BE0FB43
 P 2200 650
-F 0 "J4" V 2166 262 50  0000 R CNN
+F 0 "J8" V 2166 262 50  0000 R CNN
 F 1 "Conn_01x06" V 2075 262 50  0000 R CNN
-F 2 "Connectors_JST:JST_XH_B06B-XH-A_06x2.50mm_Straight" H 2200 650 50  0001 C CNN
+F 2 "Connectors_JST:JST_XH_S06B-XH-A_06x2.50mm_Angled" H 2200 650 50  0001 C CNN
 F 3 "~" H 2200 650 50  0001 C CNN
 	1    2200 650 
 	0    -1   -1   0   
 $EndComp
 $Comp
-L SensorToAmbient-rescue:Conn_01x06-Connector_Generic J6
+L SensorToAmbient-rescue:Conn_01x06-Connector_Generic J9
 U 1 1 5BE0FBD1
 P 4000 650
-F 0 "J6" V 3966 262 50  0000 R CNN
+F 0 "J9" V 3966 262 50  0000 R CNN
 F 1 "Conn_01x06" V 3875 262 50  0000 R CNN
-F 2 "Connectors_JST:JST_XH_B06B-XH-A_06x2.50mm_Straight" H 4000 650 50  0001 C CNN
+F 2 "Connectors_JST:JST_XH_S06B-XH-A_06x2.50mm_Angled" H 4000 650 50  0001 C CNN
 F 3 "~" H 4000 650 50  0001 C CNN
 	1    4000 650 
 	0    -1   -1   0   
 $EndComp
 $Comp
-L SensorToAmbient-rescue:Conn_01x02-Connector_Generic J5
+L SensorToAmbient-rescue:Conn_01x02-Connector_Generic J7
 U 1 1 5BE0FD4D
 P 3950 5900
-F 0 "J5" V 3823 5980 50  0000 L CNN
+F 0 "J7" V 3823 5980 50  0000 L CNN
 F 1 "Conn_01x02" V 3914 5980 50  0000 L CNN
-F 2 "Connectors_JST:JST_XH_B02B-XH-A_02x2.50mm_Straight" H 3950 5900 50  0001 C CNN
+F 2 "Connectors_JST:JST_XH_S02B-XH-A_02x2.50mm_Angled" H 3950 5900 50  0001 C CNN
 F 3 "~" H 3950 5900 50  0001 C CNN
 	1    3950 5900
 	0    1    1    0   
@@ -369,10 +369,10 @@ Wire Wire Line
 Wire Wire Line
 	4800 3150 4800 3600
 $Comp
-L SensorToAmbient-rescue:Conn_01x04-Connector_I2C J7
+L SensorToAmbient-rescue:Conn_01x04-Connector_I2C J5
 U 1 1 5BE0F4CE
 P 5050 3600
-F 0 "J7" H 4970 3917 50  0000 C CNN
+F 0 "J5" H 4970 3917 50  0000 C CNN
 F 1 "Conn_01x04" H 4970 3826 50  0000 C CNN
 F 2 "SensorToAmbient:Grove_2mm_4pin_angle" H 5050 3600 50  0001 C CNN
 F 3 "~" H 5050 3600 50  0001 C CNN
