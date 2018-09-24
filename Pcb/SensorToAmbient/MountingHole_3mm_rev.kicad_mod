@@ -1,0 +1,12 @@
+(module MountingHole_3mm_rev (layer F.Cu) (tedit 5BA9069C)
+  (descr "Mounting Hole 3mm, no annular")
+  (tags "mounting hole 3mm no annular")
+  (attr virtual)
+  (fp_text reference REF** (at 0 -2.54) (layer F.SilkS) hide
+    (effects (font (size 1 1) (thickness 0.15)))
+  )
+  (fp_text value MountingHole_3mm_rev (at 0 2.54) (layer F.Fab)
+    (effects (font (size 1 1) (thickness 0.15)))
+  )
+  (pad 1 np_thru_hole circle (at 0 0) (size 3 3) (drill 3) (layers *.Cu *.Mask))
+)
