@@ -395,14 +395,6 @@ NoConn ~ 3050 2700
 NoConn ~ 3050 2800
 NoConn ~ 3050 2900
 Wire Wire Line
-	1500 2550 1600 2550
-Wire Wire Line
-	1600 2550 1600 1800
-Wire Wire Line
-	1600 1800 3400 1800
-Wire Wire Line
-	3400 1800 3400 2450
-Wire Wire Line
 	4650 3500 4750 3500
 Wire Wire Line
 	4850 3600 4750 3600
@@ -488,4 +480,6 @@ PWR3.3V
 Wire Wire Line
 	5300 1000 4200 1000
 Connection ~ 4200 1000
+NoConn ~ 1500 2550
+NoConn ~ 3400 2450
 $EndSCHEMATC
