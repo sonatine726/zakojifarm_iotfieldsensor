@@ -493,4 +493,6 @@ F 3 "~" H 3550 5900 50  0001 C CNN
 	1    3550 5900
 	1    0    0    -1  
 $EndComp
+Text Label 3850 5450 1    50   ~ 0
+PWR_BAT
 $EndSCHEMATC
