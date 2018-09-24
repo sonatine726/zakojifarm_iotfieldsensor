@@ -272,8 +272,6 @@ NoConn ~ 4850 5100
 NoConn ~ 4850 5200
 Wire Wire Line
 	2100 850  2100 1000
-Text Label 2200 1700 1    50   ~ 0
-PWR3.3V
 Wire Wire Line
 	2200 850  2200 900 
 Wire Wire Line
@@ -397,14 +395,6 @@ NoConn ~ 3050 2700
 NoConn ~ 3050 2800
 NoConn ~ 3050 2900
 Wire Wire Line
-	1500 2550 1600 2550
-Wire Wire Line
-	1600 2550 1600 1800
-Wire Wire Line
-	1600 1800 3400 1800
-Wire Wire Line
-	3400 1800 3400 2450
-Wire Wire Line
 	4650 3500 4750 3500
 Wire Wire Line
 	4850 3600 4750 3600
@@ -429,10 +419,7 @@ Connection ~ 3850 4700
 Wire Wire Line
 	2100 4950 2100 5950
 Wire Wire Line
-	4300 900  5300 900 
-Wire Wire Line
-	5300 900  5300 5550
-Connection ~ 4300 900 
+	5300 1000 5300 5550
 Text Label 4700 5550 2    50   ~ 0
 GND
 Wire Wire Line
@@ -488,4 +475,11 @@ Wire Wire Line
 Wire Wire Line
 	3300 2750 3400 2750
 Connection ~ 3400 2750
+Text Label 2200 1700 1    50   ~ 0
+PWR3.3V
+Wire Wire Line
+	5300 1000 4200 1000
+Connection ~ 4200 1000
+NoConn ~ 1500 2550
+NoConn ~ 3400 2450
 $EndSCHEMATC
