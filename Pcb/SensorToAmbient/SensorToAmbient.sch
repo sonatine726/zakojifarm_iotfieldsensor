@@ -83,13 +83,13 @@ $EndComp
 $Comp
 L SensorToAmbient-rescue:Conn_01x02-Connector_Generic J7
 U 1 1 5BE0FD4D
-P 3950 5900
-F 0 "J7" V 3823 5980 50  0000 L CNN
-F 1 "Conn_01x02" V 3914 5980 50  0000 L CNN
-F 2 "Connectors_JST:JST_XH_S02B-XH-A_02x2.50mm_Angled" H 3950 5900 50  0001 C CNN
-F 3 "~" H 3950 5900 50  0001 C CNN
-	1    3950 5900
-	0    1    1    0   
+P 3850 5900
+F 0 "J7" V 3723 5980 50  0000 L CNN
+F 1 "Conn_01x02" V 3814 5980 50  0000 L CNN
+F 2 "Connectors_JST:JST_XH_S02B-XH-A_02x2.50mm_Angled" H 3850 5900 50  0001 C CNN
+F 3 "~" H 3850 5900 50  0001 C CNN
+	1    3850 5900
+	0    -1   1    0   
 $EndComp
 $Comp
 L SensorToAmbient-rescue:SN74HC125N-SensorToAmbient_dedicated 3SB1
@@ -190,13 +190,13 @@ Wire Wire Line
 $Comp
 L SensorToAmbient-rescue:Conn_01x04-Connector_I2C J5
 U 1 1 5BE0F4CE
-P 5050 3600
-F 0 "J5" H 4970 3917 50  0000 C CNN
-F 1 "Conn_01x04" H 4970 3826 50  0000 C CNN
-F 2 "SensorToAmbient:Grove_2mm_4pin_angle2" H 5050 3600 50  0001 C CNN
-F 3 "~" H 5050 3600 50  0001 C CNN
-	1    5050 3600
-	1    0    0    -1  
+P 5050 3700
+F 0 "J5" H 4970 4017 50  0000 C CNN
+F 1 "Conn_01x04" H 4970 3926 50  0000 C CNN
+F 2 "Connectors_JST:JST_XH_S04B-XH-A_04x2.50mm_Angled" H 5050 3700 50  0001 C CNN
+F 3 "~" H 5050 3700 50  0001 C CNN
+	1    5050 3700
+	1    0    0    1   
 $EndComp
 NoConn ~ 2900 5200
 $Comp
@@ -210,8 +210,6 @@ F 3 "" H 4600 5900 50  0001 C CNN
 	1    4600 5900
 	1    0    0    -1  
 $EndComp
-Wire Wire Line
-	4600 5550 4600 5900
 Connection ~ 4600 5550
 Wire Wire Line
 	4600 5550 5200 5550
@@ -226,8 +224,6 @@ F 3 "" H 2100 5950 50  0001 C CNN
 	1    2100 5950
 	1    0    0    -1  
 $EndComp
-Wire Wire Line
-	2100 4950 2100 5300
 Connection ~ 2100 4950
 Wire Wire Line
 	5600 5950 5600 6150
@@ -359,8 +355,6 @@ Wire Wire Line
 Wire Wire Line
 	2000 1100 2000 3850
 Wire Wire Line
-	5200 3800 4850 3800
-Wire Wire Line
 	2900 4900 3850 4900
 Wire Wire Line
 	3400 2650 3250 2650
@@ -375,17 +369,9 @@ Wire Wire Line
 	4300 2450 4750 2450
 Connection ~ 4750 2450
 Wire Wire Line
-	4750 2450 4750 3500
-Wire Wire Line
-	4850 3500 4750 3500
-Wire Wire Line
-	4850 3600 4650 3600
-Wire Wire Line
-	4650 2550 4650 3600
+	4650 2550 4650 3500
 Wire Wire Line
 	5250 6200 5250 3700
-Wire Wire Line
-	5250 3700 4850 3700
 Wire Wire Line
 	3300 6200 5250 6200
 Wire Wire Line
@@ -433,20 +419,7 @@ Wire Wire Line
 	4100 2000 4100 1100
 Connection ~ 4100 1100
 Wire Wire Line
-	4300 2750 4300 3700
-Wire Wire Line
-	4300 3700 4850 3700
-Connection ~ 4850 3700
-Wire Wire Line
 	3400 2750 3400 3800
-Wire Wire Line
-	3400 3800 4850 3800
-Connection ~ 4850 3800
-Wire Wire Line
-	2100 5300 2700 5300
-Connection ~ 2100 5300
-Wire Wire Line
-	2100 5300 2100 5950
 Connection ~ 2900 5300
 NoConn ~ 3050 2700
 NoConn ~ 3050 2800
@@ -461,7 +434,6 @@ Wire Wire Line
 	3050 2300 2700 2300
 Wire Wire Line
 	2700 2300 2700 5300
-Connection ~ 2700 5300
 Wire Wire Line
 	2700 5300 2900 5300
 Wire Wire Line
@@ -472,4 +444,40 @@ Wire Wire Line
 	1600 1800 3400 1800
 Wire Wire Line
 	3400 1800 3400 2450
+Wire Wire Line
+	4650 3500 4750 3500
+Wire Wire Line
+	4850 3600 4750 3600
+Wire Wire Line
+	4750 3500 4850 3500
+Wire Wire Line
+	4750 2450 4750 3600
+Wire Wire Line
+	3400 3800 4850 3800
+Connection ~ 4850 3800
+Wire Wire Line
+	4850 3800 5200 3800
+Wire Wire Line
+	5250 3700 4850 3700
+Wire Wire Line
+	4300 2750 4300 3150
+Wire Wire Line
+	4300 3150 3850 3150
+Wire Wire Line
+	3850 3150 3850 4700
+Connection ~ 3850 4700
+Wire Wire Line
+	2100 4950 2100 5950
+Wire Wire Line
+	4300 900  5300 900 
+Wire Wire Line
+	5300 900  5300 5550
+Connection ~ 4300 900 
+Text Label 4700 5550 2    50   ~ 0
+GND
+Wire Wire Line
+	4600 5550 4600 5900
+Wire Wire Line
+	5300 5550 5200 5550
+Connection ~ 5200 5550
 $EndSCHEMATC
