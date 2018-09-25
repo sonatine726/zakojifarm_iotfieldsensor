@@ -1,0 +1,4 @@
+(sym_lib_table
+  (lib (name SensorToAmbient_dedicated)(type Legacy)(uri D:/sonatine726/Work/SensorToAmbient/Pcb/SensorToAmbient/SensorToAmbient_dedicated.lib)(options "")(descr ""))
+  (lib (name SensorToAmbient-rescue)(type Legacy)(uri ${KIPRJMOD}/SensorToAmbient-rescue.lib)(options "")(descr ""))
+)
