@@ -178,7 +178,7 @@
     (add_net GND)
   )
 
-  (module SensorToAmbient:Grove_2mm_4pin_angle2 (layer F.Cu) (tedit 5BAB0552) (tstamp 5BA820AD)
+  (module SensorToAmbient:Grove_2mm_4pin_angle2 (layer F.Cu) (tedit 5BAB2AC8) (tstamp 5BA820AD)
     (at 31.37 70.37 90)
     (path /5BE0F3E4)
     (fp_text reference J3 (at -2.63 -3.55 90) (layer F.SilkS)
@@ -201,14 +201,14 @@
       (net 8 "Net-(3SB1-Pad11)"))
     (pad 3 thru_hole circle (at -4 0 90) (size 1.65 1.65) (drill 0.762) (layers *.Cu *.Mask)
       (net 17 "Net-(J3-Pad3)"))
-    (model ${KIPRJMOD}/GroveConnector_110990037.step
+    (model ${KIPRJMOD}/GroveConnector_110990037.wrl
       (at (xyz 0 0 0))
-      (scale (xyz 1 1 1))
+      (scale (xyz 0.394 0.394 0.394))
       (rotate (xyz -90 0 0))
     )
   )
 
-  (module SensorToAmbient:Grove_2mm_4pin_angle2 (layer F.Cu) (tedit 5BAB0552) (tstamp 5BA8209F)
+  (module SensorToAmbient:Grove_2mm_4pin_angle2 (layer F.Cu) (tedit 5BAB2AC8) (tstamp 5BA8209F)
     (at 31.37 55.34 90)
     (path /5BE0F3B8)
     (fp_text reference J2 (at -2.63 -3.55 90) (layer F.SilkS)
@@ -231,14 +231,14 @@
       (net 16 "Net-(J2-Pad4)"))
     (pad 3 thru_hole circle (at -4 0 90) (size 1.65 1.65) (drill 0.762) (layers *.Cu *.Mask)
       (net 15 "Net-(J2-Pad3)"))
-    (model ${KIPRJMOD}/GroveConnector_110990037.step
+    (model ${KIPRJMOD}/GroveConnector_110990037.wrl
       (at (xyz 0 0 0))
-      (scale (xyz 1 1 1))
+      (scale (xyz 0.394 0.394 0.394))
       (rotate (xyz -90 0 0))
     )
   )
 
-  (module SensorToAmbient:Grove_2mm_4pin_angle2 (layer F.Cu) (tedit 5BAB0552) (tstamp 5BA82091)
+  (module SensorToAmbient:Grove_2mm_4pin_angle2 (layer F.Cu) (tedit 5BAB2AC8) (tstamp 5BA82091)
     (at 31.37 40.22 90)
     (path /5BE0F275)
     (fp_text reference J1 (at -2.63 -3.55 90) (layer F.SilkS)
@@ -261,14 +261,14 @@
       (net 24 "Net-(J1-Pad4)"))
     (pad 3 thru_hole circle (at -4 0 90) (size 1.65 1.65) (drill 0.762) (layers *.Cu *.Mask)
       (net 10 "Net-(3SB1-Pad13)"))
-    (model ${KIPRJMOD}/GroveConnector_110990037.step
+    (model ${KIPRJMOD}/GroveConnector_110990037.wrl
       (at (xyz 0 0 0))
-      (scale (xyz 1 1 1))
+      (scale (xyz 0.394 0.394 0.394))
       (rotate (xyz -90 0 0))
     )
   )
 
-  (module SensorToAmbient:Grove_2mm_4pin_angle2 (layer F.Cu) (tedit 5BAB0552) (tstamp 5BA8213E)
+  (module SensorToAmbient:Grove_2mm_4pin_angle2 (layer F.Cu) (tedit 5BAB2AC8) (tstamp 5BA8213E)
     (at 62.15 46.09 270)
     (path /5BE0F456)
     (fp_text reference J6 (at -2.94 -3.52 270) (layer F.SilkS)
@@ -291,14 +291,14 @@
       (net 20 "Net-(J5-Pad4)"))
     (pad 3 thru_hole circle (at -4 0 270) (size 1.65 1.65) (drill 0.762) (layers *.Cu *.Mask)
       (net 21 "Net-(J5-Pad3)"))
-    (model ${KIPRJMOD}/GroveConnector_110990037.step
+    (model ${KIPRJMOD}/GroveConnector_110990037.wrl
       (at (xyz 0 0 0))
-      (scale (xyz 1 1 1))
+      (scale (xyz 0.394 0.394 0.394))
       (rotate (xyz -90 0 0))
     )
   )
 
-  (module SensorToAmbient:Grove_2mm_4pin_angle2 (layer F.Cu) (tedit 5BAB0552) (tstamp 5BA8214C)
+  (module SensorToAmbient:Grove_2mm_4pin_angle2 (layer F.Cu) (tedit 5BAB2AC8) (tstamp 5BA8214C)
     (at 62.15 76.29 270)
     (path /5BE0F523)
     (fp_text reference J4 (at -3.09 -3.52 270) (layer F.SilkS)
@@ -321,9 +321,9 @@
       (net 7 "Net-(3SB1-Pad10)"))
     (pad 3 thru_hole circle (at -4 0 270) (size 1.65 1.65) (drill 0.762) (layers *.Cu *.Mask)
       (net 22 "Net-(J4-Pad3)"))
-    (model ${KIPRJMOD}/GroveConnector_110990037.step
+    (model ${KIPRJMOD}/GroveConnector_110990037.wrl
       (at (xyz 0 0 0))
-      (scale (xyz 1 1 1))
+      (scale (xyz 0.394 0.394 0.394))
       (rotate (xyz -90 0 0))
     )
   )

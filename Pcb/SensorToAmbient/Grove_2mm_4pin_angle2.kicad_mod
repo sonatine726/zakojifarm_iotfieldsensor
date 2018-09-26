@@ -1,4 +1,4 @@
-(module Grove_2mm_4pin_angle2 (layer F.Cu) (tedit 5BAB0552)
+(module Grove_2mm_4pin_angle2 (layer F.Cu) (tedit 5BAB2AC8)
   (fp_text reference J6 (at -3.302 -4.318) (layer F.SilkS)
     (effects (font (size 1 1) (thickness 0.15)))
   )
@@ -15,9 +15,9 @@
   (pad 4 thru_hole circle (at -6 0) (size 1.65 1.65) (drill 0.762) (layers *.Cu *.Mask))
   (pad 2 thru_hole circle (at -2 0) (size 1.65 1.65) (drill 0.762) (layers *.Cu *.Mask))
   (pad 1 thru_hole rect (at 0 0) (size 1.65 1.65) (drill 0.762) (layers *.Cu *.Mask))
-  (model ${KIPRJMOD}/GroveConnector_110990037.step
+  (model ${KIPRJMOD}/GroveConnector_110990037.wrl
     (at (xyz 0 0 0))
-    (scale (xyz 1 1 1))
+    (scale (xyz 0.394 0.394 0.394))
     (rotate (xyz -90 0 0))
   )
 )
