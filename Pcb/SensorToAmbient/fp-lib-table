@@ -1,3 +1,3 @@
 (fp_lib_table
-  (lib (name SensorToAmbient)(type KiCad)(uri D:/sonatine726/Work/SensorToAmbient/Pcb/SensorToAmbient)(options "")(descr ""))
+  (lib (name SensorToAmbient)(type KiCad)(uri ${KIPRJMOD})(options "")(descr ""))
 )
