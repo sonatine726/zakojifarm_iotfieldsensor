@@ -30,7 +30,9 @@ typedef int IRQn_Type;
 #define C_SW_BATTERY_V 1
 #define C_SW_MS5540C 1
 #define C_SW_SLEEP_WAIT 1
+#define C_SW_EXT_RTC 1
 #define C_SW_MS5540C_ADC_CLOCK_BY_EXT_RTC 0
+#define C_SW_SLEEP_BY_POWERDOWN
 
 
 //Common global
@@ -86,7 +88,7 @@ constexpr uint8_t DS18B20_TEMPERATURE_RESOLUTION_BIT = 12;
 #endif //C_SW_DS18B20
 
 #if C_SW_MS5540C
-TwoWire exRtcI2c;
+TwoWire i2c;
 
 constexpr uint8 RTC_I2C_ADDR = 0x51;
 
@@ -143,6 +145,12 @@ void setup()
 
 	Wio.PowerSupplyGrove(true);
 
+	i2c.begin();
+
+#if C_SW_EXT_RTC
+	InitializeExtRtc();
+#endif //C_SW_EXT_RTC
+
 #if C_SW_LTE
 	//Setup LTE
 	SerialUSB.println("INFO: Setup LTE");
@@ -153,6 +161,13 @@ void setup()
 	}
 
 	UpdateRtcByNtp();
+
+#if C_SW_EXT_RTC
+	struct tm current_time = { 0 };
+	rtc.getTime(&current_time);
+
+	SetExtRtcTime(current_time);
+#endif //C_SW_EXT_RTC
 
 #if C_SW_AMBIENT
 	//Setup Ambient
@@ -177,14 +192,6 @@ void setup()
 #endif //C_SW_DS18B20
 
 #if C_SW_MS5540C
-
-#if C_SW_MS5540C_ADC_CLOCK_BY_EXT_RTC
-	struct tm current_time = { 0 };
-	rtc.getTime(&current_time);
-
-	SetupExtRtc(current_time);
-#endif //C_SW_MS5540C_ADC_CLOCK_BY_EXT_RTC
-
 	if (!SetupMs5540c())
 	{
 		SerialUSB.println("ERROR: SetupMs5540c");
@@ -485,56 +492,60 @@ float GetTemperatureDS18B20()
 #endif //C_SW_DS18B20
 
 
-
-#if C_SW_MS5540C
+#if C_SW_EXT_RTC
 //External RTC functions
-void SetupExtRtc(tm& current_time)
+
+void InitializeExtRtc()
+{
+	i2c.beginTransmission(RTC_I2C_ADDR);
+	i2c.write(RTC_REG_CTR2);
+	i2c.write(0x00); //Clear all interupts
+	i2c.endTransmission();
+}
+
+void SetExtRtcTime(tm& current_time)
 {
 	{
 		char cbuf[64];
-		snprintf(cbuf, sizeof(cbuf), "INFO: SetupExtRtc : %s", asctime(&current_time));
+		snprintf(cbuf, sizeof(cbuf), "INFO: SetExtRtcTime : %s", asctime(&current_time));
 		SerialUSB.println(cbuf);
 	}
 
-	exRtcI2c.begin();
-
-	exRtcI2c.beginTransmission(RTC_I2C_ADDR);
-	exRtcI2c.write(RTC_REG_CTR1);
-	exRtcI2c.write(0x20); //Write to RTC_REG_CTR1.STOP=1
-	exRtcI2c.write(0x00); //Write to RTC_REG_CTR2
+	i2c.beginTransmission(RTC_I2C_ADDR);
+	i2c.write(RTC_REG_SEC);
 
 	const uint8 sec_to_reg = GetRtcTimeRegValue(current_time.tm_sec);
-	exRtcI2c.write(sec_to_reg); //Write to RTC_REG_SEC
+	i2c.write(sec_to_reg); //Write to RTC_REG_SEC
 
 	const uint8 min_to_reg = GetRtcTimeRegValue(current_time.tm_min);
-	exRtcI2c.write(min_to_reg); //Write to RTC_REG_MIN
+	i2c.write(min_to_reg); //Write to RTC_REG_MIN
 
 	const uint8 hour_to_reg = GetRtcTimeRegValue(current_time.tm_hour);
-	exRtcI2c.write(hour_to_reg); //Write to RTC_REG_HOUR
+	i2c.write(hour_to_reg); //Write to RTC_REG_HOUR
 
 	const uint8 day_to_reg = GetRtcTimeRegValue(current_time.tm_mday);
-	exRtcI2c.write(day_to_reg); //Write to RTC_REG_DAYS
+	i2c.write(day_to_reg); //Write to RTC_REG_DAYS
 
 	const uint8 weekday_to_reg = GetRtcTimeRegValue(current_time.tm_wday);
-	exRtcI2c.write(weekday_to_reg); //Write to RTC_REG_WEEK
+	i2c.write(weekday_to_reg); //Write to RTC_REG_WEEK
 
 	const uint8 month_to_reg = GetRtcTimeRegValue(current_time.tm_mon);
-	exRtcI2c.write(month_to_reg); //Write to RTC_REG_MONTH
+	i2c.write(month_to_reg); //Write to RTC_REG_MONTH
 
 	const uint8 year_to_reg = GetRtcTimeRegValue(current_time.tm_year);
-	exRtcI2c.write(year_to_reg); //Write to RTC_REG_YEAR
+	i2c.write(year_to_reg); //Write to RTC_REG_YEAR
 
-	exRtcI2c.write(0x00); //Write to RTC_REG_MIN_ALR
-	exRtcI2c.write(0x00); //Write to RTC_REG_HOUR_ALR
-	exRtcI2c.write(0x00); //Write to RTC_REG_DAY_ALR
-	exRtcI2c.write(0x00); //Write to RTC_REG_WEEK_ALR
+	i2c.write(0x00); //Write to RTC_REG_MIN_ALR
+	i2c.write(0x00); //Write to RTC_REG_HOUR_ALR
+	i2c.write(0x00); //Write to RTC_REG_DAY_ALR
+	i2c.write(0x00); //Write to RTC_REG_WEEK_ALR
 
-	exRtcI2c.write(0x00); //Write to RTC_REG_CLKO_FREQ
+	i2c.write(0x00); //Write to RTC_REG_CLKO_FREQ
 
-	exRtcI2c.write(0x00); //Write to RTC_REG_TIMER_CTR
-	exRtcI2c.write(0x00); //Write to RTC_REG_TIMER
+	i2c.write(0x00); //Write to RTC_REG_TIMER_CTR
+	i2c.write(0x00); //Write to RTC_REG_TIMER
 
-	exRtcI2c.endTransmission();
+	i2c.endTransmission();
 }
 
 uint8 GetRtcTimeRegValue(uint32 time)
@@ -584,6 +595,33 @@ uint8 GetRtcTimeRegValue(uint32 time)
 
 	return regv;
 }
+
+void SetWakeupAlarmToExtRTC(time_t wakeup_time)
+{
+	{
+		char cbuf[64];
+		snprintf(cbuf, sizeof(cbuf), "INFO: SetWakeupAlarmToExtRTC : %s", asctime(&wakeup_time));
+		SerialUSB.println(cbuf);
+	}
+
+	//Set alarm time
+	i2c.beginTransmission(RTC_I2C_ADDR);
+	i2c.write(RTC_REG_MIN_ALR);
+	i2c.write(wakeup_time.tm_min); //Set only min of wakeup time. Ignore hour, day, weekday value.
+	i2c.write(0x80);
+	i2c.write(0x80);
+	i2c.write(0x80);
+	i2c.endTransmission();
+
+	//Enable Alarm
+	i2c.beginTransmission(RTC_I2C_ADDR);
+	i2c.write(RTC_REG_CTR2);
+	i2c.write(0x0A);
+	i2c.endTransmission();
+}
+#endif //C_SW_EXT_RTC
+
+#if C_SW_MS5540C
 
 bool SetupMs5540c()
 {
@@ -760,14 +798,14 @@ bool MakeAdcClockToMs5540c()
 {
 	bool isSuccess = true;
 
-#if C_SW_MS5540C_ADC_CLOCK_BY_EXT_RTC
-	exRtcI2c.beginTransmission(RTC_I2C_ADDR);
-	exRtcI2c.write(RTC_REG_CLKO_FREQ);
-	exRtcI2c.write(0x80);
-	exRtcI2c.endTransmission();
-#else //C_SW_MS5540C_ADC_CLOCK_BY_EXT_RTC
+#if C_SW_EXT_RTC && C_SW_MS5540C_ADC_CLOCK_BY_EXT_RTC
+	i2c.beginTransmission(RTC_I2C_ADDR);
+	i2c.write(RTC_REG_CLKO_FREQ);
+	i2c.write(0x80);
+	i2c.endTransmission();
+#else //C_SW_EXT_RTC && C_SW_MS5540C_ADC_CLOCK_BY_EXT_RTC
 	isSuccess = MakeClockByPwm(ADC_CLOCK_PIN_FOR_MS5540C);
-#endif //C_SW_MS5540C_ADC_CLOCK_BY_EXT_RTC
+#endif //C_SW_EXT_RTC && C_SW_MS5540C_ADC_CLOCK_BY_EXT_RTC
 
 	return isSuccess;
 }
@@ -1093,5 +1131,10 @@ void SleepUntilNextLoop(time_t sleeptime_sec)
 	time_t epoch = mktime(&current_time);
 	epoch += sleeptime_sec;
 
+#if C_SW_EXT_RTC && C_SW_SLEEP_BY_POWERDOWN
+	SetWakeupAlarmToExtRTC(epoch);
+	Wio.PowerSupplyGrove(false);
+#else //C_SW_SLEEP_BY_POWERDOWN
 	EnterStandbyMode(epoch);
+#endif //C_SW_SLEEP_BY_POWERDOWN
 }
