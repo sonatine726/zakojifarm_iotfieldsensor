@@ -108,15 +108,24 @@ constexpr uint8 RTC_REG_TIMER_CTR = 0x0E;
 constexpr uint8 RTC_REG_TIMER = 0x0F;
 
 constexpr uint8 ADC_CLOCK_PIN_FOR_MS5540C = Port2Pin('B', 4); // D20;
+constexpr uint8 OE_PIN_FOR_MS5540C_AIR = Port2Pin('A', 4); // D4;
+constexpr uint8 OE_PIN_FOR_MS5540C_WATER = Port2Pin('C', 7); // D39;
 
 Ms5540cSPI ms5540cSpi(1);
 
-uint32 ms5540c_c1;
-uint32 ms5540c_c2;
-uint32 ms5540c_c3;
-uint32 ms5540c_c4;
-uint32 ms5540c_c5;
-uint32 ms5540c_c6;
+enum MS5540C_SENSOR_ID
+{
+	MS5540C_AIR,
+	MS5540C_WATER,
+	MS5540C_SENSOR_NUMBER
+};
+
+uint32 ms5540c_c1[MS5540C_SENSOR_NUMBER];
+uint32 ms5540c_c2[MS5540C_SENSOR_NUMBER];
+uint32 ms5540c_c3[MS5540C_SENSOR_NUMBER];
+uint32 ms5540c_c4[MS5540C_SENSOR_NUMBER];
+uint32 ms5540c_c5[MS5540C_SENSOR_NUMBER];
+uint32 ms5540c_c6[MS5540C_SENSOR_NUMBER];
 #endif //C_SW_MS5540C
 
 
@@ -229,12 +238,17 @@ void loop()
 	SerialUSB.println(cbuf);
 #endif //C_SW_DS18B20
 
-	float press_ms5540c = 0;
-	float temp_ms5540c = INVALID_TEMP_AND_HUMID;
+	float press_ms5540c[MS5540C_SENSOR_NUMBER] = { 0 };
+	float temp_ms5540c[MS5540C_SENSOR_NUMBER] = { INVALID_TEMP_AND_HUMID };
 #if C_SW_MS5540C
-	GetPressureAndTemperatureFromMs5540c(press_ms5540c, temp_ms5540c);
-	snprintf(cbuf, sizeof(cbuf), "INFO: MS5540C press = %f mbar, temp = %f C", press_ms5540c, temp_ms5540c);
-	SerialUSB.println(cbuf);
+	for (int i = 0; i < MS5540C_SENSOR_NUMBER; ++i)
+	{
+		GetPressureAndTemperatureFromMs5540c(i, press_ms5540c[i], temp_ms5540c[i]);
+		snprintf(cbuf, sizeof(cbuf), "INFO: MS5540C[%d] press = %f mbar, temp = %f C", i, press_ms5540c[i], temp_ms5540c[i]);
+		SerialUSB.println(cbuf);
+	}
+
+	float water_level_cm = CalculateWaterLevelCm(press_ms5540c[MS5540C_WATER], press_ms5540c[MS5540C_AIR]);
 #endif //C_SW_MS5540C
 
 	bool validGps = false;
@@ -574,8 +588,16 @@ uint8 GetRtcTimeRegValue(uint32 time)
 bool SetupMs5540c()
 {
 	//Set AF of pins for MS5540C
+	////SCLK from B3
 	gpio_set_af_mode(GPIOA, 5, 0);
+	gpio_set_af_mode(GPIOB, 3, 5);
+	////MCLK by pwm from B4
 	gpio_set_af_mode(GPIOB, 4, 2);
+	////OE signal from A4, C7
+	gpio_set_af_mode(GPIOA, 4, 0);
+	pinMode(OE_PIN_FOR_MS5540C_AIR, OUTPUT);
+	gpio_set_af_mode(GPIOC, 7, 0);
+	pinMode(OE_PIN_FOR_MS5540C_WATER, OUTPUT);
 
 	ms5540cSpi.begin(SPI_281_250KHZ, MSBFIRST, SPI_MODE0);
 
@@ -585,13 +607,22 @@ bool SetupMs5540c()
 		return false;
 	}
 
-	GetMs5540cCalibrationValues();
+	GetMs5540cCalibrationValues(MS5540C_AIR);
+	GetMs5540cCalibrationValues(MS5540C_WATER);
 
 	return true;
 }
 
-void GetMs5540cCalibrationValues()
+void EnableMs5540c(MS5540C_SENSOR_ID sensor_id)
 {
+	digitalWrite(MS5540C_AIR, sensor_id);
+	digitalWrite(MS5540C_WATER, !sensor_id);
+}
+
+void GetMs5540cCalibrationValues(MS5540C_SENSOR_ID sensor_id)
+{
+	EnableMs5540c(sensor_id);
+
 	//Read calibration register
 	const uint32 calib_reg1 = SendCommandAndGetWord(0x1D, 0x50, 0);
 	const uint32 calib_reg2 = SendCommandAndGetWord(0x1D, 0x60, 0);
@@ -599,34 +630,44 @@ void GetMs5540cCalibrationValues()
 	const uint32 calib_reg4 = SendCommandAndGetWord(0x1D, 0xA0, 0);
 
 	//Get calibration value
-	ms5540c_c1 = calib_reg1 >> 1;
-	ms5540c_c2 = ((calib_reg3 & 0x3F) << 6) | (calib_reg4 & 0x3F);
-	ms5540c_c3 = (calib_reg4 >> 6);
-	ms5540c_c4 = (calib_reg3 >> 6);
-	ms5540c_c5 = (calib_reg2 >> 6) | ((calib_reg1 & 0x1) << 10);
-	ms5540c_c6 = calib_reg2 & 0x3F;
+	ms5540c_c1[sensor_id] = calib_reg1 >> 1;
+	ms5540c_c2[sensor_id] = ((calib_reg3 & 0x3F) << 6) | (calib_reg4 & 0x3F);
+	ms5540c_c3[sensor_id] = (calib_reg4 >> 6);
+	ms5540c_c4[sensor_id] = (calib_reg3 >> 6);
+	ms5540c_c5[sensor_id] = (calib_reg2 >> 6) | ((calib_reg1 & 0x1) << 10);
+	ms5540c_c6[sensor_id] = calib_reg2 & 0x3F;
 
-	SerialUSB.println("INFO: Ms5540c calibration values =");
-	SerialUSB.println(ms5540c_c1);
-	SerialUSB.println(ms5540c_c2);
-	SerialUSB.println(ms5540c_c3);
-	SerialUSB.println(ms5540c_c4);
-	SerialUSB.println(ms5540c_c5);
-	SerialUSB.println(ms5540c_c6);
+	char cbuf[64] = { 0 };
+	snprintf(cbuf, sizeof(cbuf), "INFO: Ms5540c[%d] calibration values =", sensor_id);
+	SerialUSB.println(cbuf);
+	SerialUSB.println(ms5540c_c1[sensor_id]);
+	SerialUSB.println(ms5540c_c2[sensor_id]);
+	SerialUSB.println(ms5540c_c3[sensor_id]);
+	SerialUSB.println(ms5540c_c4[sensor_id]);
+	SerialUSB.println(ms5540c_c5[sensor_id]);
+	SerialUSB.println(ms5540c_c6[sensor_id]);
 }
 
-void GetPressureAndTemperatureFromMs5540c(float& pressure, float& temperature)
+float CalculateWaterLevelCm(float water_pressure_mbar, float air_pressure_mbar)
 {
+	const float diff_press = water_pressure_mbar - air_pressure_mbar;
+	return diff_press * 0.9999999999999971325; // Right operand = (0.00098692326671601 * 1013.25). 1mbar = 0.00098692326671601 atm. 1atm = 1013.25 hPa. 1cm Water pressure is 1hPa. 
+}
+
+void GetPressureAndTemperatureFromMs5540c(MS5540C_SENSOR_ID sensor_id, float& pressure, float& temperature)
+{
+	EnableMs5540c(sensor_id);
+
 	long dT, raw_temperature_decuple, temperature_compensation;//data holders for interim results of temperature calculation
 
 	//Get temperature register value and calculate temperature
 	const uint16 temp_reg = SendCommandAndGetWord(0x0F, 0x20, 35);
-	temperature = CalculateTemperatureByMs5540c(temp_reg, dT, raw_temperature_decuple, temperature_compensation);
+	temperature = CalculateTemperatureByMs5540c(sensor_id, temp_reg, dT, raw_temperature_decuple, temperature_compensation);
 
 
 	//Get pressure register value and calculate pressure
 	const uint16 press_reg = SendCommandAndGetWord(0x0F, 0x40, 35);
-	pressure = CalculatePressureByMs5540c(press_reg, dT, raw_temperature_decuple, temperature_compensation);
+	pressure = CalculatePressureByMs5540c(sensor_id, press_reg, dT, raw_temperature_decuple, temperature_compensation);
 }
 
 void ResetMs5540c()
@@ -654,12 +695,12 @@ uint16 SendCommandAndGetWord(uint8 command_msb, uint8 command_lsb, unsigned int 
 	return word_msb | word_lsb;
 }
 
-float CalculateTemperatureByMs5540c(uint16 temp_reg, long& r_dT, long& r_raw_temperature_decuple, long& r_temperature_compensation)
+float CalculateTemperatureByMs5540c(MS5540C_SENSOR_ID sensor_id, uint16 temp_reg, long& r_dT, long& r_raw_temperature_decuple, long& r_temperature_compensation)
 {
-	const long UT1 = (ms5540c_c5 * 8) + 20224;
+	const long UT1 = (ms5540c_c5[sensor_id] * 8) + 20224;
 	const long dT = (temp_reg - UT1);
-	long TEMP = 200 + ((dT * (ms5540c_c6 + 50)) / 1024);
-	const long TEMP_COMPENSATION = GetCompensateValueForTemperature(TEMP, ms5540c_c6);
+	long TEMP = 200 + ((dT * (ms5540c_c6[sensor_id] + 50)) / 1024);
+	const long TEMP_COMPENSATION = GetCompensateValueForTemperature(TEMP, ms5540c_c6[sensor_id]);
 
 	r_dT = dT;
 	r_raw_temperature_decuple = TEMP;
@@ -668,10 +709,10 @@ float CalculateTemperatureByMs5540c(uint16 temp_reg, long& r_dT, long& r_raw_tem
 	return static_cast<float>(TEMP - TEMP_COMPENSATION) / 10;
 }
 
-float CalculatePressureByMs5540c(uint16 press_reg, long dT, long TEMP, long temperature_compensation)
+float CalculatePressureByMs5540c(MS5540C_SENSOR_ID sensor_id, uint16 press_reg, long dT, long TEMP, long temperature_compensation)
 {
-	const long OFF = (ms5540c_c2 * 4) + (((ms5540c_c4 - 512) * dT) / 4096);
-	const long SENS = ms5540c_c1 + ((ms5540c_c3 * dT) / 1024) + 24576;
+	const long OFF = (ms5540c_c2[sensor_id] * 4) + (((ms5540c_c4[sensor_id] - 512) * dT) / 4096);
+	const long SENS = ms5540c_c1[sensor_id] + ((ms5540c_c3[sensor_id] * dT) / 1024) + 24576;
 	const long X = ((SENS * (press_reg - 7168)) / 16384) - OFF;
 	long P = X * 10 / 32 + 2500;
 
@@ -679,16 +720,16 @@ float CalculatePressureByMs5540c(uint16 press_reg, long dT, long TEMP, long temp
 	return static_cast<float>(P) / 10;
 }
 
-long GetCompensateValueForTemperature(long TEMP, uint32 ms5540c_c6)
+long GetCompensateValueForTemperature(long TEMP, uint32 c6)
 {
 	long t2 = 0;
 	if (TEMP < 200)
 	{
-		t2 = 11 * (ms5540c_c6 + 24) * (200 - TEMP) * (200 - TEMP) / 1048576;
+		t2 = 11 * (c6 + 24) * (200 - TEMP) * (200 - TEMP) / 1048576;
 	}
 	else if (TEMP > 450)
 	{
-		t2 = 3 * (ms5540c_c6 + 24) * (450 - TEMP) * (450 - TEMP) / 1048576;
+		t2 = 3 * (c6 + 24) * (450 - TEMP) * (450 - TEMP) / 1048576;
 	}
 
 	return t2;
