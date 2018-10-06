@@ -86,7 +86,7 @@ U 1 1 5BE0FD4D
 P 3850 5900
 F 0 "J7" V 3723 5980 50  0000 L CNN
 F 1 "Conn_01x02" V 3814 5980 50  0000 L CNN
-F 2 "Connectors_JST:JST_XH_S02B-XH-A_02x2.50mm_Angled" H 3850 5900 50  0001 C CNN
+F 2 "Connectors_JST:JST_PH_S2B-PH-K_02x2.00mm_Angled" H 3850 5900 50  0001 C CNN
 F 3 "~" H 3850 5900 50  0001 C CNN
 	1    3850 5900
 	0    -1   1    0   
@@ -239,7 +239,6 @@ $EndComp
 Text Label 3850 5450 1    50   ~ 0
 PWR_BAT
 NoConn ~ 1500 2250
-NoConn ~ 1500 2350
 NoConn ~ 1500 3550
 NoConn ~ 1500 3650
 $Comp
@@ -282,7 +281,7 @@ Wire Wire Line
 	4200 1000 4200 850 
 Connection ~ 2100 1000
 Wire Wire Line
-	2100 1000 2100 4950
+	2100 1000 2100 3250
 Wire Wire Line
 	2000 1100 4100 1100
 Wire Wire Line
@@ -443,7 +442,6 @@ PWR3.3V
 Wire Wire Line
 	5300 1000 4200 1000
 Connection ~ 4200 1000
-NoConn ~ 1500 2550
 NoConn ~ 3400 2450
 Wire Wire Line
 	4050 6050 4050 5700
@@ -463,8 +461,6 @@ F 3 "" H 2650 3100 50  0001 C CNN
 	1    2650 2650
 	-1   0    0    1   
 $EndComp
-Wire Wire Line
-	2200 900  2200 5050
 Wire Wire Line
 	2250 2900 2250 4000
 Wire Wire Line
@@ -491,12 +487,12 @@ Wire Wire Line
 	2750 4000 3850 4000
 Connection ~ 2200 5050
 $Comp
-L Switch:SW_Push SW?
+L Switch:SW_Push SW1
 U 1 1 5BB9F3A0
 P 3400 6450
-F 0 "SW?" H 3400 6735 50  0000 C CNN
+F 0 "SW1" H 3400 6735 50  0000 C CNN
 F 1 "SW_Push" H 3400 6644 50  0000 C CNN
-F 2 "" H 3400 6650 50  0001 C CNN
+F 2 "Connectors_JST:JST_XH_S02B-XH-A_02x2.50mm_Angled" H 3400 6650 50  0001 C CNN
 F 3 "" H 3400 6650 50  0001 C CNN
 	1    3400 6450
 	1    0    0    -1  
@@ -507,12 +503,12 @@ Wire Wire Line
 	3100 6450 3100 5100
 Connection ~ 3100 5100
 $Comp
-L device:R R?
+L device:R R3
 U 1 1 5BBA785E
 P 3100 6700
-F 0 "R?" H 3170 6746 50  0000 L CNN
+F 0 "R3" H 3170 6746 50  0000 L CNN
 F 1 "R" H 3170 6655 50  0000 L CNN
-F 2 "" V 3030 6700 50  0001 C CNN
+F 2 "Resistors_THT:R_Axial_DIN0207_L6.3mm_D2.5mm_P7.62mm_Horizontal" V 3030 6700 50  0001 C CNN
 F 3 "~" H 3100 6700 50  0001 C CNN
 	1    3100 6700
 	1    0    0    -1  
@@ -531,17 +527,6 @@ Wire Wire Line
 	2200 6450 3100 6450
 Wire Wire Line
 	2200 5050 2200 6450
-$Comp
-L pspice:DIODE D?
-U 1 1 5BBBD86B
-P 3950 6450
-F 0 "D?" H 3950 6715 50  0000 C CNN
-F 1 "DIODE" H 3950 6624 50  0000 C CNN
-F 2 "" H 3950 6450 50  0001 C CNN
-F 3 "" H 3950 6450 50  0001 C CNN
-	1    3950 6450
-	-1   0    0    -1  
-$EndComp
 Wire Wire Line
 	3850 4900 3850 5650
 Wire Wire Line
@@ -553,4 +538,65 @@ Wire Wire Line
 Connection ~ 3850 5650
 Wire Wire Line
 	3850 5650 3850 5700
+$Comp
+L Switch:SW_Push SW2
+U 1 1 5BB8B6B3
+P 1400 1800
+F 0 "SW2" H 1400 2085 50  0000 C CNN
+F 1 "SW_Push" H 1400 1994 50  0000 C CNN
+F 2 "Connectors_JST:JST_XH_S02B-XH-A_02x2.50mm_Angled" H 1400 2000 50  0001 C CNN
+F 3 "" H 1400 2000 50  0001 C CNN
+	1    1400 1800
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	1500 2550 1600 2550
+$Comp
+L device:R R4
+U 1 1 5BB95027
+P 1600 2800
+F 0 "R4" H 1670 2846 50  0000 L CNN
+F 1 "R" H 1670 2755 50  0000 L CNN
+F 2 "Resistors_THT:R_Axial_DIN0207_L6.3mm_D2.5mm_P7.62mm_Horizontal" V 1530 2800 50  0001 C CNN
+F 3 "~" H 1600 2800 50  0001 C CNN
+	1    1600 2800
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	1600 2550 1600 2650
+Connection ~ 1600 2550
+Wire Wire Line
+	1600 2950 1600 3250
+Wire Wire Line
+	1600 3250 2100 3250
+Connection ~ 2100 3250
+Wire Wire Line
+	2100 3250 2100 4950
+$Comp
+L device:D_Schottky D1
+U 1 1 5BB9F5B8
+P 3900 6450
+F 0 "D1" H 3900 6666 50  0000 C CNN
+F 1 "D_Schottky" H 3900 6575 50  0000 C CNN
+F 2 "Diodes_THT:D_T-1_P5.08mm_Horizontal" H 3900 6450 50  0001 C CNN
+F 3 "~" H 3900 6450 50  0001 C CNN
+	1    3900 6450
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	4150 6450 4050 6450
+Wire Wire Line
+	2200 900  2200 5050
+Wire Wire Line
+	1600 1800 1600 2550
+Wire Wire Line
+	1200 1800 1200 2000
+Wire Wire Line
+	1200 2000 1550 2000
+Wire Wire Line
+	1550 2000 1550 2350
+Wire Wire Line
+	1550 2350 1500 2350
+Text Label 1200 2000 0    50   ~ 0
+PWR3.3V
 $EndSCHEMATC
