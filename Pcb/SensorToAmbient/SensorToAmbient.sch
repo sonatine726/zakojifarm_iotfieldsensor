@@ -138,8 +138,6 @@ $EndComp
 Wire Wire Line
 	1500 3850 2000 3850
 Wire Wire Line
-	1500 4950 2100 4950
-Wire Wire Line
 	2900 5000 3000 5000
 Wire Wire Line
 	4200 5000 4200 5200
@@ -211,31 +209,6 @@ F 3 "" H 2100 5950 50  0001 C CNN
 	1    2100 5950
 	1    0    0    -1  
 $EndComp
-Connection ~ 2100 4950
-Wire Wire Line
-	5600 5950 5600 6150
-$Comp
-L power:GND #PWR0101
-U 1 1 5BA60C83
-P 5600 6150
-F 0 "#PWR0101" H 5600 5900 50  0001 C CNN
-F 1 "GND" H 5605 5977 50  0000 C CNN
-F 2 "" H 5600 6150 50  0001 C CNN
-F 3 "" H 5600 6150 50  0001 C CNN
-	1    5600 6150
-	1    0    0    -1  
-$EndComp
-$Comp
-L power:PWR_FLAG #FLG0101
-U 1 1 5BA60C30
-P 5600 5950
-F 0 "#FLG0101" H 5600 6025 50  0001 C CNN
-F 1 "PWR_FLAG" H 5600 6124 50  0000 C CNN
-F 2 "" H 5600 5950 50  0001 C CNN
-F 3 "~" H 5600 5950 50  0001 C CNN
-	1    5600 5950
-	1    0    0    -1  
-$EndComp
 Text Label 3850 5450 1    50   ~ 0
 PWR_BAT
 NoConn ~ 1500 2250
@@ -254,14 +227,10 @@ F 3 "~" H 5050 5100 50  0001 C CNN
 $EndComp
 NoConn ~ 4900 2400
 NoConn ~ 4900 2500
-NoConn ~ 4850 5100
-NoConn ~ 4850 5200
 Wire Wire Line
 	2100 850  2100 1000
 Wire Wire Line
 	2200 850  2200 900 
-Wire Wire Line
-	1500 5050 2200 5050
 Wire Wire Line
 	1500 3750 1700 3750
 Wire Wire Line
@@ -274,7 +243,6 @@ Wire Wire Line
 	2200 900  4300 900 
 Wire Wire Line
 	4300 900  4300 850 
-Connection ~ 2200 900 
 Wire Wire Line
 	2100 1000 4200 1000
 Wire Wire Line
@@ -386,8 +354,6 @@ Wire Wire Line
 	3850 3150 3850 4000
 Connection ~ 3850 4700
 Wire Wire Line
-	2100 4950 2100 5950
-Wire Wire Line
 	5300 1000 5300 5550
 Text Label 4700 5550 2    50   ~ 0
 GND
@@ -437,8 +403,6 @@ Wire Wire Line
 Wire Wire Line
 	3300 2750 3400 2750
 Connection ~ 3400 2750
-Text Label 2200 1700 1    50   ~ 0
-PWR3.3V
 Wire Wire Line
 	5300 1000 4200 1000
 Connection ~ 4200 1000
@@ -473,8 +437,6 @@ Wire Wire Line
 Wire Wire Line
 	3050 2700 3100 2700
 Wire Wire Line
-	3100 2700 3100 5100
-Wire Wire Line
 	3100 5100 2900 5100
 Wire Wire Line
 	3250 2900 3050 2900
@@ -485,7 +447,6 @@ Wire Wire Line
 Connection ~ 2750 4000
 Wire Wire Line
 	2750 4000 3850 4000
-Connection ~ 2200 5050
 $Comp
 L Switch:SW_Push SW1
 U 1 1 5BB9F3A0
@@ -499,9 +460,6 @@ F 3 "" H 3400 6650 50  0001 C CNN
 $EndComp
 Wire Wire Line
 	3200 6450 3100 6450
-Wire Wire Line
-	3100 6450 3100 5100
-Connection ~ 3100 5100
 $Comp
 L device:R R3
 U 1 1 5BBA785E
@@ -524,17 +482,9 @@ Connection ~ 4600 6850
 Wire Wire Line
 	4600 6850 4600 6950
 Wire Wire Line
-	2200 6450 3100 6450
-Wire Wire Line
-	2200 5050 2200 6450
-Wire Wire Line
 	3850 4900 3850 5650
 Wire Wire Line
 	3600 6450 3750 6450
-Wire Wire Line
-	3850 5650 4150 5650
-Wire Wire Line
-	4150 5650 4150 6450
 Connection ~ 3850 5650
 Wire Wire Line
 	3850 5650 3850 5700
@@ -570,8 +520,6 @@ Wire Wire Line
 Wire Wire Line
 	1600 3250 2100 3250
 Connection ~ 2100 3250
-Wire Wire Line
-	2100 3250 2100 4950
 $Comp
 L device:D_Schottky D1
 U 1 1 5BB9F5B8
@@ -584,10 +532,6 @@ F 3 "~" H 3900 6450 50  0001 C CNN
 	1    0    0    -1  
 $EndComp
 Wire Wire Line
-	4150 6450 4050 6450
-Wire Wire Line
-	2200 900  2200 5050
-Wire Wire Line
 	1600 1800 1600 2550
 Wire Wire Line
 	1200 1800 1200 2000
@@ -598,5 +542,58 @@ Wire Wire Line
 Wire Wire Line
 	1550 2350 1500 2350
 Text Label 1200 2000 0    50   ~ 0
-PWR3.3V
+PWR3.3V_Sensor
+Wire Wire Line
+	3100 5100 3100 6450
+NoConn ~ 1500 5050
+NoConn ~ 4850 5200
+$Comp
+L device:D_Schottky D2
+U 1 1 5BBBBAF5
+P 3100 3550
+F 0 "D2" V 3146 3471 50  0000 R CNN
+F 1 "D_Schottky" V 3055 3471 50  0000 R CNN
+F 2 "Diodes_THT:D_T-1_P5.08mm_Horizontal" H 3100 3550 50  0001 C CNN
+F 3 "~" H 3100 3550 50  0001 C CNN
+	1    3100 3550
+	0    -1   -1   0   
+$EndComp
+Wire Wire Line
+	3100 2700 3100 3400
+Wire Wire Line
+	3100 3700 3100 5100
+Connection ~ 3100 5100
+Wire Wire Line
+	2100 3250 2100 5950
+NoConn ~ 1500 4950
+Wire Wire Line
+	1550 2350 2200 2350
+Wire Wire Line
+	2200 2350 2200 900 
+Connection ~ 1550 2350
+Connection ~ 2200 900 
+Wire Wire Line
+	3850 5650 4150 5650
+Wire Wire Line
+	4150 6450 4050 6450
+Wire Wire Line
+	4150 5650 4150 6450
+Wire Wire Line
+	3100 5100 4850 5100
+Text Label 4450 5100 0    50   ~ 0
+PWR3.3V_DCDC
+$Comp
+L power:PWR_FLAG #FLG0102
+U 1 1 5BBE8DA8
+P 3650 5700
+F 0 "#FLG0102" H 3650 5775 50  0001 C CNN
+F 1 "PWR_FLAG" H 3650 5874 50  0000 C CNN
+F 2 "" H 3650 5700 50  0001 C CNN
+F 3 "~" H 3650 5700 50  0001 C CNN
+	1    3650 5700
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	3650 5700 3850 5700
+Connection ~ 3850 5700
 $EndSCHEMATC
