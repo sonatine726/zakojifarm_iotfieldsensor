@@ -24,15 +24,15 @@ typedef int IRQn_Type;
 // Compile Switch
 #define C_SW_LTE 1
 #define C_SW_AMBIENT 1
-#define C_SW_DHT11 1
-#define C_SW_DS18B20 1
+#define C_SW_DHT11 0
+#define C_SW_DS18B20 0
 #define C_SW_GPS 1
 #define C_SW_BATTERY_V 1
 #define C_SW_MS5540C 1
 #define C_SW_SLEEP_WAIT 1
 #define C_SW_EXT_RTC 1
 #define C_SW_MS5540C_ADC_CLOCK_BY_EXT_RTC 0
-#define C_SW_SLEEP_BY_POWERDOWN
+#define C_SW_SLEEP_BY_POWERDOWN 0
 
 
 //Common global
@@ -50,7 +50,7 @@ constexpr time_t JAPAN_TIME_DIFF = 9 * 60 * 60; // UTC + 9h
 
 // constexpr uint32* P_RTC_BKP0R = reinterpret_cast<uint32*>(RTC_BASE) + 0x50;
 
-constexpr float INVALID_TEMP_AND_HUMID = -127;
+constexpr float INVALID_TEMP_AND_WATERLEVEL = -127;
 
 
 #if C_SW_LTE
@@ -132,7 +132,7 @@ uint32 ms5540c_c6[MS5540C_SENSOR_NUMBER];
 
 
 #if C_SW_BATTERY_V
-constexpr unsigned int EXTERNAL_BATTERY_ADC_PIN = 5;
+constexpr unsigned int EXTERNAL_BATTERY_ADC_PIN = Port2Pin('A', 5);
 constexpr unsigned int INTERNAL_BATTERY_ADC_CHANNEL = 18;
 constexpr unsigned int INTERNAL_TEMPERATURE_ADC_CHANNEL = 16;
 #endif //C_SW_BATTERY_V
@@ -220,8 +220,8 @@ void loop()
 	SerialUSB.println(cbuf);
 
 	/* Get temperature and humidity */
-	float temp = INVALID_TEMP_AND_HUMID;
-	float humi = INVALID_TEMP_AND_HUMID;
+	float temp = INVALID_TEMP_AND_WATERLEVEL;
+	float humi = INVALID_TEMP_AND_WATERLEVEL;
 
 #if C_SW_DHT11
 	SerialUSB.println("INFO: TemperatureAndHumidityRead()");
@@ -236,7 +236,7 @@ void loop()
 	}
 #endif //C_SW_DHT11
 
-	float tempDs18b20 = INVALID_TEMP_AND_HUMID;
+	float tempDs18b20 = INVALID_TEMP_AND_WATERLEVEL;
 #if C_SW_DS18B20
 	/* Get water temperature from DS18B20 */
 	SerialUSB.println("INFO: Get DS18B20 Temperature");
@@ -246,16 +246,17 @@ void loop()
 #endif //C_SW_DS18B20
 
 	float press_ms5540c[MS5540C_SENSOR_NUMBER] = { 0 };
-	float temp_ms5540c[MS5540C_SENSOR_NUMBER] = { INVALID_TEMP_AND_HUMID };
+	float temp_ms5540c[MS5540C_SENSOR_NUMBER] = { INVALID_TEMP_AND_WATERLEVEL };
+	float water_level_cm = INVALID_TEMP_AND_WATERLEVEL;
 #if C_SW_MS5540C
 	for (int i = 0; i < MS5540C_SENSOR_NUMBER; ++i)
 	{
-		GetPressureAndTemperatureFromMs5540c(i, press_ms5540c[i], temp_ms5540c[i]);
+		GetPressureAndTemperatureFromMs5540c(static_cast<MS5540C_SENSOR_ID>(i), press_ms5540c[i], temp_ms5540c[i]);
 		snprintf(cbuf, sizeof(cbuf), "INFO: MS5540C[%d] press = %f mbar, temp = %f C", i, press_ms5540c[i], temp_ms5540c[i]);
 		SerialUSB.println(cbuf);
 	}
 
-	float water_level_cm = CalculateWaterLevelCm(press_ms5540c[MS5540C_WATER], press_ms5540c[MS5540C_AIR]);
+	water_level_cm = CalculateWaterLevelCm(press_ms5540c[MS5540C_WATER], press_ms5540c[MS5540C_AIR]);
 #endif //C_SW_MS5540C
 
 	bool validGps = false;
@@ -301,11 +302,11 @@ void loop()
 	bool isSendSuccess;
 	if (validGps)
 	{
-		isSendSuccess = SendToAmbient(temp, humi, tempDs18b20, press_ms5540c, temp_ms5540c, ext_battery_v, in_battery_v, in_temperature, lat, lng, meter);
+		isSendSuccess = SendToAmbient(press_ms5540c[MS5540C_WATER], temp_ms5540c[MS5540C_WATER], press_ms5540c[MS5540C_AIR], temp_ms5540c[MS5540C_AIR], water_level_cm, ext_battery_v, in_battery_v, in_temperature, lat, lng, meter);
 	}
 	else
 	{
-		isSendSuccess = SendToAmbient(temp, humi, tempDs18b20, press_ms5540c, temp_ms5540c, ext_battery_v, in_battery_v, in_temperature);
+		isSendSuccess = SendToAmbient(press_ms5540c[MS5540C_WATER], temp_ms5540c[MS5540C_WATER], press_ms5540c[MS5540C_AIR], temp_ms5540c[MS5540C_AIR], water_level_cm, ext_battery_v, in_battery_v, in_temperature);
 	}
 
 	if (!isSendSuccess)
@@ -598,16 +599,19 @@ uint8 GetRtcTimeRegValue(uint32 time)
 
 void SetWakeupAlarmToExtRTC(time_t wakeup_time)
 {
+	struct tm tm_waketime = { 0 };
+	gmtime_r(&wakeup_time, &tm_waketime);
+	
 	{
 		char cbuf[64];
-		snprintf(cbuf, sizeof(cbuf), "INFO: SetWakeupAlarmToExtRTC : %s", asctime(&wakeup_time));
+		snprintf(cbuf, sizeof(cbuf), "INFO: SetWakeupAlarmToExtRTC : %s", asctime(&tm_waketime));
 		SerialUSB.println(cbuf);
 	}
 
 	//Set alarm time
 	i2c.beginTransmission(RTC_I2C_ADDR);
 	i2c.write(RTC_REG_MIN_ALR);
-	i2c.write(wakeup_time.tm_min); //Set only min of wakeup time. Ignore hour, day, weekday value.
+	i2c.write(tm_waketime.tm_min); //Set only min of wakeup time. Ignore hour, day, weekday value.
 	i2c.write(0x80);
 	i2c.write(0x80);
 	i2c.write(0x80);
@@ -653,8 +657,21 @@ bool SetupMs5540c()
 
 void EnableMs5540c(MS5540C_SENSOR_ID sensor_id)
 {
-	digitalWrite(MS5540C_AIR, sensor_id);
-	digitalWrite(MS5540C_WATER, !sensor_id);
+	if (sensor_id == MS5540C_AIR)
+	{
+		digitalWrite(OE_PIN_FOR_MS5540C_AIR, 0);
+		digitalWrite(OE_PIN_FOR_MS5540C_WATER, 1);
+	}
+	else if (sensor_id == MS5540C_WATER)
+	{
+		digitalWrite(OE_PIN_FOR_MS5540C_AIR, 1);
+		digitalWrite(OE_PIN_FOR_MS5540C_WATER, 0);
+	}
+	else
+	{
+		digitalWrite(OE_PIN_FOR_MS5540C_AIR, 1);
+		digitalWrite(OE_PIN_FOR_MS5540C_AIR, 1);
+	}
 }
 
 void GetMs5540cCalibrationValues(MS5540C_SENSOR_ID sensor_id)
@@ -689,7 +706,7 @@ void GetMs5540cCalibrationValues(MS5540C_SENSOR_ID sensor_id)
 float CalculateWaterLevelCm(float water_pressure_mbar, float air_pressure_mbar)
 {
 	const float diff_press = water_pressure_mbar - air_pressure_mbar;
-	return diff_press * 0.9999999999999971325; // Right operand = (0.00098692326671601 * 1013.25). 1mbar = 0.00098692326671601 atm. 1atm = 1013.25 hPa. 1cm Water pressure is 1hPa. 
+	return diff_press * 0.9999999999999971325; // Right operand = (0.00098692326671601 * 1013.25). 1mbar = 0.00098692326671601 atm. 1atm = 1013.25 hPa. 1cm WaterWater pressure is 1hPa. 
 }
 
 void GetPressureAndTemperatureFromMs5540c(MS5540C_SENSOR_ID sensor_id, float& pressure, float& temperature)
@@ -908,78 +925,91 @@ bool GpsRead(double& lat, double& lng, double& meter)
 
 #if C_SW_AMBIENT
 // Ambient functions
-bool SendToAmbient(float temp, float humi, float water_temp, float ms5540c_press, float ms5540c_temp, float ext_battery_v, float in_battery_v, float in_temperature)
+bool SendToAmbient(float water_press, float water_temp, float air_press, float air_temp, float water_level, float ext_battery_v, float in_battery_v, float in_temperature)
 {
-	return SendToAmbient(temp, humi, water_temp, ms5540c_press, ms5540c_temp, ext_battery_v, in_battery_v, in_temperature, INVALID_GPS_VALUE, INVALID_GPS_VALUE, INVALID_GPS_VALUE);
+	return SendToAmbient(water_press, water_temp, air_press, air_temp, water_level, ext_battery_v, in_battery_v, in_temperature, INVALID_GPS_VALUE, INVALID_GPS_VALUE, INVALID_GPS_VALUE);
 }
 
-bool SendToAmbient(float temp, float humi, float water_temp, float ms5540c_press, float ms5540c_temp, float ext_battery_v, float in_battery_v, float in_temperature, double lat, double lng, double meter)
+bool SendToAmbient(float water_press, float water_temp, float air_press, float air_temp, float water_level, float ext_battery_v, float in_battery_v, float in_temperature, double lat, double lng, double meter)
 {
-	if (!ambient.set(1, temp))
+	if (!ambient.set(1, water_press))
 	{
 		char logBuf[LOG_TEMP_BUF_SIZE] = { 0 };
-		snprintf(logBuf, sizeof(logBuf), "ERROR: ambient.set(1, %f)", temp);
+		snprintf(logBuf, sizeof(logBuf), "ERROR: ambient.set(1, %f)", water_press);
 		SerialUSB.println(logBuf);
 		return false;
 	}
 
-	if (!ambient.set(2, humi))
+	if (!ambient.set(2, water_temp))
 	{
 		char logBuf[LOG_TEMP_BUF_SIZE] = { 0 };
-		snprintf(logBuf, sizeof(logBuf), "ERROR: ambient.set(2, %f)", humi);
+		snprintf(logBuf, sizeof(logBuf), "ERROR: ambient.set(2, %f)", water_temp);
 		SerialUSB.println(logBuf);
 		return false;
 	}
 
-	if (!ambient.set(3, water_temp))
+	if (!ambient.set(3, air_press))
 	{
 		char logBuf[LOG_TEMP_BUF_SIZE] = { 0 };
-		snprintf(logBuf, sizeof(logBuf), "ERROR: ambient.set(3, %f)", water_temp);
+		snprintf(logBuf, sizeof(logBuf), "ERROR: ambient.set(3, %f)", air_press);
 		SerialUSB.println(logBuf);
 		return false;
 	}
 
-	if (!ambient.set(4, ext_battery_v))
+	if (!ambient.set(4, air_temp))
 	{
 		char logBuf[LOG_TEMP_BUF_SIZE] = { 0 };
-		snprintf(logBuf, sizeof(logBuf), "ERROR: ambient.set(4, %f)", ext_battery_v);
+		snprintf(logBuf, sizeof(logBuf), "ERROR: ambient.set(4, %f)", air_temp);
 		SerialUSB.println(logBuf);
 		return false;
 	}
 
-	if (!ambient.set(5, in_battery_v))
+	if (!ambient.set(5, water_level))
 	{
 		char logBuf[LOG_TEMP_BUF_SIZE] = { 0 };
-		snprintf(logBuf, sizeof(logBuf), "ERROR: ambient.set(5, %f)", in_battery_v);
+		snprintf(logBuf, sizeof(logBuf), "ERROR: ambient.set(5, %f)", water_level);
 		SerialUSB.println(logBuf);
 		return false;
 	}
 
-	if (!ambient.set(6, in_temperature))
+	if (!ambient.set(6, ext_battery_v))
 	{
 		char logBuf[LOG_TEMP_BUF_SIZE] = { 0 };
-		snprintf(logBuf, sizeof(logBuf), "ERROR: ambient.set(6, %f)", in_temperature);
+		snprintf(logBuf, sizeof(logBuf), "ERROR: ambient.set(6, %f)", ext_battery_v);
 		SerialUSB.println(logBuf);
 		return false;
 	}
 
-	if (!ambient.set(7, ms5540c_press))
+	if (!ambient.set(7, in_temperature))
 	{
 		char logBuf[LOG_TEMP_BUF_SIZE] = { 0 };
-		snprintf(logBuf, sizeof(logBuf), "ERROR: ambient.set(7, %f)", ms5540c_press);
+		snprintf(logBuf, sizeof(logBuf), "ERROR: ambient.set(7, %f)", in_temperature);
 		SerialUSB.println(logBuf);
 		return false;
 	}
 
-	if (!ambient.set(8, ms5540c_temp))
-	{
-		char logBuf[LOG_TEMP_BUF_SIZE] = { 0 };
-		snprintf(logBuf, sizeof(logBuf), "ERROR: ambient.set(8, %f)", ms5540c_temp);
-		SerialUSB.println(logBuf);
-		return false;
-	}
+	//// Exclude in_battery_v because Ambient data is full. 
+	//if (!ambient.set(7, in_battery_v))
+	//{
+	//	char logBuf[LOG_TEMP_BUF_SIZE] = { 0 };
+	//	snprintf(logBuf, sizeof(logBuf), "ERROR: ambient.set(7, %f)", in_battery_v);
+	//	SerialUSB.println(logBuf);
+	//	return false;
+	//}
 
 	char cbuf[16];
+	if (meter != INVALID_GPS_VALUE)
+	{
+		snprintf(cbuf, sizeof(cbuf), "%4.2f", meter);
+		if (!ambient.set(8, cbuf))
+		{
+			char logBuf[LOG_TEMP_BUF_SIZE] = { 0 };
+			snprintf(logBuf, sizeof(logBuf), "ERROR: ambient.set(8, %s)", cbuf);
+			SerialUSB.println(logBuf);
+			return false;
+		}
+	}
+
 	if (lat != INVALID_GPS_VALUE)
 	{
 		snprintf(cbuf, sizeof(cbuf), "%12.8f", lat);
@@ -1003,19 +1033,6 @@ bool SendToAmbient(float temp, float humi, float water_temp, float ms5540c_press
 			return false;
 		}
 	}
-
-	// Exclude gps meter because Ambient data is full. 
-	//if (meter != INVALID_GPS_VALUE)
-	//{
-	//	snprintf(cbuf, sizeof(cbuf), "%4.2f", meter);
-	//	if (!ambient.set(3, cbuf))
-	//	{
-	//		char logBuf[LOG_TEMP_BUF_SIZE] = { 0 };
-	//		snprintf(logBuf, sizeof(logBuf), "ERROR: ambient.set(3, %s)", cbuf);
-	//		SerialUSB.println(logBuf);
-	//		return false;
-	//	}
-	//}
 
 	if (!ambient.send())
 	{
