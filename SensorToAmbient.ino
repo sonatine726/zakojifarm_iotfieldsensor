@@ -257,6 +257,8 @@ void loop()
 	}
 
 	water_level_cm = CalculateWaterLevelCm(press_ms5540c[MS5540C_WATER], press_ms5540c[MS5540C_AIR]);
+	snprintf(cbuf, sizeof(cbuf), "INFO: Water level = %f cm", water_level_cm);
+	SerialUSB.println(cbuf);
 #endif //C_SW_MS5540C
 
 	bool validGps = false;
@@ -706,7 +708,7 @@ void GetMs5540cCalibrationValues(MS5540C_SENSOR_ID sensor_id)
 float CalculateWaterLevelCm(float water_pressure_mbar, float air_pressure_mbar)
 {
 	const float diff_press = water_pressure_mbar - air_pressure_mbar;
-	return diff_press * 0.9999999999999971325; // Right operand = (0.00098692326671601 * 1013.25). 1mbar = 0.00098692326671601 atm. 1atm = 1013.25 hPa. 1cm WaterWater pressure is 1hPa. 
+	return diff_press * 0.9999999999999971325; // Right operand = (0.00098692326671601 * 1013.25). 1mbar = 0.00098692326671601 atm. 1atm = 1013.25 hPa. 1cm Water pressure is 1hPa. 
 }
 
 void GetPressureAndTemperatureFromMs5540c(MS5540C_SENSOR_ID sensor_id, float& pressure, float& temperature)
