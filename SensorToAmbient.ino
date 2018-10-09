@@ -157,7 +157,9 @@ void setup()
 	if (!InitializeExtRtc())
 	{
 		SerialUSB.println("ERROR: InitializeExtRtc");
+		//[Workaround] InitializeExtRtc often failed for unknown reason. So continue setup in case of failure.
 		//return;
+
 	}
 #endif //C_SW_EXT_RTC
 
@@ -173,6 +175,14 @@ void setup()
 	UpdateRtcByNtp();
 
 #if C_SW_EXT_RTC
+	//[Workaround] InitializeExtRtc often failed for unknown reason. So re-invoke InitializeExtRtc before SetExtRtcTime.
+	if (!InitializeExtRtc())
+	{
+		SerialUSB.println("ERROR: InitializeExtRtc(Re-invoke)");
+		//[Workaround] InitializeExtRtc often failed for unknown reason. So continue setup in case of failure.
+		//return;
+	}
+
 	struct tm current_time = { 0 };
 	rtc.getTime(&current_time);
 
@@ -519,19 +529,39 @@ float GetTemperatureDS18B20()
 
 bool InitializeExtRtc()
 {
+	bool isSuccess = true;
+
+	//Initialize CTR1, 2 registers
 	i2c.beginTransmission(RTC_I2C_ADDR);
-	i2c.write(RTC_REG_CTR2);
-	i2c.write(0x00); //Clear all interupts
+	i2c.write(RTC_REG_CTR1);
+	i2c.write(0x00); //Write to RTC_REG_CTR1.
+	i2c.write(0x00); //Write to RTC_REG_CTR2
 	uint8 result = i2c.endTransmission();
 	if (result != SUCCESS)
 	{
 		char cbuf[64];
-		snprintf(cbuf, sizeof(cbuf), "ERROR: i2c.endTransmission() ret %d", result);
+		snprintf(cbuf, sizeof(cbuf), "ERROR: i2c.endTransmission() for ctr1, 2 ret %d", result);
 		SerialUSB.println(cbuf);
-		return false;
+		isSuccess = false;
 	}
 
-	return true;
+	//Initialize Frequency, timer registors
+	i2c.beginTransmission(RTC_I2C_ADDR);
+	i2c.write(RTC_REG_CLKO_FREQ);
+	i2c.write(0x00); //Write to RTC_REG_CLKO_FREQ
+	i2c.write(0x00); //Write to RTC_REG_TIMER_CTR
+	i2c.write(0x00); //Write to RTC_REG_TIMER
+
+	result = i2c.endTransmission();
+	if (result != SUCCESS)
+	{
+		char cbuf[64];
+		snprintf(cbuf, sizeof(cbuf), "ERROR: i2c.endTransmission() for freq, timer ret %d", result);
+		SerialUSB.println(cbuf);
+		isSuccess = false;
+	}
+
+	return isSuccess;
 }
 
 bool SetExtRtcTime(const tm& current_time)
