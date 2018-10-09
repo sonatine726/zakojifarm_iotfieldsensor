@@ -32,7 +32,7 @@ typedef int IRQn_Type;
 #define C_SW_SLEEP_WAIT 1
 #define C_SW_EXT_RTC 1
 #define C_SW_MS5540C_ADC_CLOCK_BY_EXT_RTC 0
-#define C_SW_SLEEP_BY_POWERDOWN 0
+#define C_SW_SLEEP_BY_POWERDOWN 1
 
 
 //Common global
@@ -52,6 +52,10 @@ constexpr time_t JAPAN_TIME_DIFF = 9 * 60 * 60; // UTC + 9h
 
 constexpr float INVALID_TEMP_AND_WATERLEVEL = -127;
 
+constexpr uint8 I2C1_SCL_PIN = Port2Pin('B', 8);
+constexpr uint8 I2C1_SDA_PIN = Port2Pin('B', 9);
+
+bool isSuccessSetup;
 
 #if C_SW_LTE
 //LTE global
@@ -139,6 +143,8 @@ constexpr unsigned int INTERNAL_TEMPERATURE_ADC_CHANNEL = 16;
 
 void setup()
 {
+	isSuccessSetup = false;
+
 	Wio.Init();
 
 	SerialUSB.println("INFO: setup()");
@@ -148,7 +154,11 @@ void setup()
 	i2c.begin();
 
 #if C_SW_EXT_RTC
-	InitializeExtRtc();
+	if (!InitializeExtRtc())
+	{
+		SerialUSB.println("ERROR: InitializeExtRtc");
+		//return;
+	}
 #endif //C_SW_EXT_RTC
 
 #if C_SW_LTE
@@ -166,7 +176,11 @@ void setup()
 	struct tm current_time = { 0 };
 	rtc.getTime(&current_time);
 
-	SetExtRtcTime(current_time);
+	if (!SetExtRtcTime(current_time))
+	{
+		SerialUSB.println("ERROR: SetExtRtcTime");
+		return;
+	}
 #endif //C_SW_EXT_RTC
 
 #if C_SW_AMBIENT
@@ -206,9 +220,10 @@ void setup()
 #if C_SW_GPS
 	//Setup GPS
 	GpsBegin(&Serial);
-	Wio.PowerSupplyGrove(true);
 	delay(500);
 #endif
+
+	isSuccessSetup = true;
 }
 
 void loop()
@@ -219,103 +234,110 @@ void loop()
 	snprintf(cbuf, sizeof(cbuf), "loop() : %s", asctime(&current_time));
 	SerialUSB.println(cbuf);
 
-	/* Get temperature and humidity */
-	float temp = INVALID_TEMP_AND_WATERLEVEL;
-	float humi = INVALID_TEMP_AND_WATERLEVEL;
+	if (isSuccessSetup)
+	{
+		/* Get temperature and humidity */
+		float temp = INVALID_TEMP_AND_WATERLEVEL;
+		float humi = INVALID_TEMP_AND_WATERLEVEL;
 
 #if C_SW_DHT11
-	SerialUSB.println("INFO: TemperatureAndHumidityRead()");
-	if (TemperatureAndHumidityRead(&temp, &humi))
-	{
-		snprintf(cbuf, sizeof(cbuf), "INFO: humid = %f%%, temp = %f C", humi, temp);
-		SerialUSB.println(cbuf);
-	}
-	else
-	{
-		SerialUSB.println("ERROR: TemperatureAndHumidityRead");
-	}
+		SerialUSB.println("INFO: TemperatureAndHumidityRead()");
+		if (TemperatureAndHumidityRead(&temp, &humi))
+		{
+			snprintf(cbuf, sizeof(cbuf), "INFO: humid = %f%%, temp = %f C", humi, temp);
+			SerialUSB.println(cbuf);
+		}
+		else
+		{
+			SerialUSB.println("ERROR: TemperatureAndHumidityRead");
+		}
 #endif //C_SW_DHT11
 
-	float tempDs18b20 = INVALID_TEMP_AND_WATERLEVEL;
+		float tempDs18b20 = INVALID_TEMP_AND_WATERLEVEL;
 #if C_SW_DS18B20
-	/* Get water temperature from DS18B20 */
-	SerialUSB.println("INFO: Get DS18B20 Temperature");
-	tempDs18b20 = GetTemperatureDS18B20();
-	snprintf(cbuf, sizeof(cbuf), "INFO: DS18B20 temp: %f", tempDs18b20);
-	SerialUSB.println(cbuf);
+		/* Get water temperature from DS18B20 */
+		SerialUSB.println("INFO: Get DS18B20 Temperature");
+		tempDs18b20 = GetTemperatureDS18B20();
+		snprintf(cbuf, sizeof(cbuf), "INFO: DS18B20 temp: %f", tempDs18b20);
+		SerialUSB.println(cbuf);
 #endif //C_SW_DS18B20
 
-	float press_ms5540c[MS5540C_SENSOR_NUMBER] = { 0 };
-	float temp_ms5540c[MS5540C_SENSOR_NUMBER] = { INVALID_TEMP_AND_WATERLEVEL };
-	float water_level_cm = INVALID_TEMP_AND_WATERLEVEL;
+		float press_ms5540c[MS5540C_SENSOR_NUMBER] = { 0 };
+		float temp_ms5540c[MS5540C_SENSOR_NUMBER] = { INVALID_TEMP_AND_WATERLEVEL };
+		float water_level_cm = INVALID_TEMP_AND_WATERLEVEL;
 #if C_SW_MS5540C
-	for (int i = 0; i < MS5540C_SENSOR_NUMBER; ++i)
-	{
-		GetPressureAndTemperatureFromMs5540c(static_cast<MS5540C_SENSOR_ID>(i), press_ms5540c[i], temp_ms5540c[i]);
-		snprintf(cbuf, sizeof(cbuf), "INFO: MS5540C[%d] press = %f mbar, temp = %f C", i, press_ms5540c[i], temp_ms5540c[i]);
-		SerialUSB.println(cbuf);
-	}
+		for (int i = 0; i < MS5540C_SENSOR_NUMBER; ++i)
+		{
+			GetPressureAndTemperatureFromMs5540c(static_cast<MS5540C_SENSOR_ID>(i), press_ms5540c[i], temp_ms5540c[i]);
+			snprintf(cbuf, sizeof(cbuf), "INFO: MS5540C[%d] press = %f mbar, temp = %f C", i, press_ms5540c[i], temp_ms5540c[i]);
+			SerialUSB.println(cbuf);
+		}
 
-	water_level_cm = CalculateWaterLevelCm(press_ms5540c[MS5540C_WATER], press_ms5540c[MS5540C_AIR]);
-	snprintf(cbuf, sizeof(cbuf), "INFO: Water level = %f cm", water_level_cm);
-	SerialUSB.println(cbuf);
+		water_level_cm = CalculateWaterLevelCm(press_ms5540c[MS5540C_WATER], press_ms5540c[MS5540C_AIR]);
+		snprintf(cbuf, sizeof(cbuf), "INFO: Water level = %f cm", water_level_cm);
+		SerialUSB.println(cbuf);
 #endif //C_SW_MS5540C
 
-	bool validGps = false;
-	double lat, lng, meter;
+		bool validGps = false;
+		double lat, lng, meter;
 #if C_SW_GPS
-	/* Get GPS */
-	SerialUSB.println("INFO: GpsRead()");
-	validGps = GpsRead(lat, lng, meter);
-	if (validGps)
-	{
-		SerialUSB.println("GPS Value:");
-		snprintf(cbuf, sizeof(cbuf), "lat: %12.8f", lat);
-		SerialUSB.println(cbuf);
+		/* Get GPS */
+		SerialUSB.println("INFO: GpsRead()");
+		validGps = GpsRead(lat, lng, meter);
+		if (validGps)
+		{
+			SerialUSB.println("GPS Value:");
+			snprintf(cbuf, sizeof(cbuf), "lat: %12.8f", lat);
+			SerialUSB.println(cbuf);
 
-		snprintf(cbuf, sizeof(cbuf), "lng: %12.8f", lng);
-		SerialUSB.println(cbuf);
+			snprintf(cbuf, sizeof(cbuf), "lng: %12.8f", lng);
+			SerialUSB.println(cbuf);
 
-		snprintf(cbuf, sizeof(cbuf), "meter: %4.2f", meter);
-		SerialUSB.println(cbuf);
-	}
+			snprintf(cbuf, sizeof(cbuf), "meter: %4.2f", meter);
+			SerialUSB.println(cbuf);
+		}
 #endif //C_SW_GPS
 
-	float ext_battery_v = 0;
-	float in_battery_v = 0;
-	float in_temperature = 0;
+		float ext_battery_v = 0;
+		float in_battery_v = 0;
+		float in_temperature = 0;
 #if C_SW_BATTERY_V
-	ext_battery_v = GetExternalBatteryV();
-	snprintf(cbuf, sizeof(cbuf), "INFO: External Battery V %f mV", ext_battery_v);
-	SerialUSB.println(cbuf);
+		ext_battery_v = GetExternalBatteryV();
+		snprintf(cbuf, sizeof(cbuf), "INFO: External Battery V %f mV", ext_battery_v);
+		SerialUSB.println(cbuf);
 
-	in_battery_v = GetInternalBatteryV();
-	snprintf(cbuf, sizeof(cbuf), "INFO: Internal Battery V %f mV", in_battery_v);
-	SerialUSB.println(cbuf);
+		in_battery_v = GetInternalBatteryV();
+		snprintf(cbuf, sizeof(cbuf), "INFO: Internal Battery V %f mV", in_battery_v);
+		SerialUSB.println(cbuf);
 
-	in_temperature = GetInternalTemperature();
-	snprintf(cbuf, sizeof(cbuf), "INFO: Internal Temp %f", in_temperature);
-	SerialUSB.println(cbuf);
+		in_temperature = GetInternalTemperature();
+		snprintf(cbuf, sizeof(cbuf), "INFO: Internal Temp %f", in_temperature);
+		SerialUSB.println(cbuf);
 #endif //C_SW_BATTERY_V
 
 #if C_SW_LTE && C_SW_AMBIENT
-	/* Send to Ambient */
-	SerialUSB.println("INFO: SendToAmbient()");
-	bool isSendSuccess;
-	if (validGps)
-	{
-		isSendSuccess = SendToAmbient(press_ms5540c[MS5540C_WATER], temp_ms5540c[MS5540C_WATER], press_ms5540c[MS5540C_AIR], temp_ms5540c[MS5540C_AIR], water_level_cm, ext_battery_v, in_battery_v, in_temperature, lat, lng, meter);
+		/* Send to Ambient */
+		SerialUSB.println("INFO: SendToAmbient()");
+		bool isSendSuccess;
+		if (validGps)
+		{
+			isSendSuccess = SendToAmbient(press_ms5540c[MS5540C_WATER], temp_ms5540c[MS5540C_WATER], press_ms5540c[MS5540C_AIR], temp_ms5540c[MS5540C_AIR], water_level_cm, ext_battery_v, in_battery_v, in_temperature, lat, lng, meter);
+		}
+		else
+		{
+			isSendSuccess = SendToAmbient(press_ms5540c[MS5540C_WATER], temp_ms5540c[MS5540C_WATER], press_ms5540c[MS5540C_AIR], temp_ms5540c[MS5540C_AIR], water_level_cm, ext_battery_v, in_battery_v, in_temperature);
+		}
+
+		if (!isSendSuccess)
+		{
+			SerialUSB.println("ERROR: SendToAmbient");
+		}
+#endif //C_SW_LTE && C_SW_AMBIENT
 	}
 	else
 	{
-		isSendSuccess = SendToAmbient(press_ms5540c[MS5540C_WATER], temp_ms5540c[MS5540C_WATER], press_ms5540c[MS5540C_AIR], temp_ms5540c[MS5540C_AIR], water_level_cm, ext_battery_v, in_battery_v, in_temperature);
+		SerialUSB.println("ERROR: Skip loop because of setup failure");
 	}
-
-	if (!isSendSuccess)
-	{
-		SerialUSB.println("ERROR: SendToAmbient");
-	}
-#endif //C_SW_LTE && C_SW_AMBIENT
 
 	/* Wait next loop */
 	unsigned long elapse = millis();
@@ -335,9 +357,6 @@ void loop()
 
 	snprintf(cbuf, sizeof(cbuf), "Wait next loop: %ld sec", waittime_sec);
 	SerialUSB.println(cbuf);
-
-	Wio.PowerSupplyGrove(false);
-
 
 #if C_SW_LTE
 	ShutdownLTE();
@@ -498,15 +517,24 @@ float GetTemperatureDS18B20()
 #if C_SW_EXT_RTC
 //External RTC functions
 
-void InitializeExtRtc()
+bool InitializeExtRtc()
 {
 	i2c.beginTransmission(RTC_I2C_ADDR);
 	i2c.write(RTC_REG_CTR2);
 	i2c.write(0x00); //Clear all interupts
-	i2c.endTransmission();
+	uint8 result = i2c.endTransmission();
+	if (result != SUCCESS)
+	{
+		char cbuf[64];
+		snprintf(cbuf, sizeof(cbuf), "ERROR: i2c.endTransmission() ret %d", result);
+		SerialUSB.println(cbuf);
+		return false;
+	}
+
+	return true;
 }
 
-void SetExtRtcTime(tm& current_time)
+bool SetExtRtcTime(const tm& current_time)
 {
 	{
 		char cbuf[64];
@@ -517,25 +545,25 @@ void SetExtRtcTime(tm& current_time)
 	i2c.beginTransmission(RTC_I2C_ADDR);
 	i2c.write(RTC_REG_SEC);
 
-	const uint8 sec_to_reg = GetRtcTimeRegValue(current_time.tm_sec);
+	const uint8 sec_to_reg = TranslateTimeToRegValueForExtRtc(current_time.tm_sec);
 	i2c.write(sec_to_reg); //Write to RTC_REG_SEC
 
-	const uint8 min_to_reg = GetRtcTimeRegValue(current_time.tm_min);
+	const uint8 min_to_reg = TranslateTimeToRegValueForExtRtc(current_time.tm_min);
 	i2c.write(min_to_reg); //Write to RTC_REG_MIN
 
-	const uint8 hour_to_reg = GetRtcTimeRegValue(current_time.tm_hour);
+	const uint8 hour_to_reg = TranslateTimeToRegValueForExtRtc(current_time.tm_hour);
 	i2c.write(hour_to_reg); //Write to RTC_REG_HOUR
 
-	const uint8 day_to_reg = GetRtcTimeRegValue(current_time.tm_mday);
+	const uint8 day_to_reg = TranslateTimeToRegValueForExtRtc(current_time.tm_mday);
 	i2c.write(day_to_reg); //Write to RTC_REG_DAYS
 
-	const uint8 weekday_to_reg = GetRtcTimeRegValue(current_time.tm_wday);
+	const uint8 weekday_to_reg = TranslateTimeToRegValueForExtRtc(current_time.tm_wday);
 	i2c.write(weekday_to_reg); //Write to RTC_REG_WEEK
 
-	const uint8 month_to_reg = GetRtcTimeRegValue(current_time.tm_mon);
+	const uint8 month_to_reg = TranslateTimeToRegValueForExtRtc(current_time.tm_mon);
 	i2c.write(month_to_reg); //Write to RTC_REG_MONTH
 
-	const uint8 year_to_reg = GetRtcTimeRegValue(current_time.tm_year);
+	const uint8 year_to_reg = TranslateTimeToRegValueForExtRtc(current_time.tm_year);
 	i2c.write(year_to_reg); //Write to RTC_REG_YEAR
 
 	i2c.write(0x00); //Write to RTC_REG_MIN_ALR
@@ -548,58 +576,68 @@ void SetExtRtcTime(tm& current_time)
 	i2c.write(0x00); //Write to RTC_REG_TIMER_CTR
 	i2c.write(0x00); //Write to RTC_REG_TIMER
 
-	i2c.endTransmission();
+	uint8 result = i2c.endTransmission();
+	if (result != SUCCESS)
+	{
+		char cbuf[64];
+		snprintf(cbuf, sizeof(cbuf), "ERROR: i2c.endTransmission() ret %d", result);
+		SerialUSB.println(cbuf);
+		return false;
+	}
+
+	return true;
 }
 
-uint8 GetRtcTimeRegValue(uint32 time)
+bool GetExtRtcTime(tm& current_time)
 {
-	uint8 regv = 0;
-	if (time >= 80)
+	i2c.beginTransmission(RTC_I2C_ADDR);
+	i2c.write(RTC_REG_SEC);
+	uint8 result = i2c.endTransmission();
+	if (result != SUCCESS)
 	{
-		regv |= 1 << 7;
-		time -= 80;
+		char cbuf[64];
+		snprintf(cbuf, sizeof(cbuf), "ERROR: i2c.endTransmission() to write addr ret %d", result);
+		SerialUSB.println(cbuf);
+		return false;
 	}
-	if (time >= 40)
-	{
-		regv |= 1 << 6;
-		time -= 40;
-	}
-	if (time >= 20)
-	{
-		regv |= 1 << 5;
-		time -= 20;
-	}
-	if (time >= 10)
-	{
-		regv |= 1 << 4;
-		time -= 10;
-	}
-	if (time >= 8)
-	{
-		regv |= 1 << 3;
-		time -= 8;
-	}
-	if (time >= 4)
-	{
-		regv |= 1 << 2;
-		time -= 4;
-	}
-	if (time >= 2)
-	{
-		regv |= 1 << 1;
-		time -= 2;
-	}
-	if (time == 1)
-	{
-		regv |= 1;
-		time -= 1;
-	}
-	assert(time == 0);
 
-	return regv;
+	result = i2c.requestFrom(RTC_I2C_ADDR, 7);
+	if (result != 7)
+	{
+		char cbuf[64];
+		snprintf(cbuf, sizeof(cbuf), "ERROR: i2c.requestFrom(7) ret %d", result);
+		SerialUSB.println(cbuf);
+		return false;
+	}
+	   
+	const uint8 reg_sec = i2c.read();
+	const uint8 reg_min = i2c.read();
+	const uint8 reg_hour = i2c.read();
+	const uint8 reg_day = i2c.read();
+	const uint8 reg_weekday = i2c.read();
+	const uint8 reg_month = i2c.read();
+	const uint8 reg_year = i2c.read();
+
+	current_time.tm_sec = TranslateRegValueToTimeForExtRtc(reg_sec);
+	current_time.tm_min = TranslateRegValueToTimeForExtRtc(reg_min);
+	current_time.tm_hour = TranslateRegValueToTimeForExtRtc(reg_hour);
+	current_time.tm_mday = TranslateRegValueToTimeForExtRtc(reg_day);
+	current_time.tm_wday = TranslateRegValueToTimeForExtRtc(reg_weekday);
+	current_time.tm_mon = TranslateRegValueToTimeForExtRtc(reg_month);
+	current_time.tm_year = TranslateRegValueToTimeForExtRtc(reg_year);
 }
 
-void SetWakeupAlarmToExtRTC(time_t wakeup_time)
+uint8 TranslateTimeToRegValueForExtRtc(uint32 time)
+{
+	return static_cast<uint8>(time / 10) << 4 | static_cast<uint8>(time % 10);
+}
+
+uint32 TranslateRegValueToTimeForExtRtc(uint8 regv)
+{
+	return 10 * (regv >> 4) + (regv & 0x0F);
+}
+
+bool SetWakeupAlarmToExtRTC(time_t wakeup_time)
 {
 	struct tm tm_waketime = { 0 };
 	gmtime_r(&wakeup_time, &tm_waketime);
@@ -613,17 +651,34 @@ void SetWakeupAlarmToExtRTC(time_t wakeup_time)
 	//Set alarm time
 	i2c.beginTransmission(RTC_I2C_ADDR);
 	i2c.write(RTC_REG_MIN_ALR);
-	i2c.write(tm_waketime.tm_min); //Set only min of wakeup time. Ignore hour, day, weekday value.
+	const uint8 min_to_reg = TranslateTimeToRegValueForExtRtc(tm_waketime.tm_min);
+	i2c.write(min_to_reg); //Write to RTC_REG_MIN
 	i2c.write(0x80);
 	i2c.write(0x80);
 	i2c.write(0x80);
-	i2c.endTransmission();
+	uint8 result = i2c.endTransmission();
+	if (result != SUCCESS)
+	{
+		char cbuf[64];
+		snprintf(cbuf, sizeof(cbuf), "ERROR: i2c.endTransmission() for set time ret %d", result);
+		SerialUSB.println(cbuf);
+		return false;
+	}
 
 	//Enable Alarm
 	i2c.beginTransmission(RTC_I2C_ADDR);
 	i2c.write(RTC_REG_CTR2);
-	i2c.write(0x0A);
-	i2c.endTransmission();
+	i2c.write(0x02);
+	result = i2c.endTransmission();
+	if (result != SUCCESS)
+	{
+		char cbuf[64];
+		snprintf(cbuf, sizeof(cbuf), "ERROR: i2c.endTransmission() for enable alarm ret %d", result);
+		SerialUSB.println(cbuf);
+		return false;
+	}
+
+	return true;
 }
 #endif //C_SW_EXT_RTC
 
@@ -821,7 +876,14 @@ bool MakeAdcClockToMs5540c()
 	i2c.beginTransmission(RTC_I2C_ADDR);
 	i2c.write(RTC_REG_CLKO_FREQ);
 	i2c.write(0x80);
-	i2c.endTransmission();
+	uint8 result = i2c.endTransmission();
+	if (result != SUCCESS)
+	{
+		char cbuf[64];
+		snprintf(cbuf, sizeof(cbuf), "ERROR: i2c.endTransmission() ret %d", result);
+		SerialUSB.println(cbuf);
+		isSuccess = false;
+	}
 #else //C_SW_EXT_RTC && C_SW_MS5540C_ADC_CLOCK_BY_EXT_RTC
 	isSuccess = MakeClockByPwm(ADC_CLOCK_PIN_FOR_MS5540C);
 #endif //C_SW_EXT_RTC && C_SW_MS5540C_ADC_CLOCK_BY_EXT_RTC
@@ -1132,7 +1194,7 @@ void EnterStandbyMode(time_t wakeup_time)
 
 	rtc.setAlarmATime(wakeup_time, false, false);
 
-	//Enter standby mode
+	//Enter standby mode=
 	SerialUSB.println("DEBUG: Enter Standby Mode");
 	SCB->SCR |= (SCB_SCR_SLEEPDEEP_Msk);
 	delay(10);
@@ -1144,16 +1206,31 @@ void SleepUntilNextLoop(time_t sleeptime_sec)
 {
 	struct tm current_time = { 0 };
 	rtc.getTime(&current_time);
-	SerialUSB.println("INFO: Current RTC time = ");
+	SerialUSB.println("INFO: Current Internal RTC time = ");
 	SerialUSB.println(asctime(&current_time));
+
+	struct tm current_time_extrtc = { 0 };
+	GetExtRtcTime(current_time_extrtc);
+	SerialUSB.println("INFO: Current External RTC time = ");
+	SerialUSB.println(asctime(&current_time_extrtc));
 
 	time_t epoch = mktime(&current_time);
 	epoch += sleeptime_sec;
 
 #if C_SW_EXT_RTC && C_SW_SLEEP_BY_POWERDOWN
-	SetWakeupAlarmToExtRTC(epoch);
-	Wio.PowerSupplyGrove(false);
-#else //C_SW_SLEEP_BY_POWERDOWN
-	EnterStandbyMode(epoch);
+	//RTC Test
+	epoch += 60;
+	//END of RTC Test
+
+	if (!SetWakeupAlarmToExtRTC(epoch))
+	{
+		SerialUSB.println("ERROR: SetWakeupAlarmToExtRTC");
+	}
+	Wio.PowerSupplyGrove(false);//
+
+	//RTC Test
+	epoch += 60;
+	//END of RTC Test
 #endif //C_SW_SLEEP_BY_POWERDOWN
+	EnterStandbyMode(epoch);
 }
