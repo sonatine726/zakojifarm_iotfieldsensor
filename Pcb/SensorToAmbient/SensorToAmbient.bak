@@ -660,9 +660,7 @@ Text Notes 4500 1800 0    50   ~ 0
 Text Label 4400 1700 0    50   ~ 0
 PWR3.3V_Sensors
 Wire Wire Line
-	4750 2300 4750 3600
-Wire Wire Line
-	4650 2200 4650 3500
+	4650 2200 4650 2650
 Wire Wire Line
 	4400 3650 4400 3200
 Wire Wire Line
@@ -748,4 +746,16 @@ Text Notes 4250 550  1    50   Italic 0
 GND
 Text Notes 4350 550  1    50   Italic 0
 VDD
+Wire Wire Line
+	4300 2650 4650 2650
+Connection ~ 4650 2650
+Wire Wire Line
+	4650 2650 4650 3500
+Wire Wire Line
+	4300 2750 4750 2750
+Wire Wire Line
+	4750 2300 4750 2750
+Connection ~ 4750 2750
+Wire Wire Line
+	4750 2750 4750 3600
 $EndSCHEMATC
