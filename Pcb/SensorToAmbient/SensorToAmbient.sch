@@ -397,8 +397,8 @@ $Comp
 L SensorToAmbient-rescue:SN74HC125N-SensorToAmbient_dedicated 3SB1
 U 1 1 5BE112A4
 P 2650 2650
-F 0 "3SB1" V 2604 3028 50  0000 L CNN
-F 1 "SN74HC125N" V 2695 3028 50  0000 L CNN
+F 0 "3SB1" H 2350 3150 50  0000 L CNN
+F 1 "SN74HC125N" H 2450 3050 50  0000 L CNN
 F 2 "digikey-footprints:DIP-14_W3mm" H 2650 3100 50  0001 C CNN
 F 3 "" H 2650 3100 50  0001 C CNN
 	1    2650 2650
@@ -439,7 +439,7 @@ $EndComp
 Wire Wire Line
 	3200 6450 3100 6450
 $Comp
-L device:R R3
+L Device:R R3
 U 1 1 5BBA785E
 P 3100 6700
 F 0 "R3" H 3170 6746 50  0000 L CNN
@@ -480,7 +480,7 @@ $EndComp
 Wire Wire Line
 	1500 2550 1600 2550
 $Comp
-L device:R R4
+L Device:R R4
 U 1 1 5BB95027
 P 1600 2800
 F 0 "R4" H 1670 2846 50  0000 L CNN
@@ -499,7 +499,7 @@ Wire Wire Line
 	1600 3250 2100 3250
 Connection ~ 2100 3250
 $Comp
-L device:D_Schottky D1
+L Device:D_Schottky D1
 U 1 1 5BB9F5B8
 P 3900 6450
 F 0 "D1" H 3900 6666 50  0000 C CNN
@@ -526,7 +526,7 @@ Wire Wire Line
 NoConn ~ 1500 5050
 NoConn ~ 4850 5200
 $Comp
-L device:D_Schottky D2
+L Device:D_Schottky D2
 U 1 1 5BBBBAF5
 P 3100 3550
 F 0 "D2" V 3146 3471 50  0000 R CNN
@@ -569,7 +569,7 @@ Wire Wire Line
 	3650 5700 3850 5700
 Connection ~ 3850 5700
 $Comp
-L device:R R6
+L Device:R R6
 U 1 1 5BBEFB78
 P 3450 5100
 F 0 "R6" V 3243 5100 50  0000 C CNN
@@ -582,7 +582,7 @@ $EndComp
 Wire Wire Line
 	3600 5100 4850 5100
 $Comp
-L device:R R7
+L Device:R R7
 U 1 1 5BBF50E0
 P 4150 5900
 F 0 "R7" H 4220 5946 50  0000 L CNN
@@ -595,7 +595,7 @@ $EndComp
 Wire Wire Line
 	4150 6050 4150 6450
 $Comp
-L device:R R5
+L Device:R R5
 U 1 1 5BBF522A
 P 3250 3050
 F 0 "R5" H 3320 3096 50  0000 L CNN
@@ -605,7 +605,6 @@ F 3 "~" H 3250 3050 50  0001 C CNN
 	1    3250 3050
 	1    0    0    -1  
 $EndComp
-Connection ~ 3250 2900
 Wire Wire Line
 	3850 4000 3850 3650
 Connection ~ 3850 4000
@@ -619,7 +618,7 @@ Wire Wire Line
 	4300 1700 4300 900 
 Connection ~ 4300 900 
 $Comp
-L device:R R8
+L Device:R R8
 U 1 1 5BC1091F
 P 4650 1950
 F 0 "R8" H 4720 1996 50  0000 L CNN
@@ -630,7 +629,7 @@ F 3 "~" H 4650 1950 50  0001 C CNN
 	1    0    0    -1  
 $EndComp
 $Comp
-L device:R R9
+L Device:R R9
 U 1 1 5BC10991
 P 4900 1950
 F 0 "R9" H 4970 1996 50  0000 L CNN
@@ -661,9 +660,7 @@ Text Notes 4500 1800 0    50   ~ 0
 Text Label 4400 1700 0    50   ~ 0
 PWR3.3V_Sensors
 Wire Wire Line
-	4750 2300 4750 3600
-Wire Wire Line
-	4650 2200 4650 3500
+	4650 2200 4650 2650
 Wire Wire Line
 	4400 3650 4400 3200
 Wire Wire Line
@@ -749,4 +746,16 @@ Text Notes 4250 550  1    50   Italic 0
 GND
 Text Notes 4350 550  1    50   Italic 0
 VDD
+Wire Wire Line
+	4300 2650 4650 2650
+Connection ~ 4650 2650
+Wire Wire Line
+	4650 2650 4650 3500
+Wire Wire Line
+	4300 2750 4750 2750
+Wire Wire Line
+	4750 2300 4750 2750
+Connection ~ 4750 2750
+Wire Wire Line
+	4750 2750 4750 3600
 $EndSCHEMATC

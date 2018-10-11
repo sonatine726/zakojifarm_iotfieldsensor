@@ -119,7 +119,7 @@ U 1 1 5BE11B05
 P 4200 4850
 F 0 "R1" H 4270 4896 50  0000 L CNN
 F 1 "100K" H 4270 4805 50  0000 L CNN
-F 2 "Resistors_THT:R_Axial_DIN0207_L6.3mm_D2.5mm_P7.62mm_Horizontal" V 4130 4850 50  0001 C CNN
+F 2 "Resistors_SMD:R_0805_HandSoldering" V 4130 4850 50  0001 C CNN
 F 3 "~" H 4200 4850 50  0001 C CNN
 	1    4200 4850
 	1    0    0    -1  
@@ -130,7 +130,7 @@ U 1 1 5BE11C1B
 P 4200 5350
 F 0 "R2" H 4270 5396 50  0000 L CNN
 F 1 "100K" H 4270 5305 50  0000 L CNN
-F 2 "Resistors_THT:R_Axial_DIN0207_L6.3mm_D2.5mm_P7.62mm_Horizontal" V 4130 5350 50  0001 C CNN
+F 2 "Resistors_SMD:R_0805_HandSoldering" V 4130 5350 50  0001 C CNN
 F 3 "~" H 4200 5350 50  0001 C CNN
 	1    4200 5350
 	1    0    0    -1  
@@ -397,8 +397,8 @@ $Comp
 L SensorToAmbient-rescue:SN74HC125N-SensorToAmbient_dedicated 3SB1
 U 1 1 5BE112A4
 P 2650 2650
-F 0 "3SB1" V 2604 3028 50  0000 L CNN
-F 1 "SN74HC125N" V 2695 3028 50  0000 L CNN
+F 0 "3SB1" H 2350 3150 50  0000 L CNN
+F 1 "SN74HC125N" H 2450 3050 50  0000 L CNN
 F 2 "digikey-footprints:DIP-14_W3mm" H 2650 3100 50  0001 C CNN
 F 3 "" H 2650 3100 50  0001 C CNN
 	1    2650 2650
@@ -439,12 +439,12 @@ $EndComp
 Wire Wire Line
 	3200 6450 3100 6450
 $Comp
-L device:R R3
+L Device:R R3
 U 1 1 5BBA785E
 P 3100 6700
 F 0 "R3" H 3170 6746 50  0000 L CNN
 F 1 "47K" H 3170 6655 50  0000 L CNN
-F 2 "Resistors_THT:R_Axial_DIN0207_L6.3mm_D2.5mm_P7.62mm_Horizontal" V 3030 6700 50  0001 C CNN
+F 2 "Resistors_SMD:R_0805_HandSoldering" V 3030 6700 50  0001 C CNN
 F 3 "~" H 3100 6700 50  0001 C CNN
 	1    3100 6700
 	1    0    0    -1  
@@ -480,12 +480,12 @@ $EndComp
 Wire Wire Line
 	1500 2550 1600 2550
 $Comp
-L device:R R4
+L Device:R R4
 U 1 1 5BB95027
 P 1600 2800
 F 0 "R4" H 1670 2846 50  0000 L CNN
 F 1 "R" H 1670 2755 50  0000 L CNN
-F 2 "Resistors_THT:R_Axial_DIN0207_L6.3mm_D2.5mm_P7.62mm_Horizontal" V 1530 2800 50  0001 C CNN
+F 2 "Resistors_SMD:R_0805_HandSoldering" V 1530 2800 50  0001 C CNN
 F 3 "~" H 1600 2800 50  0001 C CNN
 	1    1600 2800
 	1    0    0    -1  
@@ -499,12 +499,12 @@ Wire Wire Line
 	1600 3250 2100 3250
 Connection ~ 2100 3250
 $Comp
-L device:D_Schottky D1
+L Device:D_Schottky D1
 U 1 1 5BB9F5B8
 P 3900 6450
 F 0 "D1" H 3900 6666 50  0000 C CNN
 F 1 "D_Schottky" H 3900 6575 50  0000 C CNN
-F 2 "Diodes_THT:D_T-1_P5.08mm_Horizontal" H 3900 6450 50  0001 C CNN
+F 2 "Diodes_SMD:D_SOD-323_HandSoldering" H 3900 6450 50  0001 C CNN
 F 3 "~" H 3900 6450 50  0001 C CNN
 	1    3900 6450
 	1    0    0    -1  
@@ -526,12 +526,12 @@ Wire Wire Line
 NoConn ~ 1500 5050
 NoConn ~ 4850 5200
 $Comp
-L device:D_Schottky D2
+L Device:D_Schottky D2
 U 1 1 5BBBBAF5
 P 3100 3550
 F 0 "D2" V 3146 3471 50  0000 R CNN
 F 1 "D_Schottky" V 3055 3471 50  0000 R CNN
-F 2 "Diodes_THT:D_T-1_P5.08mm_Horizontal" H 3100 3550 50  0001 C CNN
+F 2 "Diodes_SMD:D_SOD-323_HandSoldering" H 3100 3550 50  0001 C CNN
 F 3 "~" H 3100 3550 50  0001 C CNN
 	1    3100 3550
 	0    -1   -1   0   
@@ -569,12 +569,12 @@ Wire Wire Line
 	3650 5700 3850 5700
 Connection ~ 3850 5700
 $Comp
-L device:R R6
+L Device:R R6
 U 1 1 5BBEFB78
 P 3450 5100
 F 0 "R6" V 3243 5100 50  0000 C CNN
 F 1 "47K" V 3334 5100 50  0000 C CNN
-F 2 "Resistors_THT:R_Axial_DIN0207_L6.3mm_D2.5mm_P7.62mm_Horizontal" V 3380 5100 50  0001 C CNN
+F 2 "Resistors_SMD:R_0805_HandSoldering" V 3380 5100 50  0001 C CNN
 F 3 "~" H 3450 5100 50  0001 C CNN
 	1    3450 5100
 	0    1    1    0   
@@ -582,12 +582,12 @@ $EndComp
 Wire Wire Line
 	3600 5100 4850 5100
 $Comp
-L device:R R7
+L Device:R R7
 U 1 1 5BBF50E0
 P 4150 5900
 F 0 "R7" H 4220 5946 50  0000 L CNN
 F 1 "47K" H 4220 5855 50  0000 L CNN
-F 2 "Resistors_THT:R_Axial_DIN0207_L6.3mm_D2.5mm_P7.62mm_Horizontal" V 4080 5900 50  0001 C CNN
+F 2 "Resistors_SMD:R_0805_HandSoldering" V 4080 5900 50  0001 C CNN
 F 3 "~" H 4150 5900 50  0001 C CNN
 	1    4150 5900
 	1    0    0    -1  
@@ -595,17 +595,16 @@ $EndComp
 Wire Wire Line
 	4150 6050 4150 6450
 $Comp
-L device:R R5
+L Device:R R5
 U 1 1 5BBF522A
 P 3250 3050
 F 0 "R5" H 3320 3096 50  0000 L CNN
 F 1 "47K" H 3320 3005 50  0000 L CNN
-F 2 "Resistors_THT:R_Axial_DIN0207_L6.3mm_D2.5mm_P7.62mm_Horizontal" V 3180 3050 50  0001 C CNN
+F 2 "Resistors_SMD:R_0805_HandSoldering" V 3180 3050 50  0001 C CNN
 F 3 "~" H 3250 3050 50  0001 C CNN
 	1    3250 3050
 	1    0    0    -1  
 $EndComp
-Connection ~ 3250 2900
 Wire Wire Line
 	3850 4000 3850 3650
 Connection ~ 3850 4000
@@ -619,23 +618,23 @@ Wire Wire Line
 	4300 1700 4300 900 
 Connection ~ 4300 900 
 $Comp
-L device:R R8
+L Device:R R8
 U 1 1 5BC1091F
 P 4650 1950
 F 0 "R8" H 4720 1996 50  0000 L CNN
 F 1 "4.7K" H 4720 1905 50  0000 L CNN
-F 2 "Resistors_THT:R_Axial_DIN0207_L6.3mm_D2.5mm_P7.62mm_Horizontal" V 4580 1950 50  0001 C CNN
+F 2 "Resistors_SMD:R_0805_HandSoldering" V 4580 1950 50  0001 C CNN
 F 3 "~" H 4650 1950 50  0001 C CNN
 	1    4650 1950
 	1    0    0    -1  
 $EndComp
 $Comp
-L device:R R9
+L Device:R R9
 U 1 1 5BC10991
 P 4900 1950
 F 0 "R9" H 4970 1996 50  0000 L CNN
 F 1 "4.7K" H 4970 1905 50  0000 L CNN
-F 2 "Resistors_THT:R_Axial_DIN0207_L6.3mm_D2.5mm_P7.62mm_Horizontal" V 4830 1950 50  0001 C CNN
+F 2 "Resistors_SMD:R_0805_HandSoldering" V 4830 1950 50  0001 C CNN
 F 3 "~" H 4900 1950 50  0001 C CNN
 	1    4900 1950
 	1    0    0    -1  
