@@ -18,8 +18,8 @@ $Comp
 L SensorToAmbient-rescue:Conn_01x04-Connector_Grove J1
 U 1 1 5BE0F275
 P 1300 2350
-F 0 "J1" H 1380 2342 50  0000 L CNN
-F 1 "Conn_01x04" H 1380 2251 50  0000 L CNN
+F 0 "J1" H 1250 2050 50  0000 L CNN
+F 1 "Conn_01x04" H 1150 1950 50  0000 L CNN
 F 2 "SensorToAmbient:Grove_2mm_4pin_angle2" H 1300 2350 50  0001 C CNN
 F 3 "~" H 1300 2350 50  0001 C CNN
 	1    1300 2350
@@ -29,8 +29,8 @@ $Comp
 L SensorToAmbient-rescue:Conn_01x04-Connector_Grove J2
 U 1 1 5BE0F3B8
 P 1300 3650
-F 0 "J2" H 1380 3642 50  0000 L CNN
-F 1 "Conn_01x04" H 1380 3551 50  0000 L CNN
+F 0 "J2" H 1300 3250 50  0000 L CNN
+F 1 "Conn_01x04" H 1150 3350 50  0000 L CNN
 F 2 "SensorToAmbient:Grove_2mm_4pin_angle2" H 1300 3650 50  0001 C CNN
 F 3 "~" H 1300 3650 50  0001 C CNN
 	1    1300 3650
@@ -40,8 +40,8 @@ $Comp
 L SensorToAmbient-rescue:Conn_01x04-Connector_Grove J3
 U 1 1 5BE0F3E4
 P 1300 5050
-F 0 "J3" H 1380 5042 50  0000 L CNN
-F 1 "Conn_01x04" H 1380 4951 50  0000 L CNN
+F 0 "J3" H 1300 4650 50  0000 L CNN
+F 1 "Conn_01x04" H 1150 4750 50  0000 L CNN
 F 2 "SensorToAmbient:Grove_2mm_4pin_angle2" H 1300 5050 50  0001 C CNN
 F 3 "~" H 1300 5050 50  0001 C CNN
 	1    1300 5050
@@ -119,7 +119,7 @@ U 1 1 5BE11B05
 P 4200 4850
 F 0 "R1" H 4270 4896 50  0000 L CNN
 F 1 "100K" H 4270 4805 50  0000 L CNN
-F 2 "Resistors_THT:R_Axial_DIN0207_L6.3mm_D2.5mm_P7.62mm_Horizontal" V 4130 4850 50  0001 C CNN
+F 2 "Resistors_SMD:R_0805_HandSoldering" V 4130 4850 50  0001 C CNN
 F 3 "~" H 4200 4850 50  0001 C CNN
 	1    4200 4850
 	1    0    0    -1  
@@ -130,7 +130,7 @@ U 1 1 5BE11C1B
 P 4200 5350
 F 0 "R2" H 4270 5396 50  0000 L CNN
 F 1 "100K" H 4270 5305 50  0000 L CNN
-F 2 "Resistors_THT:R_Axial_DIN0207_L6.3mm_D2.5mm_P7.62mm_Horizontal" V 4130 5350 50  0001 C CNN
+F 2 "Resistors_SMD:R_0805_HandSoldering" V 4130 5350 50  0001 C CNN
 F 3 "~" H 4200 5350 50  0001 C CNN
 	1    4200 5350
 	1    0    0    -1  
@@ -225,7 +225,6 @@ F 3 "~" H 5050 5100 50  0001 C CNN
 	1    5050 5100
 	1    0    0    1   
 $EndComp
-NoConn ~ 4900 2400
 NoConn ~ 4900 2500
 Wire Wire Line
 	2100 850  2100 1000
@@ -286,18 +285,6 @@ Wire Wire Line
 Wire Wire Line
 	3400 2650 3250 2650
 Wire Wire Line
-	4650 2200 4650 2550
-Wire Wire Line
-	4750 2300 4750 2450
-Wire Wire Line
-	4300 2550 4650 2550
-Connection ~ 4650 2550
-Wire Wire Line
-	4300 2450 4750 2450
-Connection ~ 4750 2450
-Wire Wire Line
-	4650 2550 4650 3500
-Wire Wire Line
 	5250 6200 5250 3700
 Wire Wire Line
 	3300 6200 5250 6200
@@ -338,20 +325,12 @@ Wire Wire Line
 Wire Wire Line
 	4750 3500 4850 3500
 Wire Wire Line
-	4750 2450 4750 3600
-Wire Wire Line
 	3400 3800 4850 3800
 Connection ~ 4850 3800
 Wire Wire Line
 	4850 3800 5200 3800
 Wire Wire Line
 	5250 3700 4850 3700
-Wire Wire Line
-	4300 2750 4300 3150
-Wire Wire Line
-	4300 3150 3850 3150
-Wire Wire Line
-	3850 3150 3850 4000
 Connection ~ 3850 4700
 Wire Wire Line
 	5300 1000 5300 5550
@@ -418,8 +397,8 @@ $Comp
 L SensorToAmbient-rescue:SN74HC125N-SensorToAmbient_dedicated 3SB1
 U 1 1 5BE112A4
 P 2650 2650
-F 0 "3SB1" V 2604 3028 50  0000 L CNN
-F 1 "SN74HC125N" V 2695 3028 50  0000 L CNN
+F 0 "3SB1" H 2350 3150 50  0000 L CNN
+F 1 "SN74HC125N" H 2450 3050 50  0000 L CNN
 F 2 "digikey-footprints:DIP-14_W3mm" H 2650 3100 50  0001 C CNN
 F 3 "" H 2650 3100 50  0001 C CNN
 	1    2650 2650
@@ -429,7 +408,6 @@ Wire Wire Line
 	2250 2900 2250 4000
 Wire Wire Line
 	2250 4000 2750 4000
-Connection ~ 3850 4000
 Wire Wire Line
 	3850 4000 3850 4700
 Wire Wire Line
@@ -461,12 +439,12 @@ $EndComp
 Wire Wire Line
 	3200 6450 3100 6450
 $Comp
-L device:R R3
+L Device:R R3
 U 1 1 5BBA785E
 P 3100 6700
 F 0 "R3" H 3170 6746 50  0000 L CNN
-F 1 "R" H 3170 6655 50  0000 L CNN
-F 2 "Resistors_THT:R_Axial_DIN0207_L6.3mm_D2.5mm_P7.62mm_Horizontal" V 3030 6700 50  0001 C CNN
+F 1 "47K" H 3170 6655 50  0000 L CNN
+F 2 "Resistors_SMD:R_0805_HandSoldering" V 3030 6700 50  0001 C CNN
 F 3 "~" H 3100 6700 50  0001 C CNN
 	1    3100 6700
 	1    0    0    -1  
@@ -502,12 +480,12 @@ $EndComp
 Wire Wire Line
 	1500 2550 1600 2550
 $Comp
-L device:R R4
+L Device:R R4
 U 1 1 5BB95027
 P 1600 2800
 F 0 "R4" H 1670 2846 50  0000 L CNN
 F 1 "R" H 1670 2755 50  0000 L CNN
-F 2 "Resistors_THT:R_Axial_DIN0207_L6.3mm_D2.5mm_P7.62mm_Horizontal" V 1530 2800 50  0001 C CNN
+F 2 "Resistors_SMD:R_0805_HandSoldering" V 1530 2800 50  0001 C CNN
 F 3 "~" H 1600 2800 50  0001 C CNN
 	1    1600 2800
 	1    0    0    -1  
@@ -521,12 +499,12 @@ Wire Wire Line
 	1600 3250 2100 3250
 Connection ~ 2100 3250
 $Comp
-L device:D_Schottky D1
+L Device:D_Schottky D1
 U 1 1 5BB9F5B8
 P 3900 6450
 F 0 "D1" H 3900 6666 50  0000 C CNN
 F 1 "D_Schottky" H 3900 6575 50  0000 C CNN
-F 2 "Diodes_THT:D_T-1_P5.08mm_Horizontal" H 3900 6450 50  0001 C CNN
+F 2 "Diodes_SMD:D_SOD-323_HandSoldering" H 3900 6450 50  0001 C CNN
 F 3 "~" H 3900 6450 50  0001 C CNN
 	1    3900 6450
 	1    0    0    -1  
@@ -542,18 +520,18 @@ Wire Wire Line
 Wire Wire Line
 	1550 2350 1500 2350
 Text Label 1200 2000 0    50   ~ 0
-PWR3.3V_Sensor
+PWR3.3V_Switch
 Wire Wire Line
 	3100 5100 3100 6450
 NoConn ~ 1500 5050
 NoConn ~ 4850 5200
 $Comp
-L device:D_Schottky D2
+L Device:D_Schottky D2
 U 1 1 5BBBBAF5
 P 3100 3550
 F 0 "D2" V 3146 3471 50  0000 R CNN
 F 1 "D_Schottky" V 3055 3471 50  0000 R CNN
-F 2 "Diodes_THT:D_T-1_P5.08mm_Horizontal" H 3100 3550 50  0001 C CNN
+F 2 "Diodes_SMD:D_SOD-323_HandSoldering" H 3100 3550 50  0001 C CNN
 F 3 "~" H 3100 3550 50  0001 C CNN
 	1    3100 3550
 	0    -1   -1   0   
@@ -567,19 +545,13 @@ Wire Wire Line
 	2100 3250 2100 5950
 NoConn ~ 1500 4950
 Wire Wire Line
-	1550 2350 2200 2350
-Wire Wire Line
-	2200 2350 2200 900 
-Connection ~ 1550 2350
-Connection ~ 2200 900 
-Wire Wire Line
 	3850 5650 4150 5650
 Wire Wire Line
 	4150 6450 4050 6450
 Wire Wire Line
-	4150 5650 4150 6450
+	4150 5650 4150 5750
 Wire Wire Line
-	3100 5100 4850 5100
+	3100 5100 3300 5100
 Text Label 4450 5100 0    50   ~ 0
 PWR3.3V_DCDC
 $Comp
@@ -596,4 +568,194 @@ $EndComp
 Wire Wire Line
 	3650 5700 3850 5700
 Connection ~ 3850 5700
+$Comp
+L Device:R R6
+U 1 1 5BBEFB78
+P 3450 5100
+F 0 "R6" V 3243 5100 50  0000 C CNN
+F 1 "47K" V 3334 5100 50  0000 C CNN
+F 2 "Resistors_SMD:R_0805_HandSoldering" V 3380 5100 50  0001 C CNN
+F 3 "~" H 3450 5100 50  0001 C CNN
+	1    3450 5100
+	0    1    1    0   
+$EndComp
+Wire Wire Line
+	3600 5100 4850 5100
+$Comp
+L Device:R R7
+U 1 1 5BBF50E0
+P 4150 5900
+F 0 "R7" H 4220 5946 50  0000 L CNN
+F 1 "47K" H 4220 5855 50  0000 L CNN
+F 2 "Resistors_SMD:R_0805_HandSoldering" V 4080 5900 50  0001 C CNN
+F 3 "~" H 4150 5900 50  0001 C CNN
+	1    4150 5900
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	4150 6050 4150 6450
+$Comp
+L Device:R R5
+U 1 1 5BBF522A
+P 3250 3050
+F 0 "R5" H 3320 3096 50  0000 L CNN
+F 1 "47K" H 3320 3005 50  0000 L CNN
+F 2 "Resistors_SMD:R_0805_HandSoldering" V 3180 3050 50  0001 C CNN
+F 3 "~" H 3250 3050 50  0001 C CNN
+	1    3250 3050
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	3850 4000 3850 3650
+Connection ~ 3850 4000
+Wire Wire Line
+	4900 2400 5250 2400
+Wire Wire Line
+	5250 2400 5250 1700
+Wire Wire Line
+	5250 1700 4900 1700
+Wire Wire Line
+	4300 1700 4300 900 
+Connection ~ 4300 900 
+$Comp
+L Device:R R8
+U 1 1 5BC1091F
+P 4650 1950
+F 0 "R8" H 4720 1996 50  0000 L CNN
+F 1 "4.7K" H 4720 1905 50  0000 L CNN
+F 2 "Resistors_SMD:R_0805_HandSoldering" V 4580 1950 50  0001 C CNN
+F 3 "~" H 4650 1950 50  0001 C CNN
+	1    4650 1950
+	1    0    0    -1  
+$EndComp
+$Comp
+L Device:R R9
+U 1 1 5BC10991
+P 4900 1950
+F 0 "R9" H 4970 1996 50  0000 L CNN
+F 1 "4.7K" H 4970 1905 50  0000 L CNN
+F 2 "Resistors_SMD:R_0805_HandSoldering" V 4830 1950 50  0001 C CNN
+F 3 "~" H 4900 1950 50  0001 C CNN
+	1    4900 1950
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	4650 2200 4650 2100
+Connection ~ 4650 2200
+Wire Wire Line
+	4650 1800 4650 1700
+Connection ~ 4650 1700
+Wire Wire Line
+	4650 1700 4300 1700
+Wire Wire Line
+	4900 1800 4900 1700
+Connection ~ 4900 1700
+Wire Wire Line
+	4900 1700 4650 1700
+Connection ~ 4900 2300
+Wire Wire Line
+	4900 2100 4900 2300
+Text Notes 4500 1800 0    50   ~ 0
+2 x pullup for I2c
+Text Label 4400 1700 0    50   ~ 0
+PWR3.3V_Sensors
+Wire Wire Line
+	4650 2200 4650 2650
+Wire Wire Line
+	4400 3650 4400 3200
+Wire Wire Line
+	4400 2450 4300 2450
+Wire Wire Line
+	3850 3650 4400 3650
+Wire Wire Line
+	3250 3200 4400 3200
+Connection ~ 4400 3200
+Wire Wire Line
+	4400 3200 4400 2450
+Text Notes 5200 2200 0    50   Italic 0
+I2C SCL
+Text Notes 5200 2300 0    50   Italic 0
+I2C SDA
+Text Notes 5200 2400 0    50   Italic 0
+PWR3.3V
+Text Notes 5000 2100 0    50   ~ 10
+From WioLTE I2C
+Text Notes 4950 3400 0    50   ~ 10
+To LED by I2C
+Text Notes 4950 4800 0    50   ~ 10
+From WioLTE A4
+Text Notes 850  2150 0    50   ~ 10
+From WioLTE D38
+Text Notes 1000 3450 0    50   ~ 10
+From WioLTE D20
+Text Notes 1000 4850 0    50   ~ 10
+From WioLTE A6
+Text Notes 5150 3500 0    50   Italic 0
+I2C SCL
+Text Notes 5150 3600 0    50   Italic 0
+I2C SDA
+Text Notes 5150 3700 0    50   Italic 0
+PWR5V
+Text Notes 5150 3800 0    50   Italic 0
+GND
+Text Notes 5150 5150 0    50   Italic 0
+PWR3.3V
+Text Notes 5150 5000 0    50   Italic 0
+ADC
+Text Notes 3800 350  0    50   ~ 10
+To Ms5540c 2
+Text Notes 1700 350  0    50   ~ 10
+To Ms5540c 1
+Text Notes 5150 4900 0    50   Italic 0
+Ms5540C 2 OE
+Text Notes 650  5300 0    50   Italic 0
+Ms5540c MISO
+Text Notes 650  5200 0    50   Italic 0
+Ms5540c MOSI
+Text Notes 650  3800 0    50   Italic 0
+Ms5540c SCK
+Text Notes 400  3900 0    50   Italic 0
+Ms5540c MCLK(PWM)
+Text Notes 800  2600 0    50   Italic 0
+Switch DIN
+Text Notes 650  2500 0    50   Italic 0
+Ms5540C 1 OE
+Text Notes 900  2400 0    50   Italic 0
+PWR3.3V
+Text Notes 1750 550  1    50   Italic 0
+MCLK
+Text Notes 1850 550  1    50   Italic 0
+DOUT
+Text Notes 1950 550  1    50   Italic 0
+DIN
+Text Notes 2050 550  1    50   Italic 0
+SCK
+Text Notes 2150 550  1    50   Italic 0
+GND
+Text Notes 2250 550  1    50   Italic 0
+VDD
+Text Notes 3850 550  1    50   Italic 0
+MCLK
+Text Notes 3950 550  1    50   Italic 0
+DOUT
+Text Notes 4050 550  1    50   Italic 0
+DIN
+Text Notes 4150 550  1    50   Italic 0
+SCK
+Text Notes 4250 550  1    50   Italic 0
+GND
+Text Notes 4350 550  1    50   Italic 0
+VDD
+Wire Wire Line
+	4300 2650 4650 2650
+Connection ~ 4650 2650
+Wire Wire Line
+	4650 2650 4650 3500
+Wire Wire Line
+	4300 2750 4750 2750
+Wire Wire Line
+	4750 2300 4750 2750
+Connection ~ 4750 2750
+Wire Wire Line
+	4750 2750 4750 3600
 $EndSCHEMATC
