@@ -439,11 +439,11 @@ $EndComp
 Wire Wire Line
 	3200 6450 3100 6450
 $Comp
-L Device:R R3
+L SensorToAmbient-rescue:R-Device R3
 U 1 1 5BBA785E
 P 3100 6700
 F 0 "R3" H 3170 6746 50  0000 L CNN
-F 1 "47K" H 3170 6655 50  0000 L CNN
+F 1 "100K" H 3170 6655 50  0000 L CNN
 F 2 "Resistors_SMD:R_0805_HandSoldering" V 3030 6700 50  0001 C CNN
 F 3 "~" H 3100 6700 50  0001 C CNN
 	1    3100 6700
@@ -480,7 +480,7 @@ $EndComp
 Wire Wire Line
 	1500 2550 1600 2550
 $Comp
-L Device:R R4
+L SensorToAmbient-rescue:R-Device R4
 U 1 1 5BB95027
 P 1600 2800
 F 0 "R4" H 1670 2846 50  0000 L CNN
@@ -499,7 +499,7 @@ Wire Wire Line
 	1600 3250 2100 3250
 Connection ~ 2100 3250
 $Comp
-L Device:D_Schottky D1
+L SensorToAmbient-rescue:D_Schottky D1
 U 1 1 5BB9F5B8
 P 3900 6450
 F 0 "D1" H 3900 6666 50  0000 C CNN
@@ -526,7 +526,7 @@ Wire Wire Line
 NoConn ~ 1500 5050
 NoConn ~ 4850 5200
 $Comp
-L Device:D_Schottky D2
+L SensorToAmbient-rescue:D_Schottky D2
 U 1 1 5BBBBAF5
 P 3100 3550
 F 0 "D2" V 3146 3471 50  0000 R CNN
@@ -549,8 +549,6 @@ Wire Wire Line
 Wire Wire Line
 	4150 6450 4050 6450
 Wire Wire Line
-	4150 5650 4150 5750
-Wire Wire Line
 	3100 5100 3300 5100
 Text Label 4450 5100 0    50   ~ 0
 PWR3.3V_DCDC
@@ -569,11 +567,11 @@ Wire Wire Line
 	3650 5700 3850 5700
 Connection ~ 3850 5700
 $Comp
-L Device:R R6
+L SensorToAmbient-rescue:R-Device R6
 U 1 1 5BBEFB78
 P 3450 5100
 F 0 "R6" V 3243 5100 50  0000 C CNN
-F 1 "47K" V 3334 5100 50  0000 C CNN
+F 1 "10K" V 3334 5100 50  0000 C CNN
 F 2 "Resistors_SMD:R_0805_HandSoldering" V 3380 5100 50  0001 C CNN
 F 3 "~" H 3450 5100 50  0001 C CNN
 	1    3450 5100
@@ -582,20 +580,7 @@ $EndComp
 Wire Wire Line
 	3600 5100 4850 5100
 $Comp
-L Device:R R7
-U 1 1 5BBF50E0
-P 4150 5900
-F 0 "R7" H 4220 5946 50  0000 L CNN
-F 1 "47K" H 4220 5855 50  0000 L CNN
-F 2 "Resistors_SMD:R_0805_HandSoldering" V 4080 5900 50  0001 C CNN
-F 3 "~" H 4150 5900 50  0001 C CNN
-	1    4150 5900
-	1    0    0    -1  
-$EndComp
-Wire Wire Line
-	4150 6050 4150 6450
-$Comp
-L Device:R R5
+L SensorToAmbient-rescue:R-Device R5
 U 1 1 5BBF522A
 P 3250 3050
 F 0 "R5" H 3320 3096 50  0000 L CNN
@@ -618,22 +603,22 @@ Wire Wire Line
 	4300 1700 4300 900 
 Connection ~ 4300 900 
 $Comp
-L Device:R R8
+L SensorToAmbient-rescue:R-Device R8
 U 1 1 5BC1091F
 P 4650 1950
 F 0 "R8" H 4720 1996 50  0000 L CNN
-F 1 "4.7K" H 4720 1905 50  0000 L CNN
+F 1 "10K" H 4720 1905 50  0000 L CNN
 F 2 "Resistors_SMD:R_0805_HandSoldering" V 4580 1950 50  0001 C CNN
 F 3 "~" H 4650 1950 50  0001 C CNN
 	1    4650 1950
 	1    0    0    -1  
 $EndComp
 $Comp
-L Device:R R9
+L SensorToAmbient-rescue:R-Device R9
 U 1 1 5BC10991
 P 4900 1950
 F 0 "R9" H 4970 1996 50  0000 L CNN
-F 1 "4.7K" H 4970 1905 50  0000 L CNN
+F 1 "10K" H 4970 1905 50  0000 L CNN
 F 2 "Resistors_SMD:R_0805_HandSoldering" V 4830 1950 50  0001 C CNN
 F 3 "~" H 4900 1950 50  0001 C CNN
 	1    4900 1950
@@ -758,4 +743,6 @@ Wire Wire Line
 Connection ~ 4750 2750
 Wire Wire Line
 	4750 2750 4750 3600
+Wire Wire Line
+	4150 5650 4150 6450
 $EndSCHEMATC
