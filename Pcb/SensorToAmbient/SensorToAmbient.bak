@@ -549,8 +549,6 @@ Wire Wire Line
 Wire Wire Line
 	4150 6450 4050 6450
 Wire Wire Line
-	4150 5650 4150 5750
-Wire Wire Line
 	3100 5100 3300 5100
 Text Label 4450 5100 0    50   ~ 0
 PWR3.3V_DCDC
@@ -581,19 +579,6 @@ F 3 "~" H 3450 5100 50  0001 C CNN
 $EndComp
 Wire Wire Line
 	3600 5100 4850 5100
-$Comp
-L SensorToAmbient-rescue:R-Device R7
-U 1 1 5BBF50E0
-P 4150 5900
-F 0 "R7" H 4220 5946 50  0000 L CNN
-F 1 "47K" H 4220 5855 50  0000 L CNN
-F 2 "Resistors_SMD:R_0805_HandSoldering" V 4080 5900 50  0001 C CNN
-F 3 "~" H 4150 5900 50  0001 C CNN
-	1    4150 5900
-	1    0    0    -1  
-$EndComp
-Wire Wire Line
-	4150 6050 4150 6450
 $Comp
 L SensorToAmbient-rescue:R-Device R5
 U 1 1 5BBF522A
@@ -758,4 +743,6 @@ Wire Wire Line
 Connection ~ 4750 2750
 Wire Wire Line
 	4750 2750 4750 3600
+Wire Wire Line
+	4150 5650 4150 6450
 $EndSCHEMATC
