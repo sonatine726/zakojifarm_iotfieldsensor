@@ -19,7 +19,7 @@ L SensorToAmbient-rescue:Conn_01x04-Connector_Grove J1
 U 1 1 5BE0F275
 P 1300 2350
 F 0 "J1" H 1250 2050 50  0000 L CNN
-F 1 "Conn_01x04" H 1150 1950 50  0000 L CNN
+F 1 "D38 In" H 1150 1950 50  0000 L CNN
 F 2 "SensorToAmbient:Grove_2mm_4pin_angle2" H 1300 2350 50  0001 C CNN
 F 3 "~" H 1300 2350 50  0001 C CNN
 	1    1300 2350
@@ -29,8 +29,8 @@ $Comp
 L SensorToAmbient-rescue:Conn_01x04-Connector_Grove J2
 U 1 1 5BE0F3B8
 P 1300 3650
-F 0 "J2" H 1300 3250 50  0000 L CNN
-F 1 "Conn_01x04" H 1150 3350 50  0000 L CNN
+F 0 "J2" H 1250 3350 50  0000 L CNN
+F 1 "D20 In" H 1100 3250 50  0000 L CNN
 F 2 "SensorToAmbient:Grove_2mm_4pin_angle2" H 1300 3650 50  0001 C CNN
 F 3 "~" H 1300 3650 50  0001 C CNN
 	1    1300 3650
@@ -40,8 +40,8 @@ $Comp
 L SensorToAmbient-rescue:Conn_01x04-Connector_Grove J3
 U 1 1 5BE0F3E4
 P 1300 5050
-F 0 "J3" H 1300 4650 50  0000 L CNN
-F 1 "Conn_01x04" H 1150 4750 50  0000 L CNN
+F 0 "J3" H 1250 4750 50  0000 L CNN
+F 1 "A6 In" H 1200 4650 50  0000 L CNN
 F 2 "SensorToAmbient:Grove_2mm_4pin_angle2" H 1300 5050 50  0001 C CNN
 F 3 "~" H 1300 5050 50  0001 C CNN
 	1    1300 5050
@@ -51,8 +51,8 @@ $Comp
 L SensorToAmbient-rescue:Conn_01x04-Connector_Grove J6
 U 1 1 5BE0F456
 P 5100 2400
-F 0 "J6" H 5020 2717 50  0000 C CNN
-F 1 "Conn_01x04" H 5020 2626 50  0000 C CNN
+F 0 "J6" H 5100 2600 50  0000 C CNN
+F 1 "I2C In" H 5100 2700 50  0000 C CNN
 F 2 "SensorToAmbient:Grove_2mm_4pin_angle2" H 5100 2400 50  0001 C CNN
 F 3 "~" H 5100 2400 50  0001 C CNN
 	1    5100 2400
@@ -63,7 +63,7 @@ L SensorToAmbient-rescue:Conn_01x06-Connector_Generic J8
 U 1 1 5BE0FB43
 P 2000 650
 F 0 "J8" V 1966 262 50  0000 R CNN
-F 1 "Conn_01x06" V 1875 262 50  0000 R CNN
+F 1 "Ms5540c_1" V 1875 262 50  0000 R CNN
 F 2 "Connectors_JST:JST_XH_S06B-XH-A_06x2.50mm_Angled" H 2000 650 50  0001 C CNN
 F 3 "~" H 2000 650 50  0001 C CNN
 	1    2000 650 
@@ -74,7 +74,7 @@ L SensorToAmbient-rescue:Conn_01x06-Connector_Generic J9
 U 1 1 5BE0FBD1
 P 4100 650
 F 0 "J9" V 4066 262 50  0000 R CNN
-F 1 "Conn_01x06" V 3975 262 50  0000 R CNN
+F 1 "Ms5540c_2" V 3975 262 50  0000 R CNN
 F 2 "Connectors_JST:JST_XH_S06B-XH-A_06x2.50mm_Angled" H 4100 650 50  0001 C CNN
 F 3 "~" H 4100 650 50  0001 C CNN
 	1    4100 650 
@@ -85,7 +85,7 @@ L SensorToAmbient-rescue:Conn_01x02-Connector_Generic J7
 U 1 1 5BE0FD4D
 P 3850 5900
 F 0 "J7" V 3723 5980 50  0000 L CNN
-F 1 "Conn_01x02" V 3814 5980 50  0000 L CNN
+F 1 "PWR In" V 3814 5980 50  0000 L CNN
 F 2 "Connectors_JST:JST_PH_S2B-PH-K_02x2.00mm_Angled" H 3850 5900 50  0001 C CNN
 F 3 "~" H 3850 5900 50  0001 C CNN
 	1    3850 5900
@@ -107,7 +107,7 @@ L SensorToAmbient-rescue:DCDC_PowerBoost500-SensorToAmbient_dedicated DCDC1
 U 1 1 5BE11987
 P 2600 5200
 F 0 "DCDC1" H 2656 5725 50  0000 C CNN
-F 1 "DCDC_PowerBoost500" H 2656 5634 50  0000 C CNN
+F 1 "PowerBoost500 Basic" H 2656 5634 50  0000 C CNN
 F 2 "SensorToAmbient:DCDC_PowerBoost500" H 2600 5600 50  0001 C CNN
 F 3 "" H 2600 5600 50  0001 C CNN
 	1    2600 5200
@@ -176,8 +176,8 @@ $Comp
 L SensorToAmbient-rescue:Conn_01x04-Connector_I2C J5
 U 1 1 5BE0F4CE
 P 5050 3700
-F 0 "J5" H 4970 4017 50  0000 C CNN
-F 1 "Conn_01x04" H 4970 3926 50  0000 C CNN
+F 0 "J5" H 5050 3900 50  0000 C CNN
+F 1 "I2C Out" H 5050 4000 50  0000 C CNN
 F 2 "Connectors_JST:JST_XH_S04B-XH-A_04x2.50mm_Angled" H 5050 3700 50  0001 C CNN
 F 3 "~" H 5050 3700 50  0001 C CNN
 	1    5050 3700
@@ -218,8 +218,8 @@ $Comp
 L SensorToAmbient-rescue:Conn_01x04-Connector_Grove J4
 U 1 1 5BE0F523
 P 5050 5100
-F 0 "J4" H 4970 5417 50  0000 C CNN
-F 1 "Conn_01x04" H 4970 5326 50  0000 C CNN
+F 0 "J4" H 5050 5300 50  0000 C CNN
+F 1 "A4 In" H 5050 5400 50  0000 C CNN
 F 2 "SensorToAmbient:Grove_2mm_4pin_angle2" H 5050 5100 50  0001 C CNN
 F 3 "~" H 5050 5100 50  0001 C CNN
 	1    5050 5100
@@ -397,8 +397,8 @@ $Comp
 L SensorToAmbient-rescue:SN74HC125N-SensorToAmbient_dedicated 3SB1
 U 1 1 5BE112A4
 P 2650 2650
-F 0 "3SB1" H 2350 3150 50  0000 L CNN
-F 1 "SN74HC125N" H 2450 3050 50  0000 L CNN
+F 0 "3SB1" H 2750 3050 50  0000 L CNN
+F 1 "SN74HC125N" H 2450 3150 50  0000 L CNN
 F 2 "digikey-footprints:DIP-14_W3mm" H 2650 3100 50  0001 C CNN
 F 3 "" H 2650 3100 50  0001 C CNN
 	1    2650 2650
@@ -484,7 +484,7 @@ L SensorToAmbient-rescue:R-Device R4
 U 1 1 5BB95027
 P 1600 2800
 F 0 "R4" H 1670 2846 50  0000 L CNN
-F 1 "R" H 1670 2755 50  0000 L CNN
+F 1 "100K" H 1670 2755 50  0000 L CNN
 F 2 "Resistors_SMD:R_0805_HandSoldering" V 1530 2800 50  0001 C CNN
 F 3 "~" H 1600 2800 50  0001 C CNN
 	1    1600 2800
@@ -584,7 +584,7 @@ L SensorToAmbient-rescue:R-Device R5
 U 1 1 5BBF522A
 P 3250 3050
 F 0 "R5" H 3320 3096 50  0000 L CNN
-F 1 "47K" H 3320 3005 50  0000 L CNN
+F 1 "100K" H 3320 3005 50  0000 L CNN
 F 2 "Resistors_SMD:R_0805_HandSoldering" V 3180 3050 50  0001 C CNN
 F 3 "~" H 3250 3050 50  0001 C CNN
 	1    3250 3050
@@ -598,50 +598,8 @@ Wire Wire Line
 Wire Wire Line
 	5250 2400 5250 1700
 Wire Wire Line
-	5250 1700 4900 1700
-Wire Wire Line
 	4300 1700 4300 900 
 Connection ~ 4300 900 
-$Comp
-L SensorToAmbient-rescue:R-Device R8
-U 1 1 5BC1091F
-P 4650 1950
-F 0 "R8" H 4720 1996 50  0000 L CNN
-F 1 "10K" H 4720 1905 50  0000 L CNN
-F 2 "Resistors_SMD:R_0805_HandSoldering" V 4580 1950 50  0001 C CNN
-F 3 "~" H 4650 1950 50  0001 C CNN
-	1    4650 1950
-	1    0    0    -1  
-$EndComp
-$Comp
-L SensorToAmbient-rescue:R-Device R9
-U 1 1 5BC10991
-P 4900 1950
-F 0 "R9" H 4970 1996 50  0000 L CNN
-F 1 "10K" H 4970 1905 50  0000 L CNN
-F 2 "Resistors_SMD:R_0805_HandSoldering" V 4830 1950 50  0001 C CNN
-F 3 "~" H 4900 1950 50  0001 C CNN
-	1    4900 1950
-	1    0    0    -1  
-$EndComp
-Wire Wire Line
-	4650 2200 4650 2100
-Connection ~ 4650 2200
-Wire Wire Line
-	4650 1800 4650 1700
-Connection ~ 4650 1700
-Wire Wire Line
-	4650 1700 4300 1700
-Wire Wire Line
-	4900 1800 4900 1700
-Connection ~ 4900 1700
-Wire Wire Line
-	4900 1700 4650 1700
-Connection ~ 4900 2300
-Wire Wire Line
-	4900 2100 4900 2300
-Text Notes 4500 1800 0    50   ~ 0
-2 x pullup for I2c
 Text Label 4400 1700 0    50   ~ 0
 PWR3.3V_Sensors
 Wire Wire Line
@@ -745,4 +703,6 @@ Wire Wire Line
 	4750 2750 4750 3600
 Wire Wire Line
 	4150 5650 4150 6450
+Wire Wire Line
+	4300 1700 5250 1700
 $EndSCHEMATC
