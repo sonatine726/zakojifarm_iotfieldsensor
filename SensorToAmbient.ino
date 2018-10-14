@@ -11,6 +11,7 @@
 #include <Wire.h>
 #include <HardwareTimer.h>
 #include "Ms5540cSPI.h"
+#include "StwI2c.h"
 
 typedef int IRQn_Type;
 #define __NVIC_PRIO_BITS          4
@@ -33,6 +34,7 @@ typedef int IRQn_Type;
 #define C_SW_EXT_RTC 1
 #define C_SW_MS5540C_ADC_CLOCK_BY_EXT_RTC 0
 #define C_SW_SLEEP_BY_POWERDOWN 1
+#define C_SW_LED_BLINKM 1
 
 
 //Common global
@@ -91,9 +93,9 @@ constexpr uint8_t DS18B20_TEMPERATURE_RESOLUTION_BIT = 12;
 
 #endif //C_SW_DS18B20
 
-#if C_SW_MS5540C
 TwoWire i2c;
 
+#if C_SW_EXT_RTC
 constexpr uint8 RTC_I2C_ADDR = 0x51;
 
 constexpr uint8 RTC_REG_CTR1 = 0x00;
@@ -113,6 +115,10 @@ constexpr uint8 RTC_REG_CLKO_FREQ = 0x0D;
 constexpr uint8 RTC_REG_TIMER_CTR = 0x0E;
 constexpr uint8 RTC_REG_TIMER = 0x0F;
 
+#endif //C_SW_EXT_RTC
+
+
+#if C_SW_MS5540C
 constexpr uint8 ADC_CLOCK_PIN_FOR_MS5540C = Port2Pin('B', 4); // D20;
 constexpr uint8 OE_PIN_FOR_MS5540C_AIR = Port2Pin('A', 4); // D4;
 constexpr uint8 OE_PIN_FOR_MS5540C_WATER = Port2Pin('C', 7); // D39;
@@ -141,6 +147,59 @@ constexpr unsigned int INTERNAL_BATTERY_ADC_CHANNEL = 18;
 constexpr unsigned int INTERNAL_TEMPERATURE_ADC_CHANNEL = 16;
 #endif //C_SW_BATTERY_V
 
+#if C_SW_LED_BLINKM
+constexpr uint8 LED_I2C_ADDR = 0x09;
+
+constexpr uint8 LED_R_FOR_SETUP = 0;
+constexpr uint8 LED_G_FOR_SETUP = 0;
+constexpr uint8 LED_B_FOR_SETUP = 255;
+constexpr uint8 FADE_SPEED_FOR_SETUP_LED = 15;
+
+constexpr uint8 LED_R_FOR_GET_SENSORS = 0;
+constexpr uint8 LED_G_FOR_GET_SENSORS = 255;
+constexpr uint8 LED_B_FOR_GET_SENSORS = 0;
+constexpr uint8 FADE_SPEED_FOR_GET_SENSORS_LED = 15;
+
+constexpr uint8 LED_R_FOR_SEND_TO_SERVER = 0;
+constexpr uint8 LED_G_FOR_SEND_TO_SERVER = 255;
+constexpr uint8 LED_B_FOR_SEND_TO_SERVER = 0;
+constexpr uint8 FADE_SPEED_FOR_SEND_TO_SERVER = 15;
+
+constexpr uint8 LED_R_FOR_SUCCESS = 0;
+constexpr uint8 LED_G_FOR_SUCCESS = 0;
+constexpr uint8 LED_B_FOR_SUCCESS = 255;
+constexpr uint8 FADE_SPEED_FOR_SUCCESS = 15;
+
+constexpr uint8 ERROR_ALERT_LED_R = 255;
+constexpr uint8 ERROR_ALERT_LED_G = 0;
+constexpr uint8 ERROR_ALERT_LED_B = 0;
+constexpr uint8 ERROR_ALERT_LED_FADE_SPEED = 15;
+constexpr uint8 ERROR_ALERT_LED_DURATION_MSEC = 15000;
+
+constexpr uint8 ERROR_BLINK_LED_R = 255;
+constexpr uint8 ERROR_BLINK_LED_G = 0;
+constexpr uint8 ERROR_BLINK_LED_B = 0;
+constexpr uint8 ERROR_BLINK_LED_FADE_SPEED = 15;
+constexpr uint8 ERROR_BLINK_LED_DURATION_MSEC = 1000;
+constexpr uint8 ERROR_BLINK_LED_INTERVAL_MSEC = 500;
+
+constexpr uint8 ERROR_BLINK_LED_COUNT_FOR_LOWBATTERY = 1;
+constexpr uint8 ERROR_BLINK_LED_COUNT_FOR_LTE = 2;
+constexpr uint8 ERROR_BLINK_LED_COUNT_FOR_PWM = 8;
+constexpr uint8 ERROR_BLINK_LED_COUNT_FOR_NTP = 10;
+constexpr uint8 ERROR_BLINK_LED_COUNT_FOR_EXT_RTC_SET_ALARM = 5;
+constexpr uint8 ERROR_BLINK_LED_COUNT_FOR_EXT_RTC_INIT = 6;
+constexpr uint8 ERROR_BLINK_LED_COUNT_FOR_EXT_RTC_SET_TIME = 7;
+constexpr uint8 ERROR_BLINK_LED_COUNT_FOR_EXT_RTC_OTHERS = 9;
+constexpr uint8 ERROR_BLINK_LED_COUNT_FOR_CONNECT_AMBIENT = 3;
+constexpr uint8 ERROR_BLINK_LED_COUNT_FOR_INIT_MS5540C = 8;
+constexpr uint8 ERROR_BLINK_LED_COUNT_FOR_SEND_TO_AMBIENT = 4;
+constexpr uint8 ERROR_BLINK_LED_COUNT_FOR_OTHERS = 15;
+
+
+
+#endif //C_SW_LED_BLINKM
+
 void setup()
 {
 	isSuccessSetup = false;
@@ -152,6 +211,22 @@ void setup()
 	Wio.PowerSupplyGrove(true);
 
 	i2c.begin();
+
+#if C_SW_LED_BLINKM
+	if (!FadeLedToSetupColor())
+	{
+		SerialUSB.println("ERROR: FadeLedToSetupColor");
+		//Not return because led failure isn't critical
+	}
+
+	//Set starup parameters to stop default script for factory shipment LED
+	if (!StopStartupScriptAtExtLed())
+	{
+		SerialUSB.println("ERROR: StopStartupScriptAtExtLed");
+		//Not return because led failure isn't critical
+	}
+#endif //C_SW_LED_BLINKM
+
 
 #if C_SW_EXT_RTC
 	if (!InitializeExtRtc())
@@ -169,16 +244,23 @@ void setup()
 	if (!SetupLTE())
 	{
 		SerialUSB.println("ERROR: SetupLTE");
+		BlinkErrorLight(ERROR_BLINK_LED_COUNT_FOR_LTE);
 		return;
 	}
 
-	UpdateRtcByNtp();
+	if (!UpdateRtcByNtp())
+	{
+		SerialUSB.println("ERROR: UpdateRtcByNtp");
+		BlinkErrorLight(ERROR_BLINK_LED_COUNT_FOR_NTP);
+		//Not return because NTP failure isn't critical
+	}
 
 #if C_SW_EXT_RTC
 	//[Workaround] InitializeExtRtc often failed for unknown reason. So re-invoke InitializeExtRtc before SetExtRtcTime.
 	if (!InitializeExtRtc())
 	{
 		SerialUSB.println("ERROR: InitializeExtRtc(Re-invoke)");
+		BlinkErrorLight(ERROR_BLINK_LED_COUNT_FOR_EXT_RTC_INIT);
 		//[Workaround] InitializeExtRtc often failed for unknown reason. So continue setup in case of failure.
 		//return;
 	}
@@ -189,14 +271,20 @@ void setup()
 	if (!SetExtRtcTime(current_time))
 	{
 		SerialUSB.println("ERROR: SetExtRtcTime");
-		return;
+		BlinkErrorLight(ERROR_BLINK_LED_COUNT_FOR_EXT_RTC_SET_TIME);
+		//Not return because RTC failure isn't critical
 	}
 #endif //C_SW_EXT_RTC
 
 #if C_SW_AMBIENT
 	//Setup Ambient
 	SerialUSB.println("INFO: Setup Ambient");
-	ambient.begin(AMBIENT_CHANNEL_ID, AMBIENT_WRITE_KEY, &WioClient);
+	if (!ambient.begin(AMBIENT_CHANNEL_ID, AMBIENT_WRITE_KEY, &WioClient))
+	{
+		SerialUSB.println("ERROR: Ambient::begin");
+		BlinkErrorLight(ERROR_BLINK_LED_COUNT_FOR_CONNECT_AMBIENT);
+		return;
+	}
 #endif //C_SW_AMBIENT
 
 #else //C_SW_LTE
@@ -219,6 +307,7 @@ void setup()
 	if (!SetupMs5540c())
 	{
 		SerialUSB.println("ERROR: SetupMs5540c");
+		BlinkErrorLight(ERROR_BLINK_LED_COUNT_FOR_INIT_MS5540C);
 		return;
 	}
 #endif //C_SW_MS5540C
@@ -246,6 +335,13 @@ void loop()
 
 	if (isSuccessSetup)
 	{
+		if (!FadeLedToGetSensorsColor())
+		{
+			SerialUSB.println("ERROR: FadeLedToGetSensorsColor");
+			BlinkErrorLight(ERROR_BLINK_LED_COUNT_FOR_OTHERS);
+			//Continue funtions because LED failure isn't critical
+		}
+
 		/* Get temperature and humidity */
 		float temp = INVALID_TEMP_AND_WATERLEVEL;
 		float humi = INVALID_TEMP_AND_WATERLEVEL;
@@ -328,6 +424,13 @@ void loop()
 #if C_SW_LTE && C_SW_AMBIENT
 		/* Send to Ambient */
 		SerialUSB.println("INFO: SendToAmbient()");
+		if (!FadeLedToSendToServerColor())
+		{
+			SerialUSB.println("ERROR: FadeLedToSendToServerColor");
+			BlinkErrorLight(ERROR_BLINK_LED_COUNT_FOR_OTHERS);
+			//Continue funtions because LED failure isn't critical
+		}
+
 		bool isSendSuccess;
 		if (validGps)
 		{
@@ -338,15 +441,29 @@ void loop()
 			isSendSuccess = SendToAmbient(press_ms5540c[MS5540C_WATER], temp_ms5540c[MS5540C_WATER], press_ms5540c[MS5540C_AIR], temp_ms5540c[MS5540C_AIR], water_level_cm, ext_battery_v, in_battery_v, in_temperature);
 		}
 
-		if (!isSendSuccess)
+		if (isSendSuccess)
+		{
+			if (!FadeLedToSuccessColor())
+			{
+				SerialUSB.println("ERROR: FadeLedToSuccessColor");
+				BlinkErrorLight(ERROR_BLINK_LED_COUNT_FOR_OTHERS);
+				//Continue funtions because LED failure isn't critical
+			}
+		}
+		else
 		{
 			SerialUSB.println("ERROR: SendToAmbient");
+			BlinkErrorLight(ERROR_BLINK_LED_COUNT_FOR_SEND_TO_AMBIENT);
 		}
 #endif //C_SW_LTE && C_SW_AMBIENT
 	}
 	else
 	{
 		SerialUSB.println("ERROR: Skip loop because of setup failure");
+		if (!AlertErrorWithLed())
+		{
+			SerialUSB.println("ERROR: AlertErrorWithLed");
+		}
 	}
 
 	/* Wait next loop */
@@ -1168,22 +1285,163 @@ float GetInternalTemperature()
 }
 #endif //C_SW_BATTERY_V
 
+//External LED(BlinkM) functions
+#if C_SW_LED_BLINKM
+bool GoToRgbAtExtLed(uint8 r, uint8 g, uint8 b)
+{
+	uint8 result = I2cTransmit(LED_I2C_ADDR, 'n', r, g, b);
+	if (result != SUCCESS)
+	{
+		char cbuf[64];
+		snprintf(cbuf, sizeof(cbuf), "ERROR: I2cTransmit('n') ret %d", result);
+		SerialUSB.println(cbuf);
+		return false;
+	}
+
+	return true;
+}
+
+bool FadeToRgbAtExtLed(uint8 r, uint8 g, uint8 b)
+{
+	uint8 result = I2cTransmit(LED_I2C_ADDR, 'c', r, g, b);
+	if (result != SUCCESS)
+	{
+		char cbuf[64];
+		snprintf(cbuf, sizeof(cbuf), "ERROR: I2cTransmit('c') ret %d", result);
+		SerialUSB.println(cbuf);
+		return false;
+	}
+
+	return true;
+}
+
+bool FadeToRgbAtExtLed(uint8 r, uint8 g, uint8 b, uint8 fade_speed)
+{
+	bool isSuccess = true;
+
+	uint8 result = I2cTransmit(LED_I2C_ADDR, 'f', fade_speed);
+	if (result != SUCCESS)
+	{
+		char cbuf[64];
+		snprintf(cbuf, sizeof(cbuf), "ERROR: I2cTransmit('f') ret %d", result);
+		SerialUSB.println(cbuf);
+		isSuccess = false;
+	}
+
+	result = FadeToRgbAtExtLed(r, g, b);
+	if (result != SUCCESS)
+	{
+		char cbuf[64];
+		snprintf(cbuf, sizeof(cbuf), "ERROR: FadeToRgbAtExtLed ret %d", result);
+		SerialUSB.println(cbuf);
+		isSuccess = false;
+	}
+
+	return isSuccess;
+}
+
+bool StopStartupScriptAtExtLed()
+{
+	uint8 result = I2cTransmit(LED_I2C_ADDR, 'B', 0, 0, 0, 8, 0);
+	if (result != SUCCESS)
+	{
+		char cbuf[64];
+		snprintf(cbuf, sizeof(cbuf), "ERROR: I2cTransmit('B') ret %d", result);
+		SerialUSB.println(cbuf);
+		return false;
+	}
+
+	return true;
+}
+
+bool BlinkErrorLight(unsigned int blinkCount)
+{
+	bool isSuccess = true;
+
+	for (unsigned int i = 0; i < blinkCount; ++i)
+	{
+		//Turn to red
+		uint8 result = FadeToRgbAtExtLed(ERROR_BLINK_LED_R, ERROR_BLINK_LED_G, ERROR_BLINK_LED_B, ERROR_BLINK_LED_FADE_SPEED);
+		if (result != SUCCESS)
+		{
+			char cbuf[64];
+			snprintf(cbuf, sizeof(cbuf), "ERROR: BlinkErrorLight red ret %d", result);
+			SerialUSB.println(cbuf);
+			isSuccess = false;
+			continue;
+		}
+		delay(ERROR_BLINK_LED_DURATION_MSEC);
+
+		//Turn to 0
+		result = FadeToRgbAtExtLed(0, 0, 0, ERROR_BLINK_LED_FADE_SPEED);
+		if (result != SUCCESS)
+		{
+			char cbuf[64];
+			snprintf(cbuf, sizeof(cbuf), "ERROR: BlinkErrorLight 0 ret %d", result);
+			SerialUSB.println(cbuf);
+			isSuccess = false;
+			continue;
+		}
+		delay(ERROR_BLINK_LED_INTERVAL_MSEC);
+	}
+
+	return isSuccess;
+}
+
+bool FadeLedToSetupColor()
+{
+	return FadeToRgbAtExtLed(LED_R_FOR_SETUP, LED_G_FOR_SETUP, LED_B_FOR_SETUP, FADE_SPEED_FOR_SETUP_LED);
+}
+
+bool FadeLedToGetSensorsColor()
+{
+	return FadeToRgbAtExtLed(LED_R_FOR_GET_SENSORS, LED_G_FOR_GET_SENSORS, LED_B_FOR_GET_SENSORS, FADE_SPEED_FOR_GET_SENSORS_LED);
+}
+
+bool FadeLedToSendToServerColor()
+{
+	return FadeToRgbAtExtLed(LED_R_FOR_SEND_TO_SERVER, LED_G_FOR_SEND_TO_SERVER, LED_B_FOR_SEND_TO_SERVER, FADE_SPEED_FOR_SEND_TO_SERVER);
+}
+
+bool FadeLedToSuccessColor()
+{
+	return FadeToRgbAtExtLed(LED_R_FOR_SUCCESS, LED_G_FOR_SUCCESS, LED_B_FOR_SUCCESS, FADE_SPEED_FOR_SUCCESS);
+}
+
+bool AlertErrorWithLed()
+{
+	if(!FadeToRgbAtExtLed(ERROR_ALERT_LED_R, ERROR_ALERT_LED_G, ERROR_ALERT_LED_B, ERROR_ALERT_LED_FADE_SPEED))
+	{
+		SerialUSB.println("ERROR: FadeToRgbAtExtLed for alert");
+		return false;
+	}
+	delay(ERROR_ALERT_LED_DURATION_MSEC);
+	return true;
+}
+
+#endif //C_SW_LED_BLINKM
+
 //RTC functions
-void UpdateRtcByNtp()
+bool UpdateRtcByNtp()
 {
 	struct tm current_time = { 0 };
-	if (GetNtpTime(Wio, current_time) == true)
+	if (!GetNtpTime(Wio, current_time))
 	{
-		time_t epoch = mktime(&current_time);
-		epoch += JAPAN_TIME_DIFF;
-
-		gmtime_r(&epoch, &current_time);
-		SerialUSB.println("INFO: Get Time From NTP Server. UTC = ");
-		SerialUSB.println(asctime(&current_time));
-
-		rtc.setTime(&current_time);
-		delay(10);  // Wait to reflect to RTC
+		SerialUSB.println("ERROR: GetNtpTime");
+		return false;
 	}
+
+	time_t epoch = mktime(&current_time);
+	epoch += JAPAN_TIME_DIFF;
+
+	gmtime_r(&epoch, &current_time);
+	SerialUSB.println("INFO: Get Time From NTP Server. UTC = ");
+	SerialUSB.println(asctime(&current_time));
+
+	rtc.setTime(&current_time);
+	delay(10);  // Wait to reflect to RTC
+
+	return true;
 }
 
 bool GetNtpTime(WioLTE& wio, tm& current_time)
