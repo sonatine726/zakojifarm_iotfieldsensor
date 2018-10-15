@@ -219,14 +219,14 @@ void setup()
 	if (!FadeLedToSetupColor())
 	{
 		SerialUSB.println("ERROR: FadeLedToSetupColor");
-		//Not return because led failure isn't critical
+		//Continue setup because led failure isn't critical
 	}
 
 	//Set starup parameters to stop default script for factory shipment LED
 	if (!StopStartupScriptAtExtLed())
 	{
 		SerialUSB.println("ERROR: StopStartupScriptAtExtLed");
-		//Not return because led failure isn't critical
+		//Continue setup because led failure isn't critical
 	}
 #endif //C_SW_LED_BLINKM
 
@@ -234,9 +234,7 @@ void setup()
 	if (!InitializeExtRtc())
 	{
 		SerialUSB.println("ERROR: InitializeExtRtc");
-		//[Workaround] InitializeExtRtc often failed for unknown reason. So continue setup in case of failure.
-		//return;
-
+		//Continue setup because external RTC setup can be made up for by subsequent processing
 	}
 #endif //C_SW_EXT_RTC
 
@@ -254,19 +252,10 @@ void setup()
 	{
 		SerialUSB.println("ERROR: UpdateRtcByNtp");
 		BlinkErrorLight(ERROR_BLINK_LED_COUNT_FOR_NTP);
-		//Not return because NTP failure isn't critical
+		//Continue setup because NTP failure isn't critical
 	}
 
 #if C_SW_EXT_RTC
-	//[Workaround] InitializeExtRtc often failed for unknown reason. So re-invoke InitializeExtRtc before SetExtRtcTime.
-	if (!InitializeExtRtc())
-	{
-		SerialUSB.println("ERROR: InitializeExtRtc(Re-invoke)");
-		BlinkErrorLight(ERROR_BLINK_LED_COUNT_FOR_EXT_RTC_INIT);
-		//[Workaround] InitializeExtRtc often failed for unknown reason. So continue setup in case of failure.
-		//return;
-	}
-
 	struct tm current_time = { 0 };
 	rtc.getTime(&current_time);
 
@@ -274,7 +263,7 @@ void setup()
 	{
 		SerialUSB.println("ERROR: SetExtRtcTime");
 		BlinkErrorLight(ERROR_BLINK_LED_COUNT_FOR_EXT_RTC_SET_TIME);
-		//Not return because RTC failure isn't critical
+		//Continue setup because RTC failure isn't critical
 	}
 #endif //C_SW_EXT_RTC
 
