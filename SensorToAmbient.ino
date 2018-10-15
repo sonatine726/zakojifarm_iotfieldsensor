@@ -151,11 +151,11 @@ constexpr unsigned int INTERNAL_TEMPERATURE_ADC_CHANNEL = 16;
 constexpr uint8 LED_I2C_ADDR = 0x09;
 
 constexpr uint8 LED_R_FOR_SETUP = 0;
-constexpr uint8 LED_G_FOR_SETUP = 0;
+constexpr uint8 LED_G_FOR_SETUP = 255;
 constexpr uint8 LED_B_FOR_SETUP = 255;
 constexpr uint8 FADE_SPEED_FOR_SETUP_LED = 15;
 
-constexpr uint8 LED_R_FOR_GET_SENSORS = 0;
+constexpr uint8 LED_R_FOR_GET_SENSORS = 255;
 constexpr uint8 LED_G_FOR_GET_SENSORS = 255;
 constexpr uint8 LED_B_FOR_GET_SENSORS = 0;
 constexpr uint8 FADE_SPEED_FOR_GET_SENSORS_LED = 15;
@@ -212,6 +212,9 @@ void setup()
 
 	i2c.begin();
 
+	//Wait for i2c ready
+	delay(500);
+
 #if C_SW_LED_BLINKM
 	if (!FadeLedToSetupColor())
 	{
@@ -226,7 +229,6 @@ void setup()
 		//Not return because led failure isn't critical
 	}
 #endif //C_SW_LED_BLINKM
-
 
 #if C_SW_EXT_RTC
 	if (!InitializeExtRtc())
@@ -1328,12 +1330,9 @@ bool FadeToRgbAtExtLed(uint8 r, uint8 g, uint8 b, uint8 fade_speed)
 		isSuccess = false;
 	}
 
-	result = FadeToRgbAtExtLed(r, g, b);
-	if (result != SUCCESS)
+	if (!FadeToRgbAtExtLed(r, g, b))
 	{
-		char cbuf[64];
-		snprintf(cbuf, sizeof(cbuf), "ERROR: FadeToRgbAtExtLed ret %d", result);
-		SerialUSB.println(cbuf);
+		SerialUSB.println("ERROR: FadeToRgbAtExtLed");
 		isSuccess = false;
 	}
 
@@ -1361,24 +1360,18 @@ bool BlinkErrorLight(unsigned int blinkCount)
 	for (unsigned int i = 0; i < blinkCount; ++i)
 	{
 		//Turn to red
-		uint8 result = FadeToRgbAtExtLed(ERROR_BLINK_LED_R, ERROR_BLINK_LED_G, ERROR_BLINK_LED_B, ERROR_BLINK_LED_FADE_SPEED);
-		if (result != SUCCESS)
+		if (!FadeToRgbAtExtLed(ERROR_BLINK_LED_R, ERROR_BLINK_LED_G, ERROR_BLINK_LED_B, ERROR_BLINK_LED_FADE_SPEED))
 		{
-			char cbuf[64];
-			snprintf(cbuf, sizeof(cbuf), "ERROR: BlinkErrorLight red ret %d", result);
-			SerialUSB.println(cbuf);
+			SerialUSB.println("ERROR: BlinkErrorLight red");
 			isSuccess = false;
 			continue;
 		}
 		delay(ERROR_BLINK_LED_DURATION_MSEC);
 
 		//Turn to 0
-		result = FadeToRgbAtExtLed(0, 0, 0, ERROR_BLINK_LED_FADE_SPEED);
-		if (result != SUCCESS)
+		if (!FadeToRgbAtExtLed(0, 0, 0, ERROR_BLINK_LED_FADE_SPEED))
 		{
-			char cbuf[64];
-			snprintf(cbuf, sizeof(cbuf), "ERROR: BlinkErrorLight 0 ret %d", result);
-			SerialUSB.println(cbuf);
+			SerialUSB.println("ERROR: BlinkErrorLight 0");
 			isSuccess = false;
 			continue;
 		}
