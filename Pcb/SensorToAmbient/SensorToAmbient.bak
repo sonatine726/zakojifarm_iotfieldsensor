@@ -471,7 +471,7 @@ L Switch:SW_Push SW2
 U 1 1 5BB8B6B3
 P 1400 1800
 F 0 "SW2" H 1400 2085 50  0000 C CNN
-F 1 "SW_Push" H 1400 1994 50  0000 C CNN
+F 1 "Func SW" H 1400 1994 50  0000 C CNN
 F 2 "Connectors_JST:JST_XH_S02B-XH-A_02x2.50mm_Angled" H 1400 2000 50  0001 C CNN
 F 3 "" H 1400 2000 50  0001 C CNN
 	1    1400 1800
@@ -550,7 +550,7 @@ Wire Wire Line
 	4150 6450 4050 6450
 Wire Wire Line
 	3100 5100 3300 5100
-Text Label 4450 5100 0    50   ~ 0
+Text Label 4250 5100 0    50   ~ 0
 PWR3.3V_DCDC
 $Comp
 L power:PWR_FLAG #FLG0102
@@ -566,19 +566,6 @@ $EndComp
 Wire Wire Line
 	3650 5700 3850 5700
 Connection ~ 3850 5700
-$Comp
-L SensorToAmbient-rescue:R-Device R6
-U 1 1 5BBEFB78
-P 3450 5100
-F 0 "R6" V 3243 5100 50  0000 C CNN
-F 1 "10K" V 3334 5100 50  0000 C CNN
-F 2 "Resistors_SMD:R_0805_HandSoldering" V 3380 5100 50  0001 C CNN
-F 3 "~" H 3450 5100 50  0001 C CNN
-	1    3450 5100
-	0    1    1    0   
-$EndComp
-Wire Wire Line
-	3600 5100 4850 5100
 $Comp
 L SensorToAmbient-rescue:R-Device R5
 U 1 1 5BBF522A
@@ -705,4 +692,17 @@ Wire Wire Line
 	4150 5650 4150 6450
 Wire Wire Line
 	4300 1700 5250 1700
+$Comp
+L Device:D_Schottky D3
+U 1 1 5BC5EC59
+P 3450 5100
+F 0 "D3" H 3500 4900 50  0000 C CNN
+F 1 "D_Schottky" H 3450 5000 50  0000 C CNN
+F 2 "Diodes_SMD:D_SOD-323_HandSoldering" H 3450 5100 50  0001 C CNN
+F 3 "~" H 3450 5100 50  0001 C CNN
+	1    3450 5100
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	3600 5100 4850 5100
 $EndSCHEMATC
