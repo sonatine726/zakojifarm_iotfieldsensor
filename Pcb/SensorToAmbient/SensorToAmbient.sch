@@ -15,17 +15,6 @@ Comment3 ""
 Comment4 ""
 $EndDescr
 $Comp
-L SensorToAmbient-rescue:Conn_01x04-Connector_Grove J1
-U 1 1 5BE0F275
-P 1300 2350
-F 0 "J1" H 1250 2050 50  0000 L CNN
-F 1 "D38 In" H 1150 1950 50  0000 L CNN
-F 2 "SensorToAmbient:Grove_2mm_4pin_angle2" H 1300 2350 50  0001 C CNN
-F 3 "~" H 1300 2350 50  0001 C CNN
-	1    1300 2350
-	-1   0    0    -1  
-$EndComp
-$Comp
 L SensorToAmbient-rescue:Conn_01x04-Connector_Grove J2
 U 1 1 5BE0F3B8
 P 1300 3650
@@ -48,22 +37,11 @@ F 3 "~" H 1300 5050 50  0001 C CNN
 	-1   0    0    -1  
 $EndComp
 $Comp
-L SensorToAmbient-rescue:Conn_01x04-Connector_Grove J6
-U 1 1 5BE0F456
-P 5100 2400
-F 0 "J6" H 5100 2600 50  0000 C CNN
-F 1 "I2C In" H 5100 2700 50  0000 C CNN
-F 2 "SensorToAmbient:Grove_2mm_4pin_angle2" H 5100 2400 50  0001 C CNN
-F 3 "~" H 5100 2400 50  0001 C CNN
-	1    5100 2400
-	1    0    0    1   
-$EndComp
-$Comp
 L SensorToAmbient-rescue:Conn_01x06-Connector_Generic J8
 U 1 1 5BE0FB43
 P 2000 650
 F 0 "J8" V 1966 262 50  0000 R CNN
-F 1 "Ms5540c_1" V 1875 262 50  0000 R CNN
+F 1 "MS5540C 1" V 1875 262 50  0000 R CNN
 F 2 "Connectors_JST:JST_XH_S06B-XH-A_06x2.50mm_Angled" H 2000 650 50  0001 C CNN
 F 3 "~" H 2000 650 50  0001 C CNN
 	1    2000 650 
@@ -74,7 +52,7 @@ L SensorToAmbient-rescue:Conn_01x06-Connector_Generic J9
 U 1 1 5BE0FBD1
 P 4100 650
 F 0 "J9" V 4066 262 50  0000 R CNN
-F 1 "Ms5540c_2" V 3975 262 50  0000 R CNN
+F 1 "MS5540C 2" V 3975 262 50  0000 R CNN
 F 2 "Connectors_JST:JST_XH_S06B-XH-A_06x2.50mm_Angled" H 4100 650 50  0001 C CNN
 F 3 "~" H 4100 650 50  0001 C CNN
 	1    4100 650 
@@ -197,7 +175,7 @@ F 3 "" H 4600 6950 50  0001 C CNN
 $EndComp
 Connection ~ 4600 5550
 Wire Wire Line
-	4600 5550 5200 5550
+	4600 5550 4850 5550
 $Comp
 L power:GND #PWR0103
 U 1 1 5BA6679C
@@ -211,21 +189,7 @@ F 3 "" H 2100 5950 50  0001 C CNN
 $EndComp
 Text Label 3850 5450 1    50   ~ 0
 PWR_BAT
-NoConn ~ 1500 2250
-NoConn ~ 1500 3550
 NoConn ~ 1500 3650
-$Comp
-L SensorToAmbient-rescue:Conn_01x04-Connector_Grove J4
-U 1 1 5BE0F523
-P 5050 5100
-F 0 "J4" H 5050 5300 50  0000 C CNN
-F 1 "A4 In" H 5050 5400 50  0000 C CNN
-F 2 "SensorToAmbient:Grove_2mm_4pin_angle2" H 5050 5100 50  0001 C CNN
-F 3 "~" H 5050 5100 50  0001 C CNN
-	1    5050 5100
-	1    0    0    1   
-$EndComp
-NoConn ~ 4900 2500
 Wire Wire Line
 	2100 850  2100 1000
 Wire Wire Line
@@ -248,7 +212,7 @@ Wire Wire Line
 	4200 1000 4200 850 
 Connection ~ 2100 1000
 Wire Wire Line
-	2100 1000 2100 3250
+	2100 1000 2100 2250
 Wire Wire Line
 	2000 1100 4100 1100
 Wire Wire Line
@@ -325,7 +289,7 @@ Wire Wire Line
 Wire Wire Line
 	4750 3500 4850 3500
 Wire Wire Line
-	3400 3800 4850 3800
+	3400 3800 4800 3800
 Connection ~ 4850 3800
 Wire Wire Line
 	4850 3800 5200 3800
@@ -524,7 +488,6 @@ PWR3.3V_Switch
 Wire Wire Line
 	3100 5100 3100 6450
 NoConn ~ 1500 5050
-NoConn ~ 4850 5200
 $Comp
 L SensorToAmbient-rescue:D_Schottky D2
 U 1 1 5BBBBAF5
@@ -542,8 +505,7 @@ Wire Wire Line
 	3100 3700 3100 5100
 Connection ~ 3100 5100
 Wire Wire Line
-	2100 3250 2100 5950
-NoConn ~ 1500 4950
+	2100 3250 2100 3550
 Wire Wire Line
 	3850 5650 4150 5650
 Wire Wire Line
@@ -705,4 +667,64 @@ F 3 "~" H 3450 5100 50  0001 C CNN
 $EndComp
 Wire Wire Line
 	3600 5100 4850 5100
+$Comp
+L SensorToAmbient-rescue:Conn_01x04-Connector_Grove J6
+U 1 1 5BE0F456
+P 5100 2400
+F 0 "J6" H 5100 2600 50  0000 C CNN
+F 1 "I2C In" H 5100 2700 50  0000 C CNN
+F 2 "SensorToAmbient:Grove_2mm_4pin_angle2" H 5100 2400 50  0001 C CNN
+F 3 "~" H 5100 2400 50  0001 C CNN
+	1    5100 2400
+	1    0    0    1   
+$EndComp
+Wire Wire Line
+	4900 2500 4800 2500
+Wire Wire Line
+	4800 2500 4800 3800
+Connection ~ 4800 3800
+Wire Wire Line
+	4800 3800 4850 3800
+$Comp
+L SensorToAmbient-rescue:Conn_01x04-Connector_Grove J4
+U 1 1 5BE0F523
+P 5050 5100
+F 0 "J4" H 5050 5300 50  0000 C CNN
+F 1 "A4 In" H 5050 5400 50  0000 C CNN
+F 2 "SensorToAmbient:Grove_2mm_4pin_angle2" H 5050 5100 50  0001 C CNN
+F 3 "~" H 5050 5100 50  0001 C CNN
+	1    5050 5100
+	1    0    0    1   
+$EndComp
+Wire Wire Line
+	4850 5200 4850 5550
+Connection ~ 4850 5550
+Wire Wire Line
+	4850 5550 5200 5550
+Wire Wire Line
+	1500 4950 2100 4950
+Connection ~ 2100 4950
+Wire Wire Line
+	2100 4950 2100 5950
+Wire Wire Line
+	1500 3550 2100 3550
+Connection ~ 2100 3550
+Wire Wire Line
+	2100 3550 2100 4950
+$Comp
+L SensorToAmbient-rescue:Conn_01x04-Connector_Grove J1
+U 1 1 5BE0F275
+P 1300 2350
+F 0 "J1" H 1250 2050 50  0000 L CNN
+F 1 "D38 In" H 1150 1950 50  0000 L CNN
+F 2 "SensorToAmbient:Grove_2mm_4pin_angle2" H 1300 2350 50  0001 C CNN
+F 3 "~" H 1300 2350 50  0001 C CNN
+	1    1300 2350
+	-1   0    0    -1  
+$EndComp
+Wire Wire Line
+	1500 2250 2100 2250
+Connection ~ 2100 2250
+Wire Wire Line
+	2100 2250 2100 3250
 $EndSCHEMATC
